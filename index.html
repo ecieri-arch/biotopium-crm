@@ -68,6 +68,9 @@ body.oscuro .metrica{background:linear-gradient(160deg,#161D33,#121729)}
 .dona-sub{font-size:11px;fill:var(--gris)}
 .leyenda{display:grid;gap:8px;font-size:13.5px}
 .leyenda .pto{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:1px}
+.smd-logo{height:72px;width:auto;display:block}
+.smd-logo-mini{height:30px;width:auto;vertical-align:middle;margin-right:8px}
+body.oscuro .smd-logo, body.oscuro .smd-logo-mini{filter:invert(1) brightness(1.15)}
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--fondo);color:var(--tinta);
@@ -371,7 +374,10 @@ td.der,th.der{text-align:right}
         <div class="card"><h3>Mix del mes · minorista vs mayorista</h3><div id="dash-dona"></div></div>
         <div class="card"><h3>Top 5 productos más vendidos</h3><div id="dash-top"></div></div>
       </div>
-      <div class="card" style="margin-top:16px"><h3>Stock bajo</h3><div id="dash-stockbajo"></div></div>
+      <div class="grid-2" style="margin-top:16px">
+        <div class="card"><h3><img class="smd-logo-mini" alt="" src="data:image/png;base64,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">Peces · Santa María Discus</h3><div id="dash-smd"></div></div>
+        <div class="card"><h3>Stock bajo</h3><div id="dash-stockbajo"></div></div>
+      </div>
     </section>
 
     <!-- ===== VENTAS ===== -->
@@ -414,6 +420,36 @@ td.der,th.der{text-align:right}
           <option value="rechazado">Rechazados</option></select>
       </div>
       <div class="tabla-wrap" id="presu-tabla"></div>
+    </section>
+
+    <!-- ===== SANTA MARÍA DISCUS ===== -->
+    <section class="vista" id="view-smd">
+      <div class="vista-head">
+        <div style="display:flex;align-items:center;gap:16px">
+          <img class="smd-logo" alt="Santa María Discus" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVQAAAFWCAMAAAABhJWMAAAAP1BMVEUAAAAJCQkJCQkJCQkJCQkJCQkJCQkJCQkTExMkJCQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC0xQxzAAAAEHRSTlMA+9AvT69vjw0HAAAAAAAAX6DUvgAAGt9JREFUeNrtXdeCo7gSNaUK7P//8BqUSiCCkQDRgx7unZ3ptuGocvx8Ng4KwfeQ4Oc9VY4R6MKBF9cqkHaTQ+ZFpeygI1ASZvYkKy8uJWckU+BAm4ZHXOlFphDTCV2OsMKLTQmmMJOghl5aPX44i6kD+0X1mN5fwvTzGWj1Na2OnAG5BeupH+Tqi9AxQpVD//ieNS0F6zrsxejn8+VwXqdjfkE64EqZdYn7GgAH7CnYsrdelH7X/bSlx97ISlWR+j2vqVof1B5eTVWfUl9QX1BbAVW2fuCVqa/2b99OxddO/f2YDZNJXo/q99NvCNXmfP9HyCJZFZqc/1eDaEx/R6iCAPAZ/E9r/zil41B0AWKuwTFUIIxps0eII1mRqvOsgH0vfy6AVcK9+noPBarhVskWFgWAzAiVfVmQLxE666XQfrCJ9Qf+q/2zGh7vt1HPBJcyfzzL/IurszKDWLVi4JSXMs58Nr5UpudQ6DV+IbLnGH/pxrSlwkbwMEunKdgyQZFPKg6y9Gl8MVLHaCGF8eu+JBpL6WC8X/s3YFpDdQqOf7Ep+Gb2QzVptf9E+jQYkHMVc6IFjyNUjTA3R6u6lqpH6uYIZojBQE039mswccC0Gx8BgxRHqzcTnCcH2zJlHVGQ4Pf4sj/aYSZgRQEwShd7TxRoz6kqVCTc0ff6M6h+H36oWh7I40r3aUWMzepTZ0+Wh0+qkap9gpFHxCh+ZgksZFjEWVEe9qHum2f4tgHqFNb5ZS85V8dlmccKOWI68jVZO2/VdzI0FNOiUXymCpZbAfUTav6B2OwPrRxOYpO7JB4/QFEb9QNmhL8SeaSIrxP9FWOmCVC3fARZUHJw5IM9iY/6zxrLeJjMLIhTMSBPAJWXdNwRmvAqTgKcxhSyrtwhWotAXfJJj+YG2AGoDaIvKlLwkFPZ+jUAzemeVlOgupJiTozMQgS+vhUzYrBn4YLWhabYn6Kar+0NTaUANwsqrSiqg3rq+4t8RrQL8p5Wg6AugUfHtCxaUGHwj2qHu43Ys2RytwPqQorQHKQEsf7mmXRkuYCbzmpR1iA9WGs9thOMigTOfODxO76ul7QArfWtiDdjJ0cDKniBwDNT++peSCEbAqC5IsWuQPef7qYnjeE3JwxlKTYBU7LEowbLSOBXNGqaGCe6tc3GxqeFWeyfJvwUAx1GDj/r2KD1ZYgLeDJ6AtUFa/8bnTrqm/anop+wYIxPvcnRFx1+8YoEM58XE+x/YUxFP5Tilqb9D6qZ0Y28rkHbpQMu8ANWicis/DdDUTGFS3xerIv7QA23gDoL5M8rf1zCPx/K3iBRuMu+MXfmW+fOaK7P8khADWUlV3OJZD2ntK3fxf1UJwo1eSmIOvgOFsR77nIpPFKhQD0Y4XSft0jdfbCeAapcWnq5/hS3wFofVGcn0u1Fjz4hcP3dztVSWcuvCyNQE3WkHtarqRVntlxRc7q0NYwNbgoDwARDLLhZS6btzLeTO8qCPLdLKlGh5B1a6nvg2wJWSXyvpACVmpsX2NtHwutZx8Ra1YLYniuBbK0i/7aL9hMqXWiH+sMfAu3l3OSuEICBhSKv0TOCPeYRNjuB9T7lGXo/EgClU6Xi2xpB+k+Lx9BtyRVblWSW6Je3MW2zwQm9VGvDLHGa06VR8JmYfi4rsdpt4zlJxOu2K3cNTwiCplDVtSS89kDYMqZnpgFLYwKw/EBtYxpaxqQFSk1jVcujLE3X+shFdloK719lkLZLLNakVu+rPM1SlTbuFz7boNITpthaS7UBkypN/630VD1hcIRzxO/3TjRcS1OV5SGrAaAR7Z9MqVhoneaHYBrrVqGFJxlCAXYFiCww1RMmHPXtTAjADbPZdI8ZtTpYhLZg5v4UL6w2fcJzZoLbsVGGm1i6xSv5ZnrSSgBpigAWO775WXtW4EbxP4yf6/cy1JP2LOFtz2u5fVf1ETxtHvhdG4xof5Zcnre4gm55ZIq93bKDmZ42ZdXcYVWjiznsMenhiTOW7xCroYHCbJKhPHNrzQ0GS5xDIzvGVj9yxLJcbVqrjvOtAlV47ID1y9ftRZbeGD0hz92uYq7mMQpQ0iqo+OSVlXwxk3kx3m+oIXj0doWrVezYOC5b/eP87H11dIOqSqdAL0AP/XNBvXw3hK9IWys75IfvAOPrFQIK0XogFx6+BYQbDK7h05fVtbhvh56+rb7BzVB/YFVtc4vhxg6aOdLmSWbrrbxmeN6mn5tTZbcYPId879QKmea9scxrYqNSo3sM1vkfbsQ0udOe527BD60WbZHqLal142fFB8LE3MgeuG5oaV2pegsF2AUJynvCXEJwOhf+KVYV3FOsKmEkt/vubJ1K3aHF1xkR5p5mtSmlZkNTFddC+OVIxJfEagzdNa7C7tVJKHceW6nC/3pG20Utw7dU1krK0ZLjlkqgMlw4+Vzr2OsDQ2lHdza/WgXUZCaY7di8anLlHe3qaoFRfqiaKZepoQJWsI9ve74EaKK8Lh9IKZ6uLxmOvyKKbJoor8vH+7mM+z2Zyuyqzn7fNmrAF/xlKiFUWRhvhqeTqjSRZF/cl0CHtbYbF5FzbM6Wqtw1kbtcTuzsHwiSlRyycFN4MoW0EPxfyesOvhAAYX+A9Rcu4mRV1UoN+HoK8mdOMrCaCcdTzR1upammbrQcN2rgT83NNdQAUjNazlu2Qn+mUUXtZFMr8oxsx03oPCsSW+qoq+WT24mGG4rovCKyHlqKpdcSRbInPnxeEVlj9cqV+GbXaCA5i5yaq1euJOFxh5twGqjN1SvXKpff8VJ8UhEZtZdIl8uu+SRQpcFmBXOZkD+nhrTNgS+XlcufAmqjA18uq+w+Q1G1OpEQrwpDngBqsxNezVWV3fVBbXdq7pWgUu0PbLV+7rIeBKoMKjVck4hXmSRQ1cywIfFWK+gv0/5VQW11qcPFoFZtgaGu7aZvuRBUrEYHjc95uwrUahkxN2ar6bL5IlDNb+RVLgONqydsfBxhCaj8A8HUaB/z++ip9e4OKbj2Xwqkyutx/R5qaL9hpoRSf8nlF/MsP4RKi02q/WnnYouKblqWehRUuOBGCpW/daDkKT3IRb7/fv4vS9vc1XlWAqo5n/+LlP+I6ZPmkZQVju3mfygU3c8ZlF3Bfdx5JaYrs9yehWnppIyd/F80o0meN92tLHi8MxxbhAu7NjfGYeh7OMN/sT+ITcFemDqGXWiVTWibtnYtHCDVefdkTbXPzTWFUpG63QfaMGbLhKrZQ+jFTaNmmAI3NHckh+IBRc0trM+Vssz/nl6eOsWF/eQp0//8Clk3X+Dg3u3q5n+BUbXHVL2s1Llf3Ah1A/+XuCvbVHitodlGVwWWSTzZU5l+ZYYemqgHKKtF3lRV/cW1ztREMVBhQ8WWqrp6unkboBbun9xSVVevumhlRCUVobohxK7udGgmVAAlZTTrea6rW3IaGvtbguq6p3t1+4g0FNAuKU2Ujfbp7mLyaKcSuKCIdo1Ur17Cg21FX+V4yecKqV5dmyuNpbOONyUtk+rljU7N9QEcD9Et0sfVw024vdwLlZAqtkCo0F6S8HhuZaGj5/hYM3MoN9IgoZYkrLKWTJmUPnAdLW6BKUit5kyZgr32cqi4t8V1RUW1eZkLoeMeKnRHUG2xPKjMcJ4JAC7odRr4+OfMSJNlF2X9o9NkF5ZU5w90/6v0ME3WsRWGdzmJyZiiNQHj/f7Yzk9N1geVZndIoWq6rrTWx/y2ExmbbKoun8cXzVIuXBLiZMkvcUNocn9GOai25JmxvN3JGyL70wbUZld1hcmRyYqgEn+xd/7m7pqBVqtYq4zjrLXMypu9e7VPq8tz6sw4RarS8MSuxGunnUTNjlSo9GAGubwGNzgiuyx6brfVoqX0Tggm7iluxYY3Z1FLsj7c8A5ShYZ3vDWV3wkPsx3moZa3EXJL64djUcRWPkKa7l0zLXFRfJiNsmRufBVhU4HzKOFXE0/cNd5nNdMJPeJtBfQxt7MWksTmF5FOzRdzJ+nu4n/zgJW5qVM41kDfRwYhQdMv3q2BBzSupk7hzROgYr55MfMMj2gGTsqeobt1VFkURkum6kMGAeiuh5Fs7zRdo97M587pKcMVVOHzoH5vrUyMpJrj/56esys7dj2NhuKtyjX4Ujn+p5qTKc82HIOqHUMat1Z8rbmqVTE9HVQfAbAxa7mTxSKoMzFEdR2ps0H1Rrd9j1uFqqLPie1UGdPTQfVLzuwoD3OjUOWlzdk9NT3pdwVU18lHt5ktSSOidlXN4zANqSoH6l38j5NZ3lFjIjwPU59U9aH3W/S/hVQjF0xVXlsl2rD5Dx8F6vUl336gL00ZSPwY1QYmevysHkj//9WltH6g73Ri4rg9k7oHxPrWQYXwNpfF/9AP9OVs+KR71nxKDSpoMXBhc3mPsDLQ13RPmPK9rqhiFdBVtQoe0qWBXUaI2HweeSCqfYwW4+m6wUEKT4Vt25GRT1KwQqej6mQp8OePHpek0J7hyTF2p/GfqIJ+kapfVBPP8Myx0D3/eUgjqjqJaWukT3FknPfE/efz91HF1JeSc0btu00T8vn7ZyRMTvPtTj1XXQrh667N518441i16ZwuqTz5lelfEKYTw4qmvpQPddSwJlHgj1tRmSMu7U9Z6vr+fQmu6nY+/9QZrahMMMUIFOKK4WLw848ddKB2y6x7BNdwJyDm8+8dcajKKrX9hGtg+3+QSN0ZQF3u/DBBvO4kOlNHHv8BAbBasaRx3QAqSox/k+3jGRfsrPs7JqI1LOPI4hWmxQ8/gv3n3z5jNeV2z63Cddi2IRx2nCCL/jfBz3tsbHVP2M9EYlzcwPEias9QrgJ7Z8rjIrDwL2umBV21v0mlHxherTIZNpwwvoAueKu/8a6XqS9+y7oKHlMI/iBdRa231T1SVz1syeYzdFX3kuoJuuol1RN0Vfe8RZvPIFV5kah5XDbpBaK2WfWqqnNI9VVVZ5hVr6qqep5abP8As+rl/zPMqpf/TyDVl/9PINWX/yuf1/4/ywN4heoJHsAfdar6W0n1BfUED8C8oFan1b8aUvnXS5He8573vOcVqu95z3v+0vlLfkArIlWuqANAoe9prgZ7qBsHoOodIUknAJ4SvI6tWm1Fx9Vz1b1t0CUrrKLXXKvN3FBS4d5MeDx5rmrxZRN2+bmP1FtjTa3X52nfQCOoTp6rEgWRhOLKONtc7zmp8kU078ZoQgJIdwao0jGmH8mKkLiSoJFcj0uDmNYB1di+Ki2nNXdCHZLibOMQt8b7tS46ZUv8pHWWUunl8+1Yt2cdTXeOoO+moBpFRqYSReFC06BpjfnrmFTqdZ2hSurjqdK70wKo3A6hAtVbhsPqjsLIeo8k1uLShPtJQnOmNCJRx7E89XrLKGJqxg8lJe+g0qub2CMsbpGDtCBUSTMM1xs2DpHZx6G1Yc6KxIvESjJm8KzFA4lwv1HlPB5vnP+gpNa7c9VdsRsH2CF5yq1ETsrwjXRvbtdUSTVpD/tHn/brF6DV+5cj0S5a6vyWlUqCLxpprOj+9lIOo0mmx5+IhDYZk72EGXnS2B125ge7xxDvkF0y/AkS7nOLFO+ZFHR48eXGjm9OvHywy8rtRED6gfthHXryAwBNQvfins3cpLHwIBtuLNMNk5WVisZPINe9tuTWOoYwCoeTp8Eod24BlY8T6hb7U2q0gZ1fGW2tHdy/OenGVxdBgp5xoMKjQHXh17X3ZZ4IPrZ0hb84w3tRwclq3Aiq3AXqz1NJ+SdnMEjQcXwt/eAM93tHssjk48AGGILc32lg1Ro6wgdGHfNPQQL2FzDSqJ8KuI8Cad93TBWSsb/WQ1g/Anuww1rmrVcbOVhRZn9rUDvcJv7gptkTzVPiqZFqWBzRc0qYqIamZp5G3RtnQP1aVMbziklE1+SmJDUa6rmTM+lj5ebsp1X8Cfr4g7TB/eL2VXu/qpsskApusvlgtrZ1bZLg1PCakJzRTGXmKpb0ptJ6hmpm4DPmxCZpinOPttGMGtqq/RfB9LUoWK1mMog5OsIuf4hL3EaT7xw+rTcZ888NzLdsYPnAG2A19RrG8JnM5abnjJGRrNkIiUjdCo4EyPxdjB6ruiyKroAkD9JHL8msasYZ247BlS98Er+BE8Z00QL7+RDZpF4ito8pf5nRL3+iFW1CdDRmXXDD6owxAD+110I3i5KRDu2St+wxjfDhPrdrhBP00t9OpsGCjx9MGIxKiBKtjrqSNMJp0ryEtdqtUMTEIzJbeS32/4rht5JAuKhP4wRUFWyC1ZubRSHQG8UQvyIRVeOj+7Yk/7l8Qh7WTSuevEVkDHHvj18LYDAfrbyDrawQ+LsS7VcFkktwpARUCoQj61mSmTYfJX8gETNN4dqvZyVyKP5b7ZAhT1Kdoz3JH7913sQoSOA3SZJQy9yPIb4q4W1SjhheLBHukWlxPfU0i5qMMfFYViARVJ4kH9h9DY+/tWP86xEh4MSQV/x6LTJFmov8hs5qWN6YGpIbGAiaunR71bC6gyagovtNxQ2yFMKRqc4mHxMHb7OmxBjv7KP22EI3ZmLqB7cdin5NjzgZQ37njPtSUDaIR2NBwoMnsBD51NyP6u9YgQqOO4K+Gsy9pVfOGKmdQcV17JcQaaUqE37g70+ctKIUgjvplHGwPUy0RdJlr+IpecUI1lPA1BrAHhTijjjJrZUOcV7jsj1mQTfjlPshWBju14MBav8SxmcFlTa3hIJq9XptUCVslKMgbb7/r0YjBVvFEVMPixYkdWmqj5RiiJ6UZ0UcPp+j/vCbbscM2tIUcZp8twQLgzyhelfJmh04eLuOYDgSCmXup2LEWrk3fityx9ExZa1A4LPWiG4Ct5G/E30DEFcEujeTIFvCj7kPMAtmqpl890jh8adHQnXAo6J1VhlISyimYnHnVFFFhUBK1xOlEp51BHk5Xs1eQppwJ8r6FPeSGC1H47eEByHhl8zLghGJ6XebGBAD+4wcjC4dOoZYimAJheZR2YpRABYl1eWjFqPYZyIt7MLr4rqaCuE/+7HBo4glQCOQFPZai7o50E+z7qKiu0SOkst9SBrxxrCa0BMKevFTxeQ3E98GKUjOpOypE+UYeakQWHz8ALOkpvxnaFkZCByjtc8+EeqlbLi5cJXTYgPQQLCyxxyhOlOKkqyZU1OgfjyGDIqJVTzvxCVHBqKgVGVPnVgaSiNK/nUtcWHWSKVkjTFpvg7S06kr40VkCCaSfohR7PGiSHU5HopBPLQ6DoP8VCtzIQZ63c31YAOU5QxPiMNoeFXZCVEIQoi5fb97NNAp6CuK5pT/Qz6Sikl0EJSdFiSdkyvizbVAvKhrr8BZPvmkrl+hPn4LRfoGlxWkCKoVEhLkvBNgbOOahbqqh1wNIrg4HSRlZdajIrvMB6KNCqNckJyQx8RgUFhSoGJbvCYOyKBMwAsLCFFDcshALsVmUNLUFykGkVHs8vhCPPGNYzDi+ynD75SLVZMtQSZXTYYhSJ9E/JDig4xBFuEgcLPpryBSgylv3xfGbB1Z1cgcsQY3L1wcP48/jE6HYk7CzApTRzZCSIATZwEbSCtn4/6GroZRlamXt+p9ELChCQL0fUaKHSl55FZZCHaw5sboifvE6hBDJLECZ1bBrsESiAFHyifApmH2yV+PwQnr+Fl32z9yigBhBT+VsgXI3rhk/cUhG2J6LWQ774Hlbpi7aC12Ceu5FQtO+/aTwPT39Fo96qdZzLClmEtOrhkFPah4ee5WKuT8kk/EJPnp60qCXIyZDXYic6mwInUTunn0m1WIxX2ATABwfzDu63n9FaaJC0rD3qBl3EgporJmOpdZEVTlPbIShKDsd/NRfKjdAVn4fBNEXAqqhIRCMnARUwA4RCA4zw2UL/Q3Os6YWNbqPr3eV0nJCkGqSUuniWwLH4UVR5+Gg6HkEhCyljwWD4OK2iUVfxLdet1naXQOBGNoLPPKin8T3wO0U+1tAuwShemDtlGV1kj7YyKkFdhgEt/HejHu63uIBh8FAx0XYgnBMJSUOxwApGMmH53ajBFCGZ9moToRu3wxSIiF6TpZJdtd5Son/l0dz99ZTPnFWlNViCR9yss6z7bwBaoGQ5MWL1ZCGV+rIqH7oHcfka3yRvieTJc/eFmBupB2GidU7zgYh//VikwZszBsoZd84ZqZ3eiOui6TkNb0DrLdAyZTcJR/0PVvTD5o+kUcOfTmlVhF387vEODWruQ973nPe97zqPPcWX4GmYdBUiLcxLLU7/OQXeI6TJEiufWZDlxrbrvvsO+7mEKMwSGNwd//+QkSvR87aXS/FFm3m9een65VLaTPbKA+/g6GBSDdvrxzltrKA02c9zNP9l5h1wJppPXF3sd878WF4dudTEY2Vo2rMNPFiDpYN2liSkrDgbLpLQZXN7DjBqSpABrkBiJP+edkRNULDM/wPbR7bAnq30XvZ6t8EXw/8jchpmXJ+MvDQdlL+aIIQn0xqWEXfHI8QD2sjmn5MBfJqkQMU+/SgBKGT/xZJ2hESf+2CZ+4ikjgm0mEDnJ/eY5mimyaSk/eJ81jW9o03qWmYhxFNP1M3CUIwyVPSUEuGmtjlDCkeSnD9hP435+BT8cw1fpuCorZ1aHJS22O5pKpVonc4iNv4IlirosPDfzSqjJjc8COllkvyDP0zBdMtdQ0kWFy2oGJLKsx/Hnkj2aarL2BO9p2ZMUEPR3UxHyihXrbDVA9CFktZn4DNXUc8oKcNnnHPdGCDYunDrVKzOIFX8dsCXWEdQNafqCL1HFYcpe2Zjv4J+IlnxhO20+cOhqLyr1f79tfFqYTDDZRnZj4K/4srt7zKt8k8pbP5Pp1/5NXXgFpj68o2z8zDResG3C0SGlBHm/YW5KxpwsjJanfuPXJi1adB2LThOV1ATN167djDAv7hYP02Pblgw1LowdRaDxNHPE9ERrOPWhwvvZ8QvS11CuYMdwKszDWHurh2VdH13VnICwVf0MgbjgAsEcuGBz9ZWSRaVxir5/mS8Kdo2hisHR3JC9VQQAA+cAg/qYRbHRCvxnxUSEYGWUz6GsWA5u/yJMgPDUc8FMgcjMC96uEm8eu4Gdvvp/Knn0P0WfCm8OX9z8LjlQ504H9fosxRTgYgFdxdJLD4RHLxgPN736InqHC43u+H7/9K1D64x+hw/cjGPjIyosBDB4vopHHt4kmY1pF83/XqH8EptFmNQAAAABJRU5ErkJggg==">
+          <div><h2>Santa María Discus</h2><p>Stock de peces en conjunto · separado de la operación Biotopium</p></div>
+        </div>
+        <div class="acciones">
+          <button class="btn btn-primario" onclick="abrirEspecieSMD()">+ Nueva especie</button>
+        </div>
+      </div>
+      <div class="filtros">
+        <div class="buscador">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="smd-busca" placeholder="Buscar especie…">
+        </div>
+        <select id="smd-filtro-ubic"><option value="">Todas las ubicaciones</option>
+          <option value="biotopium">En Biotopium</option>
+          <option value="santa_maria">En SM Discus</option></select>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <h3>Stock actual</h3>
+        <div class="tabla-wrap" id="smd-tabla" style="box-shadow:none;border-radius:0"></div>
+      </div>
+      <div class="card">
+        <h3>Últimas ventas</h3>
+        <div class="tabla-wrap" id="smd-ventas" style="box-shadow:none;border-radius:0"></div>
+      </div>
     </section>
 
     <!-- ===== LEADS ===== -->
@@ -628,7 +664,8 @@ const ICONOS = {
   productos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 8.2 12 13l8.7-4.8"/><path d="M12 13v9"/></svg>',
   reportes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>',
   config:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>',
-  presupuestos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>'
+  presupuestos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>',
+  smd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 11-5.5 1.5 1.6 2.3 3.4 2.5 5.5-.2 2.1-1 3.9-2.5 5.5-5 .5-9-1.5-11-5.5z"/><path d="M6.5 12 3 8.5c-.3 2.3-.3 4.7 0 7L6.5 12z"/><circle cx="15.5" cy="10.5" r="0.5" fill="currentColor"/></svg>'
 };
 const VISTAS = [
   { id:"dashboard", nombre:"Inicio" },
@@ -638,14 +675,16 @@ const VISTAS = [
   { id:"clientes",  nombre:"Clientes" },
   { id:"productos", nombre:"Productos" },
   { id:"reportes",  nombre:"Reportes" },
+  { id:"smd",       nombre:"SM Discus", aparte:true },
   { id:"config",    nombre:"Configuración", admin:true }
 ];
-const NAV_MOBILE = ["dashboard","ventas","leads","productos","reportes"];
+const NAV_MOBILE = ["dashboard","ventas","leads","productos","smd","reportes"];
 let vistaActual = "dashboard";
 
 function construirNav(){
   const admin = state.perfil?.rol === "admin";
   $("sb-nav").innerHTML = VISTAS.filter(v => !v.admin || admin).map(v =>
+    (v.aparte ? '<div style="height:1px;background:rgba(255,255,255,.12);margin:10px 8px"></div>' : "") +
     `<button class="sb-item" data-v="${v.id}" onclick="nav('${v.id}')">${ICONOS[v.id]}<span>${v.nombre}</span></button>`
   ).join("");
   $("bottom-nav").innerHTML = NAV_MOBILE.map(id => {
@@ -666,7 +705,7 @@ function nav(id){
   const cargas = {
     dashboard: renderDashboard, ventas: cargarVentas, leads: cargarLeads,
     clientes: cargarClientes, productos: cargarProductos, presupuestos: cargarPresupuestos,
-    reportes: cargarReporte, config: cargarConfigVista
+    smd: cargarSMD, reportes: cargarReporte, config: cargarConfigVista
   };
   cargas[id]?.();
 }
@@ -908,6 +947,211 @@ function renderDonaTipo(ventasMes){
 }
 
 
+
+/* ================= SANTA MARÍA DISCUS ================= */
+const SMD_VENDEDOR = { biotopium: "Biotopium", santa_maria: "Santa María Discus" };
+const SMD_ENVIO = { retiro: "Retiro por el local", envio_biotopium: "Envía Biotopium", envio_santa_maria: "Envía Santa María Discus" };
+const SMD_UBICACION = { biotopium: "Biotopium", santa_maria: "SM Discus" };
+
+async function cargarSMD(){
+  $("smd-tabla").innerHTML = '<div class="cargando">Cargando stock…</div>';
+  $("smd-ventas").innerHTML = "";
+  const [{ data: stock, error: e1 }, { data: ventas }] = await Promise.all([
+    sb.from("smd_stock").select("*").order("especie"),
+    sb.from("smd_ventas").select("*, perfiles(nombre)").order("created_at", { ascending: false }).limit(60)
+  ]);
+  if (e1 && /smd_stock/.test(e1.message)){
+    $("smd-tabla").innerHTML = '<div class="vacio"><b>Falta la migración</b>Corré migracion-smd.sql en Supabase → SQL Editor y recargá.</div>';
+    return;
+  }
+  state.smdStock = stock || [];
+  state.smdVentas = ventas || [];
+  renderSMD();
+}
+function renderSMD(){
+  const q = ($("smd-busca").value || "").toLowerCase();
+  const fu = $("smd-filtro-ubic").value;
+  const lista = state.smdStock.filter(s =>
+    (!q || s.especie.toLowerCase().includes(q)) &&
+    (!fu || (s.ubicacion || "biotopium") === fu));
+  const esAdmin = state.perfil.rol === "admin";
+  $("smd-tabla").innerHTML = !lista.length
+    ? '<div class="vacio"><b>Sin especies</b>Cargá la primera con “+ Nueva especie”.</div>'
+    : `<table><thead><tr><th>Especie</th><th>Tamaño</th><th>Ubicación</th><th class="der">Cantidad</th><th class="der">Acciones</th></tr></thead><tbody>` +
+      lista.map(s => `<tr>
+        <td><b>${esc(s.especie)}</b>${s.notas ? `<br><small style="color:var(--gris)">${esc(s.notas)}</small>` : ""}</td>
+        <td>${esc(s.tamano || "—")}</td>
+        <td><span class="chip ${(s.ubicacion || "biotopium") === "biotopium" ? "agua" : "gris"}">${SMD_UBICACION[s.ubicacion || "biotopium"]}</span></td>
+        <td class="der num"><b style="color:${Number(s.cantidad) <= 0 ? "var(--rojo)" : "var(--tinta)"}">${s.cantidad}</b></td>
+        <td class="der" style="white-space:nowrap">
+          <button class="btn btn-chico btn-primario" onclick="venderSMD(${s.id})" ${Number(s.cantidad) <= 0 ? "disabled" : ""}>Vender</button>
+          <button class="btn btn-chico btn-suave" onclick="ingresoSMD(${s.id})">+ Ingreso</button>
+          <button class="btn btn-chico btn-borde" onclick="abrirEspecieSMD(${s.id})">Editar</button>
+        </td>
+      </tr>`).join("") + "</tbody></table>";
+
+  $("smd-ventas").innerHTML = !state.smdVentas.length
+    ? '<div class="vacio" style="padding:18px"><b>Sin ventas registradas</b></div>'
+    : `<table><thead><tr><th>Fecha</th><th>Especie</th><th class="der">Cant.</th><th>Vendido por</th><th>Envío</th>${esAdmin ? "<th></th>" : ""}</tr></thead><tbody>` +
+      state.smdVentas.map(v => `<tr>
+        <td class="num">${fFecha(v.created_at)}</td>
+        <td>${esc(v.especie)}${v.tamano ? ` <small style="color:var(--gris)">${esc(v.tamano)}</small>` : ""}${v.nota ? `<br><small style="color:var(--gris)">${esc(v.nota)}</small>` : ""}</td>
+        <td class="der num"><b>${v.cantidad}</b></td>
+        <td><span class="chip ${v.vendido_por === "biotopium" ? "agua" : "gris"}">${SMD_VENDEDOR[v.vendido_por] || v.vendido_por}</span></td>
+        <td><span class="chip ${v.envio === "retiro" ? "gris" : "ok"}">${SMD_ENVIO[v.envio] || v.envio}</span></td>
+        ${esAdmin ? `<td class="der"><button class="btn btn-chico btn-peligro" onclick="anularVentaSMD(${v.id})">Deshacer</button></td>` : ""}
+      </tr>`).join("") + "</tbody></table>";
+}
+function abrirEspecieSMD(id){
+  const s = id ? state.smdStock.find(x => x.id === id) : null;
+  abrirModal(s ? "Editar especie" : "Nueva especie · SM Discus", `
+    <form onsubmit="guardarEspecieSMD(event, ${id || "null"})">
+      <div class="field"><label>Especie *</label><input id="smd-especie" required value="${esc(s?.especie || "")}" placeholder="Ej: Blue Diamond"></div>
+      <div class="fila-2">
+        <div class="field"><label>Tamaño</label><input id="smd-tamano" value="${esc(s?.tamano || "")}" placeholder="Ej: 8-10 cm"></div>
+        <div class="field"><label>Cantidad ${s ? "actual" : "inicial"}</label>
+          <input type="text" inputmode="numeric" id="smd-cant" value="${s?.cantidad ?? 0}"></div>
+      </div>
+      <div class="field"><label>Ubicación</label>
+        <select id="smd-ubic">
+          <option value="biotopium" ${(s?.ubicacion || "biotopium") === "biotopium" ? "selected" : ""}>Biotopium</option>
+          <option value="santa_maria" ${s?.ubicacion === "santa_maria" ? "selected" : ""}>SM Discus</option>
+        </select></div>
+      <div class="field"><label>Notas</label><input id="smd-notas" value="${esc(s?.notas || "")}" placeholder="Opcional"></div>
+      <div class="modal-pie">
+        ${s && state.perfil.rol === "admin" ? `<button type="button" class="btn btn-peligro" style="margin-right:auto" onclick="borrarEspecieSMD(${s.id})">Eliminar</button>` : ""}
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">${s ? "Guardar" : "Crear"}</button>
+      </div>
+    </form>`);
+}
+async function guardarEspecieSMD(e, id){
+  e.preventDefault();
+  const datos = {
+    especie: $("smd-especie").value.trim(),
+    tamano: $("smd-tamano").value.trim(),
+    ubicacion: $("smd-ubic").value,
+    cantidad: Math.max(0, numDec($("smd-cant").value)),
+    notas: $("smd-notas").value.trim(),
+    updated_at: new Date().toISOString()
+  };
+  const { error } = id
+    ? await sb.from("smd_stock").update(datos).eq("id", id)
+    : await sb.from("smd_stock").insert(datos);
+  if (error) return toast("No se pudo guardar: " + error.message, "error");
+  toast(id ? "Especie actualizada" : "Especie creada", "ok");
+  cerrarModal(); cargarSMD();
+}
+async function borrarEspecieSMD(id){
+  if (!confirm("¿Eliminar esta especie del stock? El historial de ventas se conserva.")) return;
+  const { error } = await sb.from("smd_stock").delete().eq("id", id);
+  if (error) return toast("No se pudo eliminar: " + error.message, "error");
+  toast("Especie eliminada", "ok"); cerrarModal(); cargarSMD();
+}
+function venderSMD(id){
+  const s = state.smdStock.find(x => x.id === id);
+  if (!s) return;
+  abrirModal("Vender · " + s.especie, `
+    <form onsubmit="guardarVentaSMD(event, ${id})">
+      <div style="background:var(--agua-claro);border-radius:11px;padding:11px 13px;font-size:13.5px;color:var(--marino);margin-bottom:4px">
+        Stock disponible: <b class="num">${s.cantidad}</b>${s.tamano ? " · " + esc(s.tamano) : ""}</div>
+      <div class="field"><label>Cantidad *</label>
+        <input type="text" inputmode="numeric" id="sv-cant" value="1" required></div>
+      <div class="fila-2">
+        <div class="field"><label>Vendido por</label>
+          <select id="sv-vendedor">
+            <option value="biotopium">Biotopium</option>
+            <option value="santa_maria">Santa María Discus</option></select></div>
+        <div class="field"><label>Envío</label>
+          <select id="sv-envio">
+            <option value="retiro">Retiro por el local</option>
+            <option value="envio_biotopium">Envía Biotopium</option>
+            <option value="envio_santa_maria">Envía Santa María Discus</option></select></div>
+      </div>
+      <div class="field"><label>Nota</label><input id="sv-nota" placeholder="Opcional"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar venta</button>
+      </div>
+    </form>`);
+}
+async function guardarVentaSMD(e, id){
+  e.preventDefault();
+  const cant = numDec($("sv-cant").value);
+  if (!cant || cant <= 0) return toast("Ingresá una cantidad válida", "error");
+  const { error } = await sb.rpc("smd_vender", {
+    p_stock_id: id, p_cantidad: cant,
+    p_vendido_por: $("sv-vendedor").value, p_envio: $("sv-envio").value,
+    p_nota: $("sv-nota").value.trim()
+  });
+  if (error) return toast("No se pudo registrar: " + error.message, "error");
+  toast("Venta registrada. Stock descontado.", "ok");
+  cerrarModal(); cargarSMD();
+}
+function ingresoSMD(id){
+  const s = state.smdStock.find(x => x.id === id);
+  const cant = prompt(`Ingreso de "${s.especie}" — ¿cuántos entran?`, "1");
+  if (cant === null) return;
+  const n = numDec(cant);
+  if (!n || n <= 0) return toast("Cantidad inválida", "error");
+  sb.rpc("smd_ingreso", { p_stock_id: id, p_cantidad: n }).then(({ error }) => {
+    if (error) return toast("No se pudo registrar: " + error.message, "error");
+    toast("Ingreso registrado", "ok"); cargarSMD();
+  });
+}
+async function anularVentaSMD(id){
+  if (!confirm("¿Deshacer esta venta? El stock se devuelve.")) return;
+  const { error } = await sb.rpc("smd_anular_venta", { p_id: id });
+  if (error) return toast("No se pudo deshacer: " + error.message, "error");
+  toast("Venta deshecha. Stock devuelto.", "ok"); cargarSMD();
+}
+$("smd-busca").addEventListener("input", renderSMD);
+$("smd-filtro-ubic").addEventListener("input", renderSMD);
+
+/* ----- Gráfico SMD en el dashboard ----- */
+async function renderDashSMD(){
+  const cont = $("dash-smd");
+  if (!cont) return;
+  try {
+    const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
+    const [{ data: stock, error: e1 }, { data: ventasMes }] = await Promise.all([
+      sb.from("smd_stock").select("especie,cantidad,ubicacion").order("cantidad", { ascending: false }),
+      sb.from("smd_ventas").select("cantidad,vendido_por").gte("created_at", inicioMes.toISOString())
+    ]);
+    if (e1) throw e1;
+    if (!stock || !stock.length){
+      cont.innerHTML = '<div class="vacio" style="padding:20px"><b>Sin peces cargados</b>Cargá especies desde la sección SM Discus.</div>';
+      return;
+    }
+    const total = stock.reduce((s,x) => s + Number(x.cantidad), 0);
+    const enBio = stock.filter(x => (x.ubicacion || "biotopium") === "biotopium").reduce((s,x) => s + Number(x.cantidad), 0);
+    const enSMD = total - enBio;
+    const top = stock.slice(0, 6);
+    const max = Math.max(...top.map(x => Number(x.cantidad)), 1);
+    const vBio = (ventasMes || []).filter(v => v.vendido_por === "biotopium").reduce((s,v) => s + Number(v.cantidad), 0);
+    const vSMD = (ventasMes || []).filter(v => v.vendido_por === "santa_maria").reduce((s,v) => s + Number(v.cantidad), 0);
+    cont.innerHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="chip agua">Total: <b class="num" style="margin-left:4px">${total}</b></span>
+        <span class="chip agua">En Biotopium: <b class="num" style="margin-left:4px">${enBio}</b></span>
+        <span class="chip gris">En SM Discus: <b class="num" style="margin-left:4px">${enSMD}</b></span>
+        <span class="chip gris">Vendidos este mes · Biotopium: <b class="num" style="margin-left:4px">${vBio}</b></span>
+        <span class="chip gris">Santa María: <b class="num" style="margin-left:4px">${vSMD}</b></span>
+      </div>` +
+      top.map(x => `
+        <div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:3px">
+            <span>${esc(x.especie)}</span><b class="num">${x.cantidad}</b></div>
+          <div style="height:8px;background:var(--linea);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${Math.max(3, Number(x.cantidad) / max * 100)}%;border-radius:99px;background:linear-gradient(90deg,#22C1A9,#3FC0E4)"></div>
+          </div>
+        </div>`).join("") +
+      (stock.length > 6 ? `<small style="color:var(--gris)">+ ${stock.length - 6} especies más en la sección SM Discus</small>` : "");
+  } catch (e){
+    cont.innerHTML = '<div class="vacio" style="padding:20px"><b>Módulo sin instalar</b><span style="font-size:13px">Corré migracion-smd.sql en Supabase.</span></div>';
+  }
+}
+
 /* ----- Torta de ventas por categoría (mes actual) ----- */
 const COLORES_TORTA = ["#3FC0E4","#8B5CF6","#22C1A9","#F59E0B","#EC4899","#8B9BB4"];
 async function renderTortaCategorias(idsVentas){
@@ -1078,6 +1322,7 @@ async function renderDashboard(){
 
   renderDonaTipo(mesActual);
   renderTortaCategorias(mesActual.map(v => v.id));
+  renderDashSMD();
 
   // Barras últimos 30 días
   const dias = {};
