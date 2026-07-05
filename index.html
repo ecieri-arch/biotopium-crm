@@ -577,6 +577,8 @@ const state = {
 };
 
 const $ = id => document.getElementById(id);
+// Número decimal tolerante: acepta "2,5" (teclado argentino) y "2.5"
+const numDec = v => { const n = parseFloat(String(v ?? "").trim().replace(",", ".")); return isFinite(n) ? n : 0; };
 
 /* ----- Tema claro / oscuro (oscuro por defecto) ----- */
 function aplicarTema(t){
@@ -1226,8 +1228,8 @@ async function guardarProducto(e, id){
     precio_ars: +$("p-pars").value || 0,
     precio_mayorista_ars: +$("p-pmay").value || 0,
     precio_usd: +$("p-pusd").value || 0,
-    stock: +$("p-stock").value || 0,
-    stock_minimo: +$("p-min").value || 0,
+    stock: numDec($("p-stock").value),
+    stock_minimo: numDec($("p-min").value),
     margen_pct: $("p-margen").value === "" ? null : Math.max(0, Math.min(100, +$("p-margen").value)),
     activo: $("p-activo").value === "true",
     notas: $("p-notas").value.trim(),
@@ -1270,18 +1272,20 @@ const MOTIVOS_MOV = [
 function abrirAjusteStock(id){
   const p = state.productos.find(x => x.id === id);
   if (!p) return;
+  const kg = p.unidad === "kg";
   abrirModal("Ajustar stock · " + p.nombre, `
     <form onsubmit="guardarAjuste(event, ${p.id})">
       <div style="background:var(--agua-claro);border-radius:11px;padding:11px 13px;font-size:13.5px;color:var(--marino);margin-bottom:4px">
-        Stock actual: <b class="num">${p.stock}</b> unidades</div>
+        Stock actual: <b class="num">${p.stock}</b> ${kg ? "kg" : "unidades"}</div>
       <div class="field"><label>Motivo</label>
         <select id="a-tipo" onchange="ajusteAyuda()">
           ${MOTIVOS_MOV.map(m => `<option value="${m.id}">${m.nombre}</option>`).join("")}
         </select>
         <small id="a-ayuda" style="color:var(--gris);font-size:12.5px;display:block;margin-top:5px">${MOTIVOS_MOV[0].ayuda}</small></div>
       <div class="fila-2">
-        <div class="field"><label>Cantidad</label>
-          <input type="number" id="a-cant" min="1" step="1" value="1" required></div>
+        <div class="field"><label>Cantidad ${kg ? "(kg, acepta decimales: 2,5)" : ""}</label>
+          <input type="text" inputmode="decimal" id="a-cant" value="1" required
+            pattern="[0-9]+([.,][0-9]+)?" title="${kg ? "Ej: 2,5 o 2.5" : "Cantidad"}"></div>
         <div class="field"><label>Fecha</label>
           <input type="date" id="a-fecha" value="${hoyISO()}"></div>
       </div>
@@ -1313,14 +1317,18 @@ async function guardarAjuste(e, prodId){
   e.preventDefault();
   const p = state.productos.find(x => x.id === prodId);
   const tipo = $("a-tipo").value;
-  const cant = Math.max(1, Math.floor(+$("a-cant").value || 0));
+  const esKg = p.unidad === "kg";
+  const bruto = numDec($("a-cant").value);
+  const cant = esKg ? Math.round(bruto * 100) / 100 : Math.floor(bruto);
+  if (!cant || cant <= 0)
+    return toast(esKg ? "Ingresá una cantidad válida (ej: 2,5)." : "Ingresá una cantidad válida.", "error");
   const mov = MOTIVOS_MOV.find(m => m.id === tipo);
   if (mov.signo < 0 && cant > p.stock)
-    return toast(`No podés dar de baja ${cant}: hay ${p.stock} en stock.`, "error");
+    return toast(`No podés dar de baja ${cant}${esKg ? " kg" : ""}: hay ${p.stock} en stock.`, "error");
   const { error } = await sb.rpc("registrar_movimiento", {
     p_producto_id: prodId, p_tipo: tipo, p_cantidad: cant,
     p_nota: $("a-nota").value.trim(), p_fecha: $("a-fecha").value || null,
-    p_costo_compra: tipo === "ingreso" ? (+$("a-costo").value || 0) : 0,
+    p_costo_compra: tipo === "ingreso" ? numDec($("a-costo").value) : 0,
     p_proveedor: tipo === "ingreso" ? $("a-prov").value.trim() : ""
   });
   if (error) return toast("No se pudo registrar: " + error.message, "error");
@@ -1908,9 +1916,12 @@ function renderCarrito(){
     ? state.carrito.map((i, ix) => { const kg = i.unidad === "kg"; return `
       <div class="item-linea">
         <div><b>${esc(i.producto_nombre)}</b><small>Stock disponible: ${i.stock}${kg ? " kg" : ""}${kg ? " · precio por kg" : ""}</small></div>
-        <input type="number" min="${kg ? "0.01" : "1"}" max="${i.stock}" step="${kg ? "0.01" : "1"}" value="${i.cantidad}"
-          aria-label="${kg ? "Kilos" : "Cantidad"}" onchange="editarItem(${ix}, 'cantidad', this.value)"
-          title="${kg ? "Kilos (acepta decimales, ej: 2,5)" : "Cantidad"}">
+        ${kg
+          ? `<input type="text" inputmode="decimal" value="${i.cantidad}" pattern="[0-9]+([.,][0-9]+)?"
+              aria-label="Kilos" title="Kilos (acepta decimales: 2,5 o 2.5)"
+              onchange="editarItem(${ix}, 'cantidad', this.value)">`
+          : `<input type="number" min="1" max="${i.stock}" step="1" value="${i.cantidad}"
+              aria-label="Cantidad" title="Cantidad" onchange="editarItem(${ix}, 'cantidad', this.value)">`}
         <input type="number" min="0" step="0.01" value="${i.precio_unit}"
           aria-label="Precio unitario" onchange="editarItem(${ix}, 'precio_unit', this.value)">
         <button class="item-quitar" onclick="quitarItem(${ix})" aria-label="Quitar">✕</button>
@@ -1942,11 +1953,12 @@ function editarItem(ix, campo, valor){
   const i = state.carrito[ix];
   if (campo === "cantidad"){
     const esKg = i.unidad === "kg";
-    let c = esKg ? Math.max(0.01, Math.round((+valor || 0) * 100) / 100)
-                 : Math.max(1, Math.floor(+valor || 1));
+    const bruto = numDec(valor);
+    let c = esKg ? Math.max(0.01, Math.round(bruto * 100) / 100)
+                 : Math.max(1, Math.floor(bruto || 1));
     if (c > i.stock){ c = i.stock; toast("Máximo disponible: " + i.stock + (esKg ? " kg" : ""), "error"); }
     i.cantidad = c;
-  } else i.precio_unit = Math.max(0, +valor || 0);
+  } else i.precio_unit = Math.max(0, numDec(valor));
   renderCarrito();
 }
 function quitarItem(ix){ state.carrito.splice(ix, 1); renderCarrito(); }
