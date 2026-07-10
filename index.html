@@ -484,6 +484,7 @@ td.der,th.der{text-align:right}
         <div><h2>Productos</h2><p>Catálogo y control de stock</p></div>
         <div class="acciones">
           <button class="btn btn-borde" onclick="abrirMovimientos()">Movimientos</button>
+          <button class="btn btn-borde" id="btn-importar" onclick="abrirImportador()" style="display:none">Importar</button>
           <button class="btn btn-borde" onclick="exportarProductos()">Exportar</button>
           <button class="btn btn-primario" onclick="abrirProducto()">+ Nuevo producto</button>
         </div>
@@ -493,6 +494,7 @@ td.der,th.der{text-align:right}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           <input id="prod-busca" placeholder="Buscar por nombre, SKU o escaneá el código…" onkeydown="prodBuscaEnter(event)">
         </div>
+        <select id="prod-filtro-marca"><option value="">Todas las marcas</option></select>
         <select id="prod-filtro-cat"><option value="">Todas las categorías</option></select>
         <select id="prod-filtro-stock"><option value="">Todo el stock</option>
           <option value="bajo">Stock bajo</option><option value="sin">Sin stock</option></select>
@@ -600,6 +602,7 @@ td.der,th.der{text-align:right}
    ============================================================ */
 const SUPABASE_URL = "https://dfdpfzwzqgricvbickxl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZHBmend6cWdyaWN2Ymlja3hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNjI2MzQsImV4cCI6MjA5ODczODYzNH0.G6WbtO4c3cLv_81jueUvbTfX40Wn2wD2Sk9rR7MYcsQ";
+
 
 /* ============================================================ */
 let sb = null;
@@ -947,6 +950,201 @@ function renderDonaTipo(ventasMes){
 }
 
 
+
+
+/* ================= IMPORTADOR CSV / XLSX ================= */
+const CAMPOS_IMP = [
+  { id: "nombre", nombre: "Producto (nombre) *", req: true },
+  { id: "marca", nombre: "Marca" },
+  { id: "sku", nombre: "SKU" },
+  { id: "codigo_barras", nombre: "Código de barras / QR" },
+  { id: "categoria", nombre: "Categoría" },
+  { id: "costo_usd", nombre: "Costo USD", num: true },
+  { id: "precio_ars", nombre: "Precio minorista ARS", num: true },
+  { id: "precio_mayorista_ars", nombre: "Precio mayorista ARS", num: true },
+  { id: "precio_usd", nombre: "Precio USD", num: true },
+  { id: "stock", nombre: "Stock", num: true },
+  { id: "stock_minimo", nombre: "Stock mínimo", num: true },
+  { id: "unidad", nombre: "Unidad (unidad/kg)" }
+];
+// Número tolerante a formatos argentinos: "$ 11.000,50" → 11000.5
+function numImport(v){
+  if (v == null || v === "") return null;
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  let s = String(v).replace(/[^0-9.,\-]/g, "");
+  if (!s) return null;
+  const tienePunto = s.includes("."), tieneComa = s.includes(",");
+  if (tienePunto && tieneComa){
+    if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
+    else s = s.replace(/,/g, "");
+  } else if (tieneComa){
+    s = s.replace(",", ".");
+  } else if (tienePunto){
+    // "11.000" (miles AR) vs "11.5" (decimal): 3 dígitos exactos tras el último punto = miles
+    const dec = s.split(".").pop();
+    if (dec.length === 3 && s.split(".").length >= 2) s = s.replace(/\./g, "");
+  }
+  const n = parseFloat(s);
+  return isFinite(n) ? n : null;
+}
+const normHeader = h => String(h || "").toLowerCase()
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+function autoMapear(headers){
+  const alias = {
+    codigo_barras: ["codigobarras","codigodebarras","barras","ean","barcode","upc","qr","codigo","cod"],
+    nombre: ["nombre","producto","articulo","descripcion","item"],
+    marca: ["marca","brand","fabricante"],
+    sku: ["sku","codigointerno"],
+    categoria: ["categoria","rubro","familia"],
+    costo_usd: ["costousd","costodolar","costo"],
+    precio_ars: ["precioars","preciominorista","precioventa","minorista","precio"],
+    precio_mayorista_ars: ["preciomayorista","preciomayoristaars","mayorista"],
+    precio_usd: ["preciousd","preciodolar"],
+    stock: ["stock","cantidad","existencia"],
+    stock_minimo: ["stockminimo","stockmin","minimo","alerta"],
+    unidad: ["unidad","sevende","tipoventa"]
+  };
+  const mapa = {};
+  const hn = headers.map(normHeader);
+  const usados = new Set();
+  // Dos pasadas: primero coincidencia exacta (en orden de especificidad), después "contiene"
+  for (const pasada of ["exacta", "contiene"]){
+    for (const campo of Object.keys(alias)){
+      if (mapa[campo] >= 0) continue;
+      let ix = -1;
+      for (const a of alias[campo]){
+        if (pasada === "contiene" && a.length < 5) continue; // evita falsos positivos tipo "usd"
+        ix = hn.findIndex((h, i) => !usados.has(i) && (pasada === "exacta" ? h === a : h.includes(a)));
+        if (ix >= 0) break;
+      }
+      if (ix >= 0){ mapa[campo] = ix; usados.add(ix); }
+    }
+  }
+  for (const c of CAMPOS_IMP) if (mapa[c.id] == null) mapa[c.id] = -1;
+  return mapa;
+}
+function abrirImportador(){
+  abrirModal("Importar productos (CSV / Excel)", `
+    <div class="modal-cuerpo">
+      <p style="font-size:13.5px;color:var(--gris)">
+        Subí un <b>.xlsx</b> o <b>.csv</b> con una fila de encabezados. Los productos se
+        <b>crean</b> si son nuevos o se <b>actualizan</b> si ya existen (se matchean por
+        código de barras, después SKU, después nombre). Solo se pisan las columnas que traiga el archivo.</p>
+      <input type="file" id="imp-file" accept=".csv,.xlsx,.xls"
+        style="border:1.5px dashed var(--linea);border-radius:11px;padding:18px;width:100%"
+        onchange="leerArchivoImport(this)">
+      <div id="imp-zona"></div>
+      <div class="modal-pie"><button class="btn btn-borde" onclick="cerrarModal()">Cancelar</button></div>
+    </div>`);
+}
+function leerArchivoImport(input){
+  const f = input.files[0];
+  if (!f) return;
+  if (typeof XLSX === "undefined") return toast("La librería de Excel todavía está cargando. Probá en unos segundos.", "error");
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const wb = XLSX.read(r.result, { type: "array" });
+      const hoja = wb.Sheets[wb.SheetNames[0]];
+      const filas = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: "" });
+      if (!filas.length || filas.length < 2) return toast("El archivo no tiene datos (encabezado + filas).", "error");
+      state.impHeaders = filas[0].map(h => String(h));
+      state.impFilas = filas.slice(1).filter(fl => fl.some(c => String(c).trim() !== ""));
+      state.impMapa = autoMapear(state.impHeaders);
+      renderMapeoImport();
+    } catch (e){ toast("No se pudo leer el archivo: " + e.message, "error"); }
+  };
+  r.readAsArrayBuffer(f);
+}
+function renderMapeoImport(){
+  const ops = ix => '<option value="-1">— No importar —</option>' +
+    state.impHeaders.map((h, i) => `<option value="${i}" ${ix === i ? "selected" : ""}>${esc(h)}</option>`).join("");
+  $("imp-zona").innerHTML = `
+    <p style="font-size:13px;color:var(--gris);margin:12px 0 8px"><b>${state.impFilas.length} filas</b> detectadas.
+      Revisá qué columna del archivo va a cada campo:</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;max-height:34vh;overflow:auto;padding:2px">
+      ${CAMPOS_IMP.map(c => `
+        <label style="font-size:12px;color:var(--gris);display:block">${c.nombre}
+          <select data-imp="${c.id}" style="width:100%;margin-top:3px;border:1.5px solid var(--linea);border-radius:8px;padding:7px 8px">${ops(state.impMapa[c.id])}</select>
+        </label>`).join("")}
+    </div>
+    <div id="imp-progreso" style="font-size:13px;margin-top:10px"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button class="btn btn-primario" id="imp-go" onclick="ejecutarImportacion()">Importar ${state.impFilas.length} filas</button>
+    </div>`;
+}
+async function ejecutarImportacion(){
+  const mapa = {};
+  document.querySelectorAll("[data-imp]").forEach(s => mapa[s.dataset.imp] = +s.value);
+  if (mapa.nombre < 0) return toast("Tenés que mapear al menos la columna del nombre del producto.", "error");
+  const btn = $("imp-go"); btn.disabled = true; btn.textContent = "Importando…";
+  const prog = $("imp-progreso");
+  const val = (fila, campo) => mapa[campo] >= 0 ? fila[mapa[campo]] : undefined;
+  // 1) Categorías nuevas
+  const catsArchivo = [...new Set(state.impFilas
+    .map(f => String(val(f, "categoria") ?? "").trim()).filter(Boolean))];
+  const catsNuevas = catsArchivo.filter(n =>
+    !state.categorias.some(c => c.nombre.toLowerCase() === n.toLowerCase()));
+  if (catsNuevas.length){
+    prog.textContent = `Creando ${catsNuevas.length} categorías nuevas…`;
+    const { error } = await sb.from("categorias").insert(catsNuevas.map(nombre => ({ nombre })));
+    if (error && !/unique|duplicate/i.test(error.message)){
+      btn.disabled = false; btn.textContent = "Importar";
+      return toast("Error creando categorías: " + error.message, "error");
+    }
+    const { data } = await sb.from("categorias").select("*").order("nombre");
+    state.categorias = data || state.categorias;
+  }
+  const catId = n => { if (!n) return null;
+    return state.categorias.find(c => c.nombre.toLowerCase() === String(n).trim().toLowerCase())?.id || null; };
+  // 2) Armar filas y separar crear vs actualizar
+  const porCodigo = {}, porSku = {}, porNombre = {};
+  state.productos.forEach(p => {
+    if (p.codigo_barras) porCodigo[p.codigo_barras] = p;
+    if (p.sku) porSku[p.sku.toLowerCase()] = p;
+    porNombre[p.nombre.toLowerCase()] = p;
+  });
+  const crear = [], actualizar = [];
+  let saltadas = 0;
+  for (const fila of state.impFilas){
+    const nombre = String(val(fila, "nombre") ?? "").trim();
+    if (!nombre){ saltadas++; continue; }
+    const d = { nombre };
+    const txt = (c, k) => { const v = val(fila, c); if (v !== undefined && String(v).trim() !== "") d[k || c] = String(v).trim(); };
+    const num = (c) => { const v = numImport(val(fila, c)); if (v !== null) d[c] = v; };
+    txt("marca"); txt("sku"); txt("codigo_barras");
+    num("costo_usd"); num("precio_ars"); num("precio_mayorista_ars"); num("precio_usd"); num("stock"); num("stock_minimo");
+    const u = String(val(fila, "unidad") ?? "").trim().toLowerCase();
+    if (u) d.unidad = /^k/.test(u) ? "kg" : "unidad";
+    const catV = val(fila, "categoria");
+    if (catV !== undefined && String(catV).trim() !== "") d.categoria_id = catId(catV);
+    const existente = (d.codigo_barras && porCodigo[d.codigo_barras]) ||
+      (d.sku && porSku[d.sku.toLowerCase()]) || porNombre[nombre.toLowerCase()];
+    if (existente) actualizar.push({ id: existente.id, datos: d });
+    else crear.push({ ...d, precio_ars: d.precio_ars ?? 0 });
+  }
+  // 3) Ejecutar
+  let creados = 0, actualizados = 0, errores = 0;
+  for (let i = 0; i < crear.length; i += 100){
+    prog.textContent = `Creando productos… ${Math.min(i + 100, crear.length)} / ${crear.length}`;
+    const { error } = await sb.from("productos").insert(crear.slice(i, i + 100));
+    if (error) errores += crear.slice(i, i + 100).length; else creados += crear.slice(i, i + 100).length;
+  }
+  for (let i = 0; i < actualizar.length; i++){
+    if (i % 10 === 0) prog.textContent = `Actualizando existentes… ${i} / ${actualizar.length}`;
+    const { id, datos } = actualizar[i];
+    const { error } = await sb.from("productos").update({ ...datos, updated_at: new Date().toISOString() }).eq("id", id);
+    if (error) errores++; else actualizados++;
+  }
+  prog.innerHTML = `<b style="color:var(--ok)">Listo:</b> ${creados} creados · ${actualizados} actualizados` +
+    (saltadas ? ` · ${saltadas} filas sin nombre (salteadas)` : "") +
+    (errores ? ` · <b style="color:var(--rojo)">${errores} con error</b>` : "");
+  btn.textContent = "Importación terminada";
+  toast(`Importación: ${creados} creados, ${actualizados} actualizados.`, errores ? "error" : "ok");
+  await cargarProductosData();
+  poblarMarcas();
+  renderProductos();
+}
 
 /* ================= SANTA MARÍA DISCUS ================= */
 const SMD_VENDEDOR = { biotopium: "Biotopium", santa_maria: "Santa María Discus" };
@@ -1373,15 +1571,19 @@ async function renderDashboard(){
 async function cargarProductos(){
   $("prod-tabla").innerHTML = '<div class="cargando">Cargando productos…</div>';
   await cargarProductosData();
+  poblarMarcas();
+  $("btn-importar").style.display = state.perfil.rol === "admin" ? "" : "none";
   renderProductos();
 }
 function renderProductos(){
   const q = ($("prod-busca").value || "").toLowerCase();
   const cat = $("prod-filtro-cat").value;
   const fs = $("prod-filtro-stock").value;
+  const fm = $("prod-filtro-marca").value;
   let lista = state.productos.filter(p =>
-    (!q || p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) || (p.codigo_barras || "").toLowerCase().includes(q)) &&
+    (!q || p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) || (p.codigo_barras || "").toLowerCase().includes(q) || (p.marca || "").toLowerCase().includes(q)) &&
     (!cat || String(p.categoria_id) === cat) &&
+    (!fm || (p.marca || "") === fm) &&
     (fs !== "bajo" || (p.stock <= p.stock_minimo && p.stock > 0)) &&
     (fs !== "sin" || p.stock <= 0));
   if (!lista.length){
@@ -1390,11 +1592,12 @@ function renderProductos(){
   }
   const catNombre = id => state.categorias.find(c => c.id === id)?.nombre || "—";
   $("prod-tabla").innerHTML = `<table><thead><tr>
-      <th>Producto</th><th>Categoría</th><th class="der">Precio ARS</th>
+      <th>Producto</th><th>Marca</th><th>Categoría</th><th class="der">Precio ARS</th>
       <th class="der">Mayorista</th><th class="der">USD</th><th class="der">Stock</th><th></th>
     </tr></thead><tbody>` +
     lista.map(p => `<tr class="fila-click" onclick="abrirProducto(${p.id})">
       <td><b>${esc(p.nombre)}</b>${p.sku ? `<br><small style="color:var(--gris)">SKU ${esc(p.sku)}</small>` : ""}${p.activo ? "" : ' <span class="chip gris">Inactivo</span>'}</td>
+      <td style="color:var(--gris);font-size:13.5px">${esc(p.marca || "—")}</td>
       <td>${esc(catNombre(p.categoria_id))}</td>
       <td class="der num">${fmtARS.format(p.precio_ars)}</td>
       <td class="der num">${p.precio_mayorista_ars ? fmtARS.format(p.precio_mayorista_ars) : "—"}</td>
@@ -1403,8 +1606,14 @@ function renderProductos(){
       <td class="der"><button class="btn btn-chico btn-suave" onclick="event.stopPropagation();abrirAjusteStock(${p.id})">Ajustar</button></td>
     </tr>`).join("") + "</tbody></table>";
 }
-["prod-busca","prod-filtro-cat","prod-filtro-stock"].forEach(id =>
+["prod-busca","prod-filtro-cat","prod-filtro-stock","prod-filtro-marca"].forEach(id =>
   $(id).addEventListener("input", renderProductos));
+function poblarMarcas(){
+  const marcas = [...new Set(state.productos.map(p => (p.marca || "").trim()).filter(Boolean))].sort();
+  const sel = $("prod-filtro-marca"), actual = sel.value;
+  sel.innerHTML = '<option value="">Todas las marcas</option>' + marcas.map(m => `<option>${esc(m)}</option>`).join("");
+  sel.value = actual;
+}
 
 function abrirProducto(id){
   const p = id ? state.productos.find(x => x.id === id) : null;
@@ -1415,8 +1624,9 @@ function abrirProducto(id){
     <form id="form-prod" onsubmit="guardarProducto(event, ${p?.id || "null"})">
       <div class="fila-2">
         <div class="field"><label>Nombre *</label><input id="p-nombre" required value="${esc(p?.nombre || "")}"></div>
-        <div class="field"><label>SKU</label><input id="p-sku" value="${esc(p?.sku || "")}"></div>
+        <div class="field"><label>Marca</label><input id="p-marca" value="${esc(p?.marca || "")}" placeholder="Ej: Tetra, Tropical, SOBO…"></div>
       </div>
+      <div class="field"><label>SKU</label><input id="p-sku" value="${esc(p?.sku || "")}"></div>
       <div class="field"><label>Código de barras / QR</label>
         <input id="p-codigo" placeholder="Hacé clic acá y escaneá con el lector" value="${esc(p?.codigo_barras || "")}"
           onkeydown="if(event.key==='Enter'){event.preventDefault()}">
@@ -1469,6 +1679,7 @@ async function guardarProducto(e, id){
   e.preventDefault();
   const datos = {
     nombre: $("p-nombre").value.trim(),
+    marca: $("p-marca").value.trim(),
     sku: $("p-sku").value.trim() || null,
     codigo_barras: $("p-codigo").value.trim() || null,
     categoria_id: $("p-cat").value || null,
@@ -3080,7 +3291,7 @@ function exportarPDF(desde, hasta, nombre){
 }
 function exportarProductos(){
   const filas = state.productos.map(p => ({
-    "SKU": p.sku || "", "Código barras": p.codigo_barras || "", "Producto": p.nombre,
+    "SKU": p.sku || "", "Código barras": p.codigo_barras || "", "Producto": p.nombre, "Marca": p.marca || "",
     "Categoría": state.categorias.find(c => c.id === p.categoria_id)?.nombre || "",
     "Costo USD": Number(p.costo_usd), "Precio ARS": Number(p.precio_ars),
     "Precio mayorista ARS": Number(p.precio_mayorista_ars), "Precio USD": Number(p.precio_usd),
