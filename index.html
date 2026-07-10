@@ -603,7 +603,6 @@ td.der,th.der{text-align:right}
 const SUPABASE_URL = "https://dfdpfzwzqgricvbickxl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmZHBmend6cWdyaWN2Ymlja3hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNjI2MzQsImV4cCI6MjA5ODczODYzNH0.G6WbtO4c3cLv_81jueUvbTfX40Wn2wD2Sk9rR7MYcsQ";
 
-
 /* ============================================================ */
 let sb = null;
 try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
@@ -2217,7 +2216,11 @@ function abrirNuevaVenta(clienteId, modo){
         <div id="v-pago-dif" style="font-size:12.5px;margin-top:6px"></div>
       </div>
 
-      <div class="field"><label>Notas</label><input id="v-notas" placeholder="Opcional"></div>
+      <div class="fila-2">
+        <div class="field" ${esPresu ? 'style="display:none"' : ""}><label>Fecha de la venta</label>
+          <input type="date" id="v-fecha"></div>
+        <div class="field"><label>Notas</label><input id="v-notas" placeholder="Opcional"></div>
+      </div>
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
         <button type="button" class="btn btn-primario" id="v-confirmar" onclick="confirmarVenta()">${esPresu ? "Guardar presupuesto" : "Confirmar venta"}</button>
@@ -2227,6 +2230,7 @@ function abrirNuevaVenta(clienteId, modo){
   state.pagoTocado = false;
   state.margenTocado = false;
   $("v-margen").value = state.config.margen_default ?? 40;
+  $("v-fecha").value = hoyISO();
   if (clienteId) clienteCambio();
   renderCarrito();
   renderPagos();
@@ -2495,7 +2499,8 @@ async function confirmarVenta(){
     p_items: state.carrito.map(i => ({
       producto_id: i.producto_id, producto_nombre: i.producto_nombre,
       cantidad: i.cantidad, precio_unit: i.precio_unit
-    }))
+    })),
+    p_fecha: $("v-fecha").value && $("v-fecha").value !== hoyISO() ? $("v-fecha").value : null
   });
   if (error){
     btn.disabled = false; btn.textContent = "Confirmar venta";
@@ -2643,7 +2648,11 @@ function editarVenta(id){
       </div>
       <div class="field" id="ev-dir-wrap" style="display:${v.entrega === "envio" ? "block" : "none"}">
         <label>Dirección de envío</label><input id="ev-dir" value="${esc(v.direccion_envio || "")}"></div>
-      <div class="field"><label>Notas</label><input id="ev-notas" value="${esc(v.notas || "")}"></div>
+      <div class="fila-2">
+        <div class="field"><label>Fecha de la venta</label>
+          <input type="date" id="ev-fecha" value="${new Date(v.created_at).toISOString().slice(0,10)}"></div>
+        <div class="field"><label>Notas</label><input id="ev-notas" value="${esc(v.notas || "")}"></div>
+      </div>
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="verVenta(${v.id})">Cancelar</button>
         <button type="submit" class="btn btn-primario">Guardar cambios</button>
@@ -2652,6 +2661,7 @@ function editarVenta(id){
 }
 async function guardarEdicionVenta(e, id){
   e.preventDefault();
+  const v0 = state.ventas.find(x => x.id === id);
   const entrega = $("ev-entrega").value;
   const datos = {
     cliente_id: $("ev-cliente").value ? +$("ev-cliente").value : null,
@@ -2659,6 +2669,9 @@ async function guardarEdicionVenta(e, id){
     entrega, direccion_envio: entrega === "envio" ? $("ev-dir").value.trim() : "",
     notas: $("ev-notas").value.trim()
   };
+  const fNueva = $("ev-fecha").value;
+  if (fNueva && fNueva !== new Date(v0.created_at).toISOString().slice(0,10))
+    datos.created_at = new Date(fNueva + "T12:00:00").toISOString();
   const { error } = await sb.from("ventas").update(datos).eq("id", id);
   if (error) return toast("No se pudo guardar: " + error.message, "error");
   toast("Venta actualizada", "ok");
