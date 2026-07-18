@@ -192,6 +192,9 @@ tbody tr{transition:background .1s}
 tbody tr:hover{background:var(--superficie)}
 td.der,th.der{text-align:right}
 .fila-click{cursor:pointer}
+.acciones-fila{white-space:nowrap}
+.acciones-fila>*{vertical-align:middle}
+.acciones-fila .btn-icono{margin-left:5px}
 
 /* ---------- CHIPS / BADGES ---------- */
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
@@ -1655,7 +1658,11 @@ function renderProductos(){
       <td class="der num">${p.precio_mayorista_ars ? fmtARS.format(p.precio_mayorista_ars) : "—"}</td>
       <td class="der num">${p.precio_usd ? fmtUSD.format(p.precio_usd) : "—"}</td>
       <td class="der"><span class="chip num ${p.stock <= 0 ? "rojo" : p.stock <= p.stock_minimo ? "alerta" : "ok"}">${p.stock}</span></td>
-      <td class="der"><button class="btn btn-chico btn-suave" onclick="event.stopPropagation();abrirAjusteStock(${p.id})">Ajustar</button></td>
+      <td class="der acciones-fila" onclick="event.stopPropagation()">
+        <button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">Ajustar</button>
+        <button class="btn-icono" title="Editar producto" onclick="abrirProducto(${p.id})">✎</button>
+        ${state.perfil?.rol === "admin" ? `<button class="btn-icono btn-peligro" title="Eliminar producto" onclick="borrarProducto(${p.id})">✕</button>` : ""}
+      </td>
     </tr>`).join("") + "</tbody></table>";
 }
 ["prod-busca","prod-filtro-cat","prod-filtro-stock","prod-filtro-marca"].forEach(id =>
@@ -1694,8 +1701,15 @@ function abrirProducto(id){
           </select></div>
       </div>
       <div class="fila-2">
-        <div class="field"><label>Costo (USD)</label>
-          <input type="number" id="p-costo" min="0" step="0.01" value="${p?.costo_usd || 0}" oninput="calcularMargenProducto()"></div>
+        <div class="field"><label>Costo</label>
+          <div style="display:flex;gap:8px">
+            <input type="number" id="p-costo" min="0" step="0.01" style="flex:1"
+              value="${p?.costo != null ? p.costo : (p?.costo_usd || 0)}" oninput="calcularMargenProducto()">
+            <select id="p-costo-moneda" onchange="calcularMargenProducto()" style="width:92px">
+              <option value="USD" ${(p?.costo_moneda || "USD") === "USD" ? "selected" : ""}>USD</option>
+              <option value="ARS" ${p?.costo_moneda === "ARS" ? "selected" : ""}>ARS</option>
+            </select>
+          </div></div>
         <div class="field"><label>Precio minorista (ARS) *</label>
           <input type="number" id="p-pars" min="0" step="0.01" required value="${p?.precio_ars || ""}" oninput="calcularMargenProducto()"></div>
       </div>
@@ -1727,6 +1741,30 @@ function abrirProducto(id){
     </form>`);
 }
 
+async function borrarProducto(id){
+  const p = state.productos.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`¿Eliminar "${p.nombre}"? Esta acción no se puede deshacer.`)) return;
+  const { data, error } = await sb.from("productos").delete().eq("id", id).select();
+  if (!error && data && data.length){ toast("Producto eliminado", "ok"); return cargarProductos(); }
+  // Falla por permisos (RLS) sin devolver error → 0 filas
+  if (!error && (!data || !data.length)){
+    return toast("No se pudo eliminar por permisos. Corré el SQL de borrado (productos-borrar.sql) en Supabase.", "error");
+  }
+  // Falla por referencias (ventas / movimientos de stock)
+  const fk = /foreign key|violates|23503|referenced|still referenced/i.test(error?.message || "");
+  if (fk){
+    if (confirm(`"${p.nombre}" tiene ventas o movimientos de stock asociados, así que no se puede borrar sin perder ese historial.\n\n¿Querés desactivarlo? Deja de aparecer en el catálogo de ventas nuevas, pero conserva todo el historial.`)){
+      const { error: e2 } = await sb.from("productos").update({ activo: false, updated_at: new Date().toISOString() }).eq("id", id);
+      if (e2) return toast("No se pudo desactivar: " + e2.message, "error");
+      toast("Producto desactivado", "ok");
+      cargarProductos();
+    }
+    return;
+  }
+  toast("No se pudo eliminar: " + (error?.message || "error desconocido"), "error");
+}
+
 async function guardarProducto(e, id){
   e.preventDefault();
   const datos = {
@@ -1736,7 +1774,11 @@ async function guardarProducto(e, id){
     codigo_barras: $("p-codigo").value.trim() || null,
     categoria_id: $("p-cat").value || null,
     unidad: $("p-unidad").value,
-    costo_usd: +$("p-costo").value || 0,
+    costo: +$("p-costo").value || 0,
+    costo_moneda: $("p-costo-moneda").value,
+    costo_usd: $("p-costo-moneda").value === "USD"
+      ? (+$("p-costo").value || 0)
+      : Math.round(((+$("p-costo").value || 0) / (Number(state.config.tipo_cambio) || 1)) * 100) / 100,
     precio_ars: +$("p-pars").value || 0,
     precio_mayorista_ars: +$("p-pmay").value || 0,
     precio_usd: +$("p-pusd").value || 0,
@@ -1757,20 +1799,22 @@ async function guardarProducto(e, id){
 
 /* Margen automático: (precio − costo en ARS) / precio. Se pisa a mano si querés. */
 function calcularMargenProducto(){
-  const costoUSD = +$("p-costo").value || 0;
+  const costoVal = +$("p-costo").value || 0;
+  const cm = $("p-costo-moneda") ? $("p-costo-moneda").value : "USD";
   const precio = +$("p-pars").value || 0;
   const info = $("p-margen-info");
-  if (!costoUSD || !precio){ info.style.display = "none"; return; }
+  if (!costoVal || !precio){ info.style.display = "none"; return; }
   const tc = Number(state.config.tipo_cambio) || 1;
-  const costoARS = costoUSD * tc;
+  const costoARS = cm === "ARS" ? costoVal : costoVal * tc;
+  const detalle = cm === "USD" ? ` (USD ${costoVal} × TC ${tc})` : "";
   const margen = Math.round((precio - costoARS) / precio * 100);
   info.style.display = "block";
   if (margen < 0){
     info.style.background = "var(--rojo-bg)"; info.style.color = "var(--rojo)";
-    info.innerHTML = `⚠ Estás vendiendo BAJO el costo: cuesta ${fmtARS.format(costoARS)} (USD ${costoUSD} × TC ${tc}) y lo vendés a ${fmtARS.format(precio)}.`;
+    info.innerHTML = `⚠ Estás vendiendo BAJO el costo: cuesta ${fmtARS.format(costoARS)}${detalle} y lo vendés a ${fmtARS.format(precio)}.`;
   } else {
     info.style.background = "var(--ok-bg)"; info.style.color = "var(--ok)";
-    info.innerHTML = `Margen calculado: <b>${margen}%</b> · costo ${fmtARS.format(costoARS)} (USD ${costoUSD} × TC ${tc}) → ganás ${fmtARS.format(precio - costoARS)} por ${$("p-unidad").value === "kg" ? "kg" : "unidad"}.`;
+    info.innerHTML = `Margen calculado: <b>${margen}%</b> · costo ${fmtARS.format(costoARS)}${detalle} → ganás ${fmtARS.format(precio - costoARS)} por ${$("p-unidad").value === "kg" ? "kg" : "unidad"}.`;
   }
   if (!state.margenProdTocado && margen >= 0) $("p-margen").value = margen;
 }
@@ -2418,11 +2462,19 @@ function precioProducto(p){
   return Number(p.precio_ars) || 0;
 }
 /* Costo unitario en la moneda de la venta. El costo del producto está en USD; en ARS se convierte por el TC vigente. */
+/* Costo del producto convertido a la moneda destino, respetando la moneda nativa cargada en el producto. */
+function costoProductoEn(p, destino){
+  const nativo = (p && p.costo != null) ? Number(p.costo) : Number(p?.costo_usd) || 0;
+  const pm = p?.costo_moneda || "USD";
+  if (pm === destino) return nativo;
+  const tc = tcVenta() || 1;
+  return destino === "USD"
+    ? Math.round((nativo / tc) * 100) / 100    // ARS → USD
+    : Math.round(nativo * tc * 100) / 100;      // USD → ARS
+}
 function costoProducto(p){
-  const cu = Number(p?.costo_usd) || 0;   // costo nativo del producto, en USD
   const cm = $("v-costo-moneda") ? $("v-costo-moneda").value : "USD";
-  if (cm === "USD") return cu;
-  return Math.round(cu * tcVenta() * 100) / 100;   // en ARS
+  return costoProductoEn(p, cm);
 }
 /* Costo unitario convertido a la moneda de la venta, para calcular margen y ganancia. */
 function costoUnitEnVenta(i){
@@ -3448,6 +3500,7 @@ function exportarProductos(){
   const filas = state.productos.map(p => ({
     "SKU": p.sku || "", "Código barras": p.codigo_barras || "", "Producto": p.nombre, "Marca": p.marca || "",
     "Categoría": state.categorias.find(c => c.id === p.categoria_id)?.nombre || "",
+    "Costo": Number(p.costo != null ? p.costo : p.costo_usd), "Moneda costo": p.costo_moneda || "USD",
     "Costo USD": Number(p.costo_usd), "Precio ARS": Number(p.precio_ars),
     "Precio mayorista ARS": Number(p.precio_mayorista_ars), "Precio USD": Number(p.precio_usd),
     "Stock": Number(p.stock), "Stock mínimo": Number(p.stock_minimo),
