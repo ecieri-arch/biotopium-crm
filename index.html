@@ -533,7 +533,7 @@ td.der,th.der{text-align:right}
     <section class="vista" id="view-reportes">
       <div class="vista-head">
         <div><h2>Reportes</h2><p>Métricas del período, tendencias y exportación</p></div>
-        <div class="acciones"><button class="btn btn-primario" onclick="abrirGasto()">+ Registrar gasto</button></div>
+        <div class="acciones"><button class="btn btn-primario" onclick="nav('gastos')">+ Registrar gasto</button></div>
       </div>
       <div class="card" style="margin-bottom:16px">
         <div class="filtros" style="margin-bottom:0">
@@ -1496,14 +1496,15 @@ async function renderDashboard(){
   const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
   const inicioMesPrev = new Date(inicioMes); inicioMesPrev.setMonth(inicioMesPrev.getMonth() - 1);
 
-  const [{ data: ventas30 }, { data: leadsAct }, { data: comprasMes }, { data: movMes }, { data: ventasCC }, { data: abonosAll }] = await Promise.all([
+  const [{ data: ventas30 }, { data: leadsAct }, { data: comprasMes }, { data: movMes }, { data: ventasCC }, { data: abonosAll }, { data: gastosMesData }] = await Promise.all([
     sb.from("ventas").select("id,total,moneda,tipo_cambio,margen_pct,tipo,estado,created_at")
       .gte("created_at", inicioMesPrev.toISOString()).order("created_at"),
     sb.from("leads").select("id,estado").not("estado", "in", '("ganado","perdido")'),
     sb.from("compras").select("monto,tipo,created_at").gte("created_at", inicioMesPrev.toISOString()),
     sb.from("movimientos_stock").select("tipo,cantidad,costo_usd,tipo_cambio,created_at").gte("created_at", inicioMes.toISOString()),
     sb.from("ventas").select("total,moneda,tipo_cambio,pagado,estado,cliente_id"),
-    sb.from("abonos").select("monto")
+    sb.from("abonos").select("monto"),
+    sb.from("gastos").select("fecha,monto,moneda,tipo_cambio,categoria").gte("fecha", inicioMes.toISOString().slice(0,10))
   ]);
   await cargarProductosData();
 
@@ -1516,8 +1517,15 @@ async function renderDashboard(){
   const varPct = totPrev > 0 ? Math.round((totMes - totPrev) / totPrev * 100) : null;
   const ganMes = mesActual.reduce((s,v) => s + gananciaARS(v), 0);
   const ticket = mesActual.length ? totMes / mesActual.length : 0;
-  const invMes = (comprasMes || []).filter(c => new Date(c.created_at) >= inicioMes).reduce((s,c) => s + Number(c.monto), 0);
-  const gastosMes = (comprasMes || []).filter(c => new Date(c.created_at) >= inicioMes && c.tipo !== "producto").reduce((s,c) => s + Number(c.monto), 0);
+  // Compras/gastos del mes = tabla legacy `compras` + solapa `gastos`.
+  // Las categorías de inventario (mercadería) suman a lo invertido pero NO se restan del neto.
+  const INV_CATS = new Set(["mercaderia"]);
+  const gTab = (gastosMesData || []).filter(g => (g.fecha || "").slice(0,7) === inicioMes.toISOString().slice(0,7));
+  const gInv = gTab.filter(g => INV_CATS.has(g.categoria)).reduce((s,g) => s + gastoARS(g), 0);
+  const gOp  = gTab.filter(g => !INV_CATS.has(g.categoria)).reduce((s,g) => s + gastoARS(g), 0);
+  const comprasMesL = (comprasMes || []).filter(c => new Date(c.created_at) >= inicioMes);
+  const invMes = comprasMesL.reduce((s,c) => s + Number(c.monto), 0) + gInv + gOp;
+  const gastosMes = comprasMesL.filter(c => c.tipo !== "producto").reduce((s,c) => s + Number(c.monto), 0) + gOp;
   const mermasMes = (movMes || []).filter(m => m.tipo === "merma" || m.tipo === "consumo")
     .reduce((s,m) => s + Number(m.cantidad) * Number(m.costo_usd || 0) * Number(m.tipo_cambio || 1), 0);
   const neto = ganMes - mermasMes - gastosMes;
@@ -3338,10 +3346,10 @@ function renderAnalisisClientes(){
     : '<div class="vacio" style="padding:18px"><b>Todos activos</b><span style="font-size:13px">Nadie con más de 45 días sin comprar.</span></div>';
 }
 
-/* ---------------- REGISTRAR GASTO / COMPRA ---------------- */
-function abrirGasto(){
+/* ---------------- COMPRA/GASTO LEGACY (reemplazado por la solapa Gastos) ---------------- */
+function abrirCompraLegacy(){
   abrirModal("Registrar gasto / compra", `
-    <form onsubmit="guardarGasto(event)">
+    <form onsubmit="guardarCompraLegacy(event)">
       <p style="color:var(--gris);font-size:13.5px;margin-bottom:4px">
         Para servicios y gastos sin stock. Las reposiciones de productos se cargan desde el botón “Ajustar” de cada producto.</p>
       <div class="field"><label>Concepto *</label>
@@ -3366,7 +3374,7 @@ function abrirGasto(){
       </div>
     </form>`);
 }
-async function guardarGasto(e){
+async function guardarCompraLegacy(e){
   e.preventDefault();
   const monto = +$("g-monto").value || 0;
   if (monto <= 0) return toast("Ingresá un monto válido", "error");
@@ -3551,6 +3559,7 @@ async function exportarBackup(){
 
 /* ---------------- GASTOS ---------------- */
 const GASTO_CATS = [
+  { id:"mercaderia",   nombre:"Compra de mercadería / stock" },
   { id:"transporte",   nombre:"Uber / transporte" },
   { id:"peaje",        nombre:"Peaje" },
   { id:"combustible",  nombre:"Combustible" },
