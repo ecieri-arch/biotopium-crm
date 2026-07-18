@@ -249,8 +249,31 @@ td.der,th.der{text-align:right}
 @media(min-width:640px){.modal-fondo{align-items:center;padding:24px}.modal{border-radius:20px}}
 
 /* ---------- CARRITO ---------- */
-.item-linea{display:grid;grid-template-columns:1fr 84px 110px 34px;gap:8px;align-items:center;color:var(--tinta);
+.item-linea{display:flex;flex-direction:column;gap:8px;color:var(--tinta);
   background:var(--superficie);border:1px solid var(--linea);border-radius:11px;padding:9px 10px}
+.item-linea .il-main{display:grid;grid-template-columns:1fr 84px 110px 34px;gap:8px;align-items:center}
+.item-linea .il-sub{display:grid;grid-template-columns:auto 120px 1fr;gap:8px;align-items:center;
+  border-top:1px dashed var(--linea);padding-top:8px}
+.item-linea .il-sub label{font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.03em}
+.margen-badge{justify-self:end;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;
+  background:var(--ok-bg);color:var(--ok)}
+.margen-badge.neg{background:var(--rojo-bg);color:var(--rojo)}
+.cotiz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.cotiz-card{text-align:left;cursor:pointer;background:var(--superficie);border:1.5px solid var(--linea);
+  border-radius:11px;padding:10px 11px;transition:border-color .12s,background .12s}
+.cotiz-card:hover{border-color:var(--agua-suave)}
+.cotiz-card.activa{border-color:var(--agua);background:var(--agua-claro)}
+.cotiz-nom{font-size:12px;color:var(--gris);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.cotiz-card.activa .cotiz-nom{color:var(--agua-fuerte)}
+.cotiz-check{color:var(--agua-fuerte)}
+.cotiz-venta{font-size:18px;font-weight:700;color:var(--profundo)}
+.cotiz-compra{font-size:11.5px;color:var(--gris)}
+.gastos-resumen{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.gastos-resumen .gr-card{flex:1;min-width:150px;background:var(--card);border:1px solid var(--linea);
+  border-radius:12px;padding:12px 14px;box-shadow:var(--sombra)}
+.gastos-resumen .gr-label{font-size:11.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.04em}
+.gastos-resumen .gr-valor{font-size:20px;font-weight:700;color:var(--profundo);margin-top:3px}
+.chip.cat{background:var(--agua-claro);color:var(--agua-fuerte);font-weight:600}
 .item-linea b{color:var(--tinta);font-weight:700}
 .item-linea small{color:var(--gris);display:block}
 .item-linea b{font-size:13.5px;display:block;line-height:1.25}
@@ -299,7 +322,8 @@ td.der,th.der{text-align:right}
   .metrica{padding:14px 15px}.metrica .valor{font-size:22px}
   .kanban{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
   .kcol{flex:0 0 84vw;max-width:320px;scroll-snap-align:start}
-  .item-linea{grid-template-columns:1fr 64px 92px 30px}
+  .item-linea .il-main{grid-template-columns:1fr 60px 88px 28px}
+  .cotiz-grid{grid-template-columns:1fr}
   .fila-2{grid-template-columns:1fr}
 }
 @media print{
@@ -539,6 +563,28 @@ td.der,th.der{text-align:right}
         <div style="overflow:auto" id="rep-detalle"></div></div>
     </section>
 
+    <!-- ===== GASTOS ===== -->
+    <section class="vista" id="view-gastos">
+      <div class="vista-head">
+        <div><h2>Gastos</h2><p>Salidas de caja: Uber, peajes, combustible, envíos, insumos, servicios…</p></div>
+        <div class="acciones">
+          <button class="btn btn-borde" onclick="exportarGastos()">Exportar</button>
+          <button class="btn btn-primario" onclick="abrirGasto()">+ Nuevo gasto</button>
+        </div>
+      </div>
+      <div class="filtros">
+        <div class="buscador">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="gastos-busca" placeholder="Buscar concepto o proveedor…">
+        </div>
+        <input type="month" id="gastos-mes" style="min-width:150px">
+        <select id="gastos-filtro-cat"><option value="">Todas las categorías</option></select>
+        <select id="gastos-filtro-metodo"><option value="">Todos los métodos</option></select>
+      </div>
+      <div id="gastos-resumen" class="gastos-resumen"></div>
+      <div class="tabla-wrap" id="gastos-tabla"></div>
+    </section>
+
     <!-- ===== CONFIGURACIÓN ===== -->
     <section class="vista" id="view-config">
       <div class="vista-head">
@@ -548,9 +594,11 @@ td.der,th.der{text-align:right}
         <div class="card">
           <h3>Tipo de cambio y margen</h3>
           <p style="color:var(--gris);font-size:13.5px;margin-bottom:12px">
-            Cotización USD → ARS para ventas en dólares. El margen por defecto se precarga en cada venta nueva.</p>
+            Elegí qué dólar usar por defecto. Se toma la cotización <b>venta</b> de dolarapi.com. En cada venta en USD podés cambiarlo.</p>
+          <div class="cotiz-grid" id="cfg-cotiz"></div>
+          <button class="btn btn-suave btn-chico" id="cfg-tc-refrescar" onclick="traerCotizaciones(true)" style="margin-bottom:14px">Actualizar cotizaciones</button>
           <div class="fila-2" style="align-items:end">
-            <div class="field"><label>1 USD = ARS</label><input type="number" id="cfg-tc" min="0" step="0.01"></div>
+            <div class="field"><label>1 USD = ARS (activo)</label><input type="number" id="cfg-tc" min="0" step="0.01"></div>
             <div class="field"><label>Margen por defecto (%)</label><input type="number" id="cfg-margen" min="0" max="100" step="1"></div>
           </div>
           <button class="btn btn-primario" style="margin-top:12px" onclick="guardarTC()">Guardar</button>
@@ -610,8 +658,9 @@ catch (e) { console.warn("Supabase sin configurar:", e.message); }
 
 const state = {
   user: null, perfil: null, config: { tipo_cambio: 1000 },
+  cotizaciones: { oficial: null, blue: null, mep: null }, tcFuente: (localStorage.getItem("bt_tc_fuente") || "oficial"),
   categorias: [], productos: [], clientes: [], leads: [],
-  ventas: [], perfiles: [], presupuestos: [],
+  ventas: [], perfiles: [], presupuestos: [], gastos: [],
   repVentas: [], repVentasPrev: [], repVentas6m: [],
   repItems: [], repMovs: [],
   repCompras: [], repComprasPrev: [], repCompras6m: [],
@@ -667,7 +716,8 @@ const ICONOS = {
   reportes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>',
   config:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>',
   presupuestos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>',
-  smd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 11-5.5 1.5 1.6 2.3 3.4 2.5 5.5-.2 2.1-1 3.9-2.5 5.5-5 .5-9-1.5-11-5.5z"/><path d="M6.5 12 3 8.5c-.3 2.3-.3 4.7 0 7L6.5 12z"/><circle cx="15.5" cy="10.5" r="0.5" fill="currentColor"/></svg>'
+  smd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 11-5.5 1.5 1.6 2.3 3.4 2.5 5.5-.2 2.1-1 3.9-2.5 5.5-5 .5-9-1.5-11-5.5z"/><path d="M6.5 12 3 8.5c-.3 2.3-.3 4.7 0 7L6.5 12z"/><circle cx="15.5" cy="10.5" r="0.5" fill="currentColor"/></svg>',
+  gastos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h5"/></svg>'
 };
 const VISTAS = [
   { id:"dashboard", nombre:"Inicio" },
@@ -677,6 +727,7 @@ const VISTAS = [
   { id:"clientes",  nombre:"Clientes" },
   { id:"productos", nombre:"Productos" },
   { id:"reportes",  nombre:"Reportes" },
+  { id:"gastos",    nombre:"Gastos" },
   { id:"smd",       nombre:"SM Discus", aparte:true },
   { id:"config",    nombre:"Configuración", admin:true }
 ];
@@ -707,7 +758,8 @@ function nav(id){
   const cargas = {
     dashboard: renderDashboard, ventas: cargarVentas, leads: cargarLeads,
     clientes: cargarClientes, productos: cargarProductos, presupuestos: cargarPresupuestos,
-    smd: cargarSMD, reportes: cargarReporte, config: cargarConfigVista
+    smd: cargarSMD, reportes: cargarReporte, config: cargarConfigVista,
+    gastos: cargarGastos
   };
   cargas[id]?.();
 }
@@ -909,6 +961,7 @@ async function iniciarApp(){
   $("app").style.display = "block";
   construirNav();
   await Promise.all([cargarBase(), cargarProductosData(), cargarClientesData()]);
+  traerCotizaciones(false);
   nav("dashboard");
 }
 
@@ -2166,8 +2219,26 @@ function abrirNuevaVenta(clienteId, modo){
             <option value="minorista">Minorista</option>
             <option value="mayorista">Mayorista</option></select></div>
         <div class="field"><label>Moneda</label>
-          <select id="v-moneda" onchange="reprecioCarrito()">
+          <select id="v-moneda" onchange="monedaCambio()">
             <option value="ARS">ARS</option><option value="USD">USD</option></select></div>
+      </div>
+      <div class="fila-2" id="v-tc-wrap" style="display:none">
+        <div class="field"><label>Cotización (fuente)</label>
+          <select id="v-tc-fuente" onchange="fuenteVentaCambio()">
+            <option value="oficial">Oficial</option>
+            <option value="blue">Blue</option>
+            <option value="mep">MEP</option>
+            <option value="manual">Manual</option></select></div>
+        <div class="field"><label>1 USD = ARS</label>
+          <input type="number" id="v-tc" min="0" step="0.01" oninput="tcVentaEditado()"></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>Costo cargado en</label>
+          <select id="v-costo-moneda" onchange="costoMonedaCambio()">
+            <option value="USD">Dólares (USD)</option>
+            <option value="ARS">Pesos (ARS)</option></select></div>
+        <div class="field"><label>&nbsp;</label>
+          <div style="font-size:12px;color:var(--gris);padding:10px 0;line-height:1.35">El margen convierte costo y precio a la moneda de la venta con el TC.</div></div>
       </div>
       <div class="field sugerencias"><label>Agregar producto <span style="font-weight:400;color:var(--gris);text-transform:none;letter-spacing:0">· compatible con lector QR/barras</span></label>
         <input id="v-busca" placeholder="Buscá por nombre o escaneá el código…" autocomplete="off"
@@ -2188,8 +2259,10 @@ function abrirNuevaVenta(clienteId, modo){
         <input id="v-direccion" placeholder="Calle, número, localidad…"></div>
 
       <div class="fila-2">
-        <div class="field"><label>Margen de ganancia (%)</label>
-          <input type="number" id="v-margen" min="0" max="100" step="1" oninput="margenEditado()"></div>
+        <div class="field"><label>Margen de ganancia (%) · automático</label>
+          <input type="number" id="v-margen" readonly tabindex="-1"
+            style="background:var(--superficie);color:var(--gris);cursor:not-allowed"
+            title="Se calcula solo a partir del costo y precio de cada ítem"></div>
         <div class="field"><label>Ganancia estimada</label>
           <div style="padding:10px 0;font-weight:600;color:var(--ok)" class="num" id="v-ganancia">—</div></div>
       </div>
@@ -2228,12 +2301,52 @@ function abrirNuevaVenta(clienteId, modo){
     </div>`);
   state.pagos = [{ metodo: "efectivo", monto: 0 }];
   state.pagoTocado = false;
-  state.margenTocado = false;
-  $("v-margen").value = state.config.margen_default ?? 40;
+  state.tcVentaTocado = false;
+  $("v-tc-fuente").value = state.tcFuente;
   $("v-fecha").value = hoyISO();
+  monedaCambio();
   if (clienteId) clienteCambio();
   renderCarrito();
   renderPagos();
+}
+/* TC vigente para la venta actual: en USD sale del campo v-tc; en ARS, el TC de config (para convertir costos USD). */
+function tcVenta(){
+  if ($("v-moneda") && $("v-moneda").value === "USD"){
+    return Number($("v-tc")?.value) || Number(state.config.tipo_cambio) || 1;
+  }
+  return Number(state.config.tipo_cambio) || 1;
+}
+/* Cambio de moneda: muestra/oculta el bloque de cotización y reprecia costos + precios. */
+function monedaCambio(){
+  const usd = $("v-moneda").value === "USD";
+  $("v-tc-wrap").style.display = usd ? "grid" : "none";
+  if (usd) fuenteVentaCambio();   // precarga el TC y reprecia
+  else reprecioCarrito();
+}
+/* Elegí Oficial/Blue/MEP/Manual para esta venta: precarga el número (salvo Manual). */
+function fuenteVentaCambio(){
+  const f = $("v-tc-fuente").value;
+  if (f !== "manual"){
+    const v = tcDeFuente(f);
+    if (v != null){ $("v-tc").value = v; state.tcVentaTocado = false; }
+    else if (!$("v-tc").value){ $("v-tc").value = state.config.tipo_cambio || ""; }
+  } else if (!$("v-tc").value){
+    $("v-tc").value = state.config.tipo_cambio || "";
+  }
+  reprecioCarrito();
+}
+function tcVentaEditado(){ state.tcVentaTocado = true; $("v-tc-fuente").value = "manual"; totalesCarrito(); }
+/* Cambio de moneda del costo: convierte los costos ya cargados con el TC vigente. */
+function costoMonedaCambio(){
+  const tc = tcVenta() || 1;
+  const to = $("v-costo-moneda").value;   // moneda destino elegida
+  state.carrito.forEach(i => {
+    const c = Number(i.costo_unit) || 0;
+    i.costo_unit = to === "ARS"
+      ? Math.round(c * tc * 100) / 100    // venía en USD → a ARS
+      : Math.round(c / tc * 100) / 100;   // venía en ARS → a USD
+  });
+  renderCarrito();
 }
 const METODOS_PAGO = [["efectivo","Efectivo"],["transferencia","Transferencia"],["posnet","Posnet"]];
 const nombreMetodo = m => (METODOS_PAGO.find(x => x[0] === m) || [,m])[1];
@@ -2304,6 +2417,22 @@ function precioProducto(p){
   if (tipo === "mayorista" && Number(p.precio_mayorista_ars) > 0) return Number(p.precio_mayorista_ars);
   return Number(p.precio_ars) || 0;
 }
+/* Costo unitario en la moneda de la venta. El costo del producto está en USD; en ARS se convierte por el TC vigente. */
+function costoProducto(p){
+  const cu = Number(p?.costo_usd) || 0;   // costo nativo del producto, en USD
+  const cm = $("v-costo-moneda") ? $("v-costo-moneda").value : "USD";
+  if (cm === "USD") return cu;
+  return Math.round(cu * tcVenta() * 100) / 100;   // en ARS
+}
+/* Costo unitario convertido a la moneda de la venta, para calcular margen y ganancia. */
+function costoUnitEnVenta(i){
+  const c = Number(i.costo_unit) || 0;
+  const cm = $("v-costo-moneda") ? $("v-costo-moneda").value : "USD";
+  const vm = $("v-moneda") ? $("v-moneda").value : "ARS";
+  if (cm === vm) return c;
+  const tc = tcVenta() || 1;
+  return cm === "USD" ? c * tc : c / tc;   // USD→ARS ×TC · ARS→USD ÷TC
+}
 function sugerirProductos(){
   const q = $("v-busca").value.toLowerCase().trim();
   const caja = $("v-sugerencias");
@@ -2328,7 +2457,8 @@ function agregarAlCarrito(id){
   if (!p) return;
   state.carrito.push({
     producto_id: p.id, producto_nombre: p.nombre, unidad: p.unidad || "unidad",
-    cantidad: 1, precio_unit: precioProducto(p), stock: Number(p.stock)
+    cantidad: 1, precio_unit: precioProducto(p), costo_unit: costoProducto(p),
+    costoManual: false, stock: Number(p.stock)
   });
   $("v-busca").value = ""; $("v-sugerencias").style.display = "none";
   renderCarrito();
@@ -2375,44 +2505,51 @@ function prodBuscaEnter(e){
   const p = buscarPorCodigo(q);
   if (p){ e.target.value = ""; renderProductos(); abrirProducto(p.id); }
 }
+function margenLinea(i){
+  const p = Number(i.precio_unit) || 0, c = costoUnitEnVenta(i);
+  if (p <= 0) return 0;
+  return Math.round((p - c) / p * 100);
+}
 function renderCarrito(){
+  const m = $("v-moneda") ? $("v-moneda").value : "ARS";
+  const cm = $("v-costo-moneda") ? $("v-costo-moneda").value : "USD";
   $("v-items").innerHTML = state.carrito.length
-    ? state.carrito.map((i, ix) => { const kg = i.unidad === "kg"; return `
+    ? state.carrito.map((i, ix) => { const kg = i.unidad === "kg"; const mg = margenLinea(i); return `
       <div class="item-linea">
-        <div><b>${esc(i.producto_nombre)}</b><small>Stock disponible: ${i.stock}${kg ? " kg" : ""}${kg ? " · precio por kg" : ""}</small></div>
-        ${kg
-          ? `<input type="text" inputmode="decimal" value="${i.cantidad}" pattern="[0-9]+([.,][0-9]+)?"
-              aria-label="Kilos" title="Kilos (acepta decimales: 2,5 o 2.5)"
-              onchange="editarItem(${ix}, 'cantidad', this.value)">`
-          : `<input type="number" min="1" max="${i.stock}" step="1" value="${i.cantidad}"
-              aria-label="Cantidad" title="Cantidad" onchange="editarItem(${ix}, 'cantidad', this.value)">`}
-        <input type="number" min="0" step="0.01" value="${i.precio_unit}"
-          aria-label="Precio unitario" onchange="editarItem(${ix}, 'precio_unit', this.value)">
-        <button class="item-quitar" onclick="quitarItem(${ix})" aria-label="Quitar">✕</button>
+        <div class="il-main">
+          <div><b>${esc(i.producto_nombre)}</b><small>Stock disponible: ${i.stock}${kg ? " kg" : ""}${kg ? " · precio por kg" : ""}</small></div>
+          ${kg
+            ? `<input type="text" inputmode="decimal" value="${i.cantidad}" pattern="[0-9]+([.,][0-9]+)?"
+                aria-label="Kilos" title="Kilos (acepta decimales: 2,5 o 2.5)"
+                onchange="editarItem(${ix}, 'cantidad', this.value)">`
+            : `<input type="number" min="1" max="${i.stock}" step="1" value="${i.cantidad}"
+                aria-label="Cantidad" title="Cantidad" onchange="editarItem(${ix}, 'cantidad', this.value)">`}
+          <input type="number" min="0" step="0.01" value="${i.precio_unit}"
+            aria-label="Precio de venta unitario" title="Precio de venta"
+            onchange="editarItem(${ix}, 'precio_unit', this.value)">
+          <button class="item-quitar" onclick="quitarItem(${ix})" aria-label="Quitar">✕</button>
+        </div>
+        <div class="il-sub">
+          <label>Costo u. (${cm})</label>
+          <input type="number" min="0" step="0.01" value="${i.costo_unit ?? 0}"
+            aria-label="Costo unitario" title="Costo unitario (${cm})"
+            onchange="editarItem(${ix}, 'costo_unit', this.value)">
+          <span class="margen-badge ${mg < 0 ? "neg" : ""}">Margen ${mg}%</span>
+        </div>
       </div>`; }).join("")
     : '<div class="vacio" style="padding:18px"><b>Sin productos</b>Buscá arriba y agregalos a la venta.</div>';
-  sugerirMargen();
   totalesCarrito();
 }
-function margenProducto(p){
-  if (!p) return Number(state.config.margen_default) || 0;
-  if (p.margen_pct != null && p.margen_pct !== "") return Number(p.margen_pct);
-  const cat = state.categorias.find(c => c.id === p.categoria_id);
-  if (cat && cat.margen_pct != null) return Number(cat.margen_pct);
-  return Number(state.config.margen_default) || 0;
+/* Costo total del carrito en la moneda de la venta. */
+function costoCarrito(){
+  return state.carrito.reduce((s,i) => s + (Number(i.cantidad)||0) * costoUnitEnVenta(i), 0);
 }
-function sugerirMargen(){
-  if (state.margenTocado || !$("v-margen")) return;
-  if (!state.carrito.length){ $("v-margen").value = state.config.margen_default ?? 40; return; }
-  let base = 0, wsum = 0;
-  state.carrito.forEach(i => {
-    const p = state.productos.find(x => x.id === i.producto_id);
-    const sub = i.cantidad * i.precio_unit;
-    base += sub * margenProducto(p); wsum += sub;
-  });
-  $("v-margen").value = wsum ? Math.round(base / wsum) : (state.config.margen_default || 0);
+/* Margen agregado de la venta = (subtotal − costo) / subtotal. Automático, no editable. */
+function margenVenta(){
+  const sub = state.carrito.reduce((s,i) => s + (Number(i.cantidad)||0) * (Number(i.precio_unit)||0), 0);
+  if (sub <= 0) return 0;
+  return Math.round((sub - costoCarrito()) / sub * 100);
 }
-function margenEditado(){ state.margenTocado = true; totalesCarrito(); }
 function editarItem(ix, campo, valor){
   const i = state.carrito[ix];
   if (campo === "cantidad"){
@@ -2422,6 +2559,9 @@ function editarItem(ix, campo, valor){
                  : Math.max(1, Math.floor(bruto || 1));
     if (c > i.stock){ c = i.stock; toast("Máximo disponible: " + i.stock + (esKg ? " kg" : ""), "error"); }
     i.cantidad = c;
+  } else if (campo === "costo_unit"){
+    i.costo_unit = Math.max(0, numDec(valor));
+    i.costoManual = true;
   } else i.precio_unit = Math.max(0, numDec(valor));
   renderCarrito();
 }
@@ -2429,21 +2569,23 @@ function quitarItem(ix){ state.carrito.splice(ix, 1); renderCarrito(); }
 function reprecioCarrito(){
   state.carrito.forEach(i => {
     const p = state.productos.find(x => x.id === i.producto_id);
-    if (p) i.precio_unit = precioProducto(p);
+    if (p){ i.precio_unit = precioProducto(p); i.costo_unit = costoProducto(p); i.costoManual = false; }
   });
   renderCarrito();
   if (state.pagos) renderPagos();
 }
 function totalesCarrito(){
   const m = $("v-moneda").value;
-  const { sub, envio, total } = totalVenta();
+  const { sub, desc, envio, total } = totalVenta();
   $("v-subtotal").textContent = fMoneda(sub, m);
   if ($("v-envio-monto")) $("v-envio-monto").textContent = fMoneda(envio, m);
   $("v-total").textContent = fMoneda(total, m);
-  const margen = +$("v-margen")?.value || 0;
-  if ($("v-ganancia")) $("v-ganancia").textContent = fMoneda(total * margen / 100, m);
+  if ($("v-margen")) $("v-margen").value = margenVenta();
+  const ganancia = (sub - desc) - costoCarrito();
+  if ($("v-ganancia")) $("v-ganancia").textContent = fMoneda(ganancia, m);
+  const tc = tcVenta();
   $("v-tc-nota").textContent = m === "USD"
-    ? `Se registra con tipo de cambio ${fmtARS.format(state.config.tipo_cambio)} por USD (equivale a ${fmtARS.format(total * state.config.tipo_cambio)}).`
+    ? `Se registra con tipo de cambio ${fmtARS.format(tc)} por USD (equivale a ${fmtARS.format(total * tc)}).`
     : "";
   // Si hay un solo método y no lo tocaron, lo igualo al total
   if (state.pagos && state.pagos.length === 1 && !state.pagoTocado){ state.pagos[0].monto = total; renderPagos(); }
@@ -2460,8 +2602,8 @@ async function confirmarVenta(){
     const { data, error } = await sb.rpc("crear_presupuesto", {
       p_cliente_id: $("v-cliente").value ? +$("v-cliente").value : null,
       p_tipo: $("v-tipo").value, p_moneda: moneda,
-      p_tipo_cambio: moneda === "USD" ? Number(state.config.tipo_cambio) : 1,
-      p_descuento: desc, p_costo_envio: 0, p_margen_pct: +$("v-margen").value || 0,
+      p_tipo_cambio: moneda === "USD" ? tcVenta() : 1,
+      p_descuento: desc, p_costo_envio: 0, p_margen_pct: margenVenta(),
       p_notas: $("v-notas").value.trim(),
       p_items: state.carrito.map(i => ({ producto_id: i.producto_id, producto_nombre: i.producto_nombre, cantidad: i.cantidad, precio_unit: i.precio_unit }))
     });
@@ -2488,13 +2630,13 @@ async function confirmarVenta(){
     p_cliente_id: clienteId,
     p_tipo: $("v-tipo").value,
     p_moneda: moneda,
-    p_tipo_cambio: moneda === "USD" ? Number(state.config.tipo_cambio) : 1,
+    p_tipo_cambio: moneda === "USD" ? tcVenta() : 1,
     p_descuento: desc,
     p_costo_envio: envio,
     p_entrega: entrega,
     p_direccion: entrega === "envio" ? $("v-direccion").value.trim() : "",
     p_pagos: state.pagos.filter(p => +p.monto > 0).map(p => ({ metodo: p.metodo, monto: +p.monto })),
-    p_margen_pct: +$("v-margen").value || 0,
+    p_margen_pct: margenVenta(),
     p_notas: $("v-notas").value.trim(),
     p_items: state.carrito.map(i => ({
       producto_id: i.producto_id, producto_nombre: i.producto_nombre,
@@ -3354,10 +3496,232 @@ async function exportarBackup(){
   }
 }
 
+/* ---------------- GASTOS ---------------- */
+const GASTO_CATS = [
+  { id:"transporte",   nombre:"Uber / transporte" },
+  { id:"peaje",        nombre:"Peaje" },
+  { id:"combustible",  nombre:"Combustible" },
+  { id:"viaticos",     nombre:"Viáticos / comida" },
+  { id:"envios",       nombre:"Envíos / logística" },
+  { id:"insumos",      nombre:"Insumos" },
+  { id:"herramientas", nombre:"Herramientas / equipamiento" },
+  { id:"mantenimiento",nombre:"Mantenimiento" },
+  { id:"sueldos",      nombre:"Sueldos / honorarios" },
+  { id:"alquiler",     nombre:"Alquiler" },
+  { id:"servicios",    nombre:"Servicios (luz, agua, internet)" },
+  { id:"impuestos",    nombre:"Impuestos / tasas" },
+  { id:"bancarios",    nombre:"Bancarios / comisiones" },
+  { id:"marketing",    nombre:"Marketing / publicidad" },
+  { id:"otros",        nombre:"Otros" }
+];
+const nombreCat = id => (GASTO_CATS.find(c => c.id === id) || {}).nombre || id || "Otros";
+const GASTO_METODOS = [
+  ["efectivo","Efectivo"],["transferencia","Transferencia"],["tarjeta","Tarjeta"],
+  ["debito","Débito"],["mercadopago","Mercado Pago"],["otro","Otro"]
+];
+const nombreMetodoGasto = m => (GASTO_METODOS.find(x => x[0] === m) || [,m])[1] || "—";
+const gastoARS = g => g.moneda === "USD" ? Number(g.monto) * (Number(g.tipo_cambio) || 1) : Number(g.monto);
+
+async function cargarGastos(){
+  $("gastos-tabla").innerHTML = '<div class="cargando">Cargando gastos…</div>';
+  if ($("gastos-filtro-cat").children.length <= 1){
+    $("gastos-filtro-cat").innerHTML = '<option value="">Todas las categorías</option>' +
+      GASTO_CATS.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("");
+    $("gastos-filtro-metodo").innerHTML = '<option value="">Todos los métodos</option>' +
+      GASTO_METODOS.map(([v,n]) => `<option value="${v}">${n}</option>`).join("");
+  }
+  if (!$("gastos-mes").value) $("gastos-mes").value = hoyISO().slice(0,7);
+  const { data, error } = await sb.from("gastos").select("*").order("fecha", { ascending:false }).limit(1000);
+  if (error){ $("gastos-tabla").innerHTML = `<div class="vacio"><b>No se pudieron cargar los gastos</b>${esc(error.message)}</div>`; return; }
+  state.gastos = data || [];
+  renderGastos();
+}
+function renderGastos(){
+  const q = ($("gastos-busca").value || "").toLowerCase();
+  const cat = $("gastos-filtro-cat").value;
+  const met = $("gastos-filtro-metodo").value;
+  const mes = $("gastos-mes").value;   // YYYY-MM o ""
+  const lista = state.gastos.filter(g =>
+    (!q || (g.concepto||"").toLowerCase().includes(q) || (g.proveedor||"").toLowerCase().includes(q)) &&
+    (!cat || g.categoria === cat) &&
+    (!met || g.metodo_pago === met) &&
+    (!mes || (g.fecha||"").slice(0,7) === mes));
+  const total = lista.reduce((s,g) => s + gastoARS(g), 0);
+  $("gastos-resumen").innerHTML = `
+    <div class="gr-card"><div class="gr-label">Total ${mes ? "del mes" : "filtrado"}</div><div class="gr-valor num">${fmtARS.format(total)}</div></div>
+    <div class="gr-card"><div class="gr-label">Cantidad de gastos</div><div class="gr-valor num">${lista.length}</div></div>`;
+  if (!lista.length){
+    $("gastos-tabla").innerHTML = '<div class="vacio"><b>Sin gastos</b>Registrá el primero con “+ Nuevo gasto”.</div>';
+    return;
+  }
+  const admin = state.perfil?.rol === "admin";
+  $("gastos-tabla").innerHTML = `<table><thead><tr>
+      <th>Fecha</th><th>Categoría</th><th>Concepto</th><th>Método</th><th class="der">Monto</th><th></th>
+    </tr></thead><tbody>` +
+    lista.map(g => `<tr>
+      <td class="num">${fFecha(g.fecha)}</td>
+      <td><span class="chip cat">${esc(nombreCat(g.categoria))}</span></td>
+      <td><b>${esc(g.concepto)}</b>${g.proveedor ? `<small style="color:var(--gris);display:block">${esc(g.proveedor)}</small>` : ""}</td>
+      <td style="color:var(--gris)">${esc(nombreMetodoGasto(g.metodo_pago))}</td>
+      <td class="der num">${fMoneda(g.monto, g.moneda)}${g.moneda === "USD" ? `<small style="color:var(--gris);display:block">${fmtARS.format(gastoARS(g))}</small>` : ""}</td>
+      <td style="white-space:nowrap;text-align:right">
+        <button class="btn-icono" title="Editar" onclick="abrirGasto(${g.id})">✎</button>
+        ${admin ? `<button class="btn-icono btn-peligro" title="Eliminar" onclick="borrarGasto(${g.id})">✕</button>` : ""}
+      </td>
+    </tr>`).join("") + "</tbody></table>";
+}
+["gastos-busca","gastos-filtro-cat","gastos-filtro-metodo","gastos-mes"].forEach(id =>
+  { const el = $(id); if (el) el.addEventListener("input", renderGastos); });
+
+function abrirGasto(id){
+  const g = id ? state.gastos.find(x => x.id === id) : null;
+  const usd = g?.moneda === "USD";
+  abrirModal(g ? "Editar gasto" : "Nuevo gasto", `
+    <form onsubmit="guardarGasto(event, ${g?.id || "null"})">
+      <div class="fila-2">
+        <div class="field"><label>Fecha *</label><input type="date" id="g-fecha" required value="${g?.fecha || hoyISO()}"></div>
+        <div class="field"><label>Categoría *</label>
+          <select id="g-categoria">${GASTO_CATS.map(c => `<option value="${c.id}" ${g?.categoria === c.id ? "selected" : ""}>${c.nombre}</option>`).join("")}</select></div>
+      </div>
+      <div class="field"><label>Concepto *</label>
+        <input id="g-concepto" required value="${esc(g?.concepto || "")}" placeholder="Ej: Uber a proveedor, peaje Panamericana…"></div>
+      <div class="field"><label>Proveedor / comercio</label>
+        <input id="g-proveedor" value="${esc(g?.proveedor || "")}" placeholder="Ej: Uber, Autopista del Sol (opcional)"></div>
+      <div class="fila-2">
+        <div class="field"><label>Monto *</label><input type="number" id="g-monto" min="0" step="0.01" required value="${g?.monto ?? ""}"></div>
+        <div class="field"><label>Moneda</label>
+          <select id="g-moneda" onchange="gastoMonedaCambio()">
+            <option value="ARS" ${!usd ? "selected" : ""}>ARS</option>
+            <option value="USD" ${usd ? "selected" : ""}>USD</option></select></div>
+      </div>
+      <div class="field" id="g-tc-wrap" style="display:${usd ? "block" : "none"}"><label>1 USD = ARS</label>
+        <input type="number" id="g-tc" min="0" step="0.01" value="${g?.tipo_cambio || state.config.tipo_cambio || ""}"></div>
+      <div class="field"><label>Método de pago</label>
+        <select id="g-metodo">${GASTO_METODOS.map(([v,n]) => `<option value="${v}" ${g?.metodo_pago === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="field"><label>Notas</label><textarea id="g-notas" placeholder="Opcional">${esc(g?.notas || "")}</textarea></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">${g ? "Guardar cambios" : "Registrar gasto"}</button>
+      </div>
+    </form>`);
+}
+function gastoMonedaCambio(){
+  const usd = $("g-moneda").value === "USD";
+  $("g-tc-wrap").style.display = usd ? "block" : "none";
+  if (usd && !$("g-tc").value) $("g-tc").value = state.config.tipo_cambio || "";
+}
+async function guardarGasto(e, id){
+  e.preventDefault();
+  const moneda = $("g-moneda").value;
+  const monto = Math.max(0, +$("g-monto").value || 0);
+  if (!monto) return toast("Ingresá un monto válido.", "error");
+  const concepto = $("g-concepto").value.trim();
+  if (!concepto) return toast("El concepto no puede quedar vacío.", "error");
+  const datos = {
+    fecha: $("g-fecha").value || hoyISO(),
+    categoria: $("g-categoria").value,
+    concepto,
+    proveedor: $("g-proveedor").value.trim() || null,
+    monto,
+    moneda,
+    tipo_cambio: moneda === "USD" ? (Math.max(0, +$("g-tc").value) || Number(state.config.tipo_cambio) || 1) : 1,
+    metodo_pago: $("g-metodo").value,
+    notas: $("g-notas").value.trim() || null
+  };
+  if (!id) datos.cargado_por = state.perfil?.nombre || state.user?.email || null;
+  const res = id
+    ? await sb.from("gastos").update(datos).eq("id", id).select().single()
+    : await sb.from("gastos").insert(datos).select().single();
+  if (res.error) return toast("No se pudo guardar: " + res.error.message, "error");
+  toast(id ? "Gasto actualizado" : "Gasto registrado", "ok");
+  cerrarModal();
+  await cargarGastos();
+}
+async function borrarGasto(id){
+  const g = state.gastos.find(x => x.id === id);
+  if (!g) return;
+  if (!confirm(`¿Eliminar el gasto "${g.concepto}" por ${fMoneda(g.monto, g.moneda)}? No se puede deshacer.`)) return;
+  const { error } = await sb.from("gastos").delete().eq("id", id);
+  if (error) return toast("No se pudo eliminar: " + error.message, "error");
+  toast("Gasto eliminado", "ok");
+  await cargarGastos();
+}
+function exportarGastos(){
+  const filas = state.gastos.map(g => ({
+    "Fecha": g.fecha, "Categoría": nombreCat(g.categoria), "Concepto": g.concepto,
+    "Proveedor": g.proveedor || "", "Monto": Number(g.monto), "Moneda": g.moneda,
+    "TC": Number(g.tipo_cambio || 1), "Monto ARS": gastoARS(g),
+    "Método": nombreMetodoGasto(g.metodo_pago), "Notas": g.notas || "", "Cargado por": g.cargado_por || ""
+  }));
+  if (!filas.length) return toast("No hay gastos para exportar.", "error");
+  descargarXLSX([{ nombre: "Gastos", filas }], "biotopium-gastos-" + hoyISO());
+}
+
+/* ---------------- COTIZACIONES DÓLAR (dolarapi.com) ---------------- */
+/* Trae Oficial / Blue / MEP. Se usa el valor VENTA de cada uno. Sin API key, con CORS. */
+const COTIZ_DEFS = [
+  { key: "oficial", nombre: "Oficial", url: "https://dolarapi.com/v1/dolares/oficial" },
+  { key: "blue",    nombre: "Blue",    url: "https://dolarapi.com/v1/dolares/blue" },
+  { key: "mep",     nombre: "MEP",     url: "https://dolarapi.com/v1/dolares/bolsa" },
+];
+const nombreFuente = k => (COTIZ_DEFS.find(d => d.key === k) || {}).nombre || "Manual";
+/* Valor de venta de una fuente ya cargada (o null). */
+function tcDeFuente(key){
+  const c = state.cotizaciones[key];
+  return c ? Number(c.venta || c.compra || 0) : null;
+}
+async function traerCotizaciones(manual){
+  const btn = $("cfg-tc-refrescar");
+  if (btn){ btn.disabled = true; btn.textContent = "Actualizando…"; }
+  try {
+    const res = await Promise.allSettled(COTIZ_DEFS.map(d => fetch(d.url).then(r => r.json())));
+    let ok = 0;
+    res.forEach((r, i) => {
+      if (r.status === "fulfilled" && r.value && (r.value.venta || r.value.compra)){
+        state.cotizaciones[COTIZ_DEFS[i].key] = { compra: Number(r.value.compra) || 0, venta: Number(r.value.venta) || 0 };
+        ok++;
+      }
+    });
+    if (!ok){ if (manual) toast("No se pudieron traer las cotizaciones. Cargalas a mano.", "error"); return false; }
+    if (manual) toast("Cotizaciones actualizadas.", "ok");
+    if (vistaActual === "config") renderCotizaciones();
+    return true;
+  } catch(e){
+    if (manual) toast("Error al consultar el dólar: " + e.message, "error");
+    return false;
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = "Actualizar cotizaciones"; }
+  }
+}
+/* Render de las 3 tarjetas de cotización en Configuración. */
+function renderCotizaciones(){
+  const cont = $("cfg-cotiz"); if (!cont) return;
+  cont.innerHTML = COTIZ_DEFS.map(d => {
+    const c = state.cotizaciones[d.key];
+    const activa = state.tcFuente === d.key;
+    return `<button type="button" class="cotiz-card ${activa ? "activa" : ""}" onclick="elegirFuenteTC('${d.key}')">
+      <div class="cotiz-nom">${d.nombre}${activa ? ' <span class="cotiz-check">✓</span>' : ""}</div>
+      <div class="cotiz-venta num">${c ? fmtARS.format(c.venta) : "—"}</div>
+      <div class="cotiz-compra num">compra ${c ? fmtARS.format(c.compra) : "—"}</div>
+    </button>`;
+  }).join("");
+}
+/* Elegir la fuente por defecto: precarga el campo manual con su venta. */
+function elegirFuenteTC(key){
+  const v = tcDeFuente(key);
+  if (v == null){ toast("Esa cotización todavía no cargó.", "error"); return; }
+  state.tcFuente = key;
+  localStorage.setItem("bt_tc_fuente", key);
+  $("cfg-tc").value = v;
+  renderCotizaciones();
+}
+
 /* ---------------- CONFIGURACIÓN (admin) ---------------- */
 async function cargarConfigVista(){
   $("cfg-tc").value = state.config.tipo_cambio;
   $("cfg-margen").value = state.config.margen_default ?? 40;
+  renderCotizaciones();
+  if (!state.cotizaciones.oficial) traerCotizaciones(false);
   renderCategoriasCfg();
   $("cfg-usuarios").innerHTML = '<div class="cargando">Cargando equipo…</div>';
   const { data } = await sb.from("perfiles").select("*").order("nombre");
