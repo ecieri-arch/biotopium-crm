@@ -557,7 +557,10 @@ td.der,th.der{text-align:right}
         <div class="card"><h3>Cobros por método</h3><div id="rep-pagos"></div></div>
         <div class="card"><h3>Mermas y consumo interno</h3><div id="rep-movimientos"></div></div>
       </div>
-      <div class="card" style="margin-bottom:16px"><h3>Inversión en compras</h3><div id="rep-compras"></div></div>
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card"><h3>Inversión en compras</h3><div id="rep-compras"></div></div>
+        <div class="card"><h3>Gastos operativos</h3><div id="rep-gastos"></div></div>
+      </div>
       <div class="grid-2" style="margin-bottom:16px">
         <div class="card"><h3>Mejores clientes del período</h3><div id="rep-top-clientes"></div></div>
         <div class="card"><h3>Clientes para reactivar</h3><div id="rep-inactivos"></div></div>
@@ -1519,13 +1522,14 @@ async function renderDashboard(){
   const ticket = mesActual.length ? totMes / mesActual.length : 0;
   // Compras/gastos del mes = tabla legacy `compras` + solapa `gastos`.
   // Las categorías de inventario (mercadería) suman a lo invertido pero NO se restan del neto.
-  const INV_CATS = new Set(["mercaderia"]);
-  const gTab = (gastosMesData || []).filter(g => (g.fecha || "").slice(0,7) === inicioMes.toISOString().slice(0,7));
-  const gInv = gTab.filter(g => INV_CATS.has(g.categoria)).reduce((s,g) => s + gastoARS(g), 0);
-  const gOp  = gTab.filter(g => !INV_CATS.has(g.categoria)).reduce((s,g) => s + gastoARS(g), 0);
+  // Inversión en compras = adquisición de productos/stock (tabla `compras`, alimentada por "Ajustar → Ingreso").
+  // Gastos = operativos (comida, viajes, servicios) de la solapa Gastos. Son cosas distintas.
+  const gTabMes = (gastosMesData || []).filter(g => (g.fecha || "").slice(0,7) === inicioMes.toISOString().slice(0,7));
+  const gastosTab = gTabMes.reduce((s,g) => s + gastoARS(g), 0);
   const comprasMesL = (comprasMes || []).filter(c => new Date(c.created_at) >= inicioMes);
-  const invMes = comprasMesL.reduce((s,c) => s + Number(c.monto), 0) + gInv + gOp;
-  const gastosMes = comprasMesL.filter(c => c.tipo !== "producto").reduce((s,c) => s + Number(c.monto), 0) + gOp;
+  const invMes = comprasMesL.filter(c => c.tipo === "producto").reduce((s,c) => s + Number(c.monto), 0);
+  // Gasto operativo del mes = solapa Gastos + compras legacy que no eran producto (servicios/otros).
+  const gastosMes = gastosTab + comprasMesL.filter(c => c.tipo !== "producto").reduce((s,c) => s + Number(c.monto), 0);
   const mermasMes = (movMes || []).filter(m => m.tipo === "merma" || m.tipo === "consumo")
     .reduce((s,m) => s + Number(m.cantidad) * Number(m.costo_usd || 0) * Number(m.tipo_cambio || 1), 0);
   const neto = ganMes - mermasMes - gastosMes;
@@ -1567,7 +1571,10 @@ async function renderDashboard(){
       <div class="extra">${esAdmin ? "Ganancia − mermas − gastos" : "Visible para admin"}</div></div>
     <div class="metrica ${invMes ? "alerta" : ""}" data-g="c"><div class="icono">📦</div><div class="rotulo">Invertido en compras</div>
       <div class="valor num">${esAdmin ? fmtARS.format(invMes) : "—"}</div>
-      <div class="extra">${esAdmin ? "Productos y servicios este mes" : "Visible para admin"}</div></div>
+      <div class="extra">${esAdmin ? "Productos / stock adquirido este mes" : "Visible para admin"}</div></div>
+    <div class="metrica ${gastosMes ? "alerta" : ""}" data-g="d"><div class="icono">💸</div><div class="rotulo">Gastos del mes</div>
+      <div class="valor num">${esAdmin ? fmtARS.format(gastosMes) : "—"}</div>
+      <div class="extra">${esAdmin ? "Comida, viajes, servicios, operativos" : "Visible para admin"}</div></div>
     <div class="metrica ${porCobrar ? "alerta" : ""}" data-g="d"><div class="icono">🧾</div><div class="rotulo">Cuentas por cobrar</div>
       <div class="valor num">${fmtARS.format(porCobrar)}</div>
       <div class="extra">${porCobrar ? "Saldos de clientes pendientes" : "Todo cobrado"}</div></div>
@@ -1801,6 +1808,18 @@ async function guardarProducto(e, id){
     ? await sb.from("productos").update(datos).eq("id", id)
     : await sb.from("productos").insert(datos);
   if (error) return toast("No se pudo guardar: " + error.message, "error");
+  // Alta con stock inicial → registrar la inversión en compras (para el dashboard).
+  if (!id && Number(datos.stock) > 0 && Number(datos.costo) > 0){
+    const tc = Number(state.config.tipo_cambio) || 1;
+    const costoUnitARS = datos.costo_moneda === "ARS" ? Number(datos.costo) : Number(datos.costo) * tc;
+    const montoInv = Math.round(costoUnitARS * Number(datos.stock) * 100) / 100;
+    if (montoInv > 0){
+      sb.rpc("registrar_compra", {
+        p_concepto: "Stock inicial: " + datos.nombre, p_tipo: "producto", p_monto: montoInv,
+        p_proveedor: "", p_nota: "Alta de producto con stock inicial", p_fecha: null
+      }).then(({ error: e }) => { if (e) console.warn("No se registró la inversión inicial:", e.message); });
+    }
+  }
   toast(id ? "Producto actualizado" : "Producto creado", "ok");
   cerrarModal(); cargarProductos();
 }
@@ -3048,11 +3067,12 @@ async function cargarReporte(){
   const seis = new Date(); seis.setMonth(seis.getMonth() - 5); seis.setDate(1); seis.setHours(0,0,0,0);
   const rangeStart = new Date(Math.min(prevDesde.getTime(), seis.getTime())).toISOString();
 
-  const [{ data: ventasAll }, { data: comprasAll }, { data: movs }] = await Promise.all([
+  const [{ data: ventasAll }, { data: comprasAll }, { data: movs }, { data: gastosAll }] = await Promise.all([
     sb.from("ventas").select("*, clientes(nombre), perfiles(nombre)")
       .gte("created_at", rangeStart).lte("created_at", hastaFin).order("created_at"),
     sb.from("compras").select("*").gte("created_at", rangeStart).lte("created_at", hastaFin).order("created_at"),
-    sb.from("movimientos_stock").select("*").gte("created_at", desde).lte("created_at", hastaFin).order("created_at")
+    sb.from("movimientos_stock").select("*").gte("created_at", desde).lte("created_at", hastaFin).order("created_at"),
+    sb.from("gastos").select("*").gte("fecha", desde).lte("fecha", hasta).order("fecha")
   ]);
 
   const enRango = (arr, a, b) => (arr || []).filter(x => x.created_at >= a && x.created_at <= b);
@@ -3060,6 +3080,7 @@ async function cargarReporte(){
   state.repVentasPrev = enRango(ventasAll, prevDesde.toISOString(), prevHasta.toISOString().slice(0,10) + "T23:59:59");
   state.repVentas6m = ventasAll || [];
   state.repCompras = enRango(comprasAll, desde, hastaFin);
+  state.repGastos = gastosAll || [];
   state.repComprasPrev = enRango(comprasAll, prevDesde.toISOString(), prevHasta.toISOString().slice(0,10) + "T23:59:59");
   state.repCompras6m = comprasAll || [];
   state.repMovs = movs || [];
@@ -3194,7 +3215,7 @@ function renderReporte(){
   if (!esAdmin){
     $("rep-compras").innerHTML = '<div class="vacio" style="padding:18px"><b>Visible para admin</b></div>';
   } else if (!compras.length){
-    $("rep-compras").innerHTML = '<div class="vacio" style="padding:18px"><b>Sin compras en el período</b><span style="font-size:13px">Registrá reposiciones desde “Ajustar” o gastos con “+ Registrar gasto”.</span></div>';
+    $("rep-compras").innerHTML = '<div class="vacio" style="padding:18px"><b>Sin compras en el período</b><span style="font-size:13px">La inversión se registra al ingresar stock: “Ajustar → Ingreso” con su costo, o al crear un producto con stock inicial.</span></div>';
   } else {
     const maxC = Math.max(...Object.values(porTipoC), 1);
     $("rep-compras").innerHTML = Object.entries(porTipoC).filter(([,t]) => t > 0).map(([k, t]) => `
@@ -3221,6 +3242,29 @@ function renderReporte(){
             <span>${fFecha(c.created_at)} · ${esc(c.concepto || nombreTipoC[c.tipo])}${c.proveedor ? " · " + esc(c.proveedor) : ""}</span>
             <b class="num">${fmtARS.format(c.monto)}</b></div>`).join("")}
       </div>`;
+  }
+
+  // Gastos operativos (solapa Gastos, por categoría)
+  const gastosRep = state.repGastos || [];
+  const porCatG = {};
+  gastosRep.forEach(g => { const k = g.categoria || "otros"; porCatG[k] = (porCatG[k] || 0) + gastoARS(g); });
+  const totalG = gastosRep.reduce((s,g) => s + gastoARS(g), 0);
+  if (!esAdmin){
+    $("rep-gastos").innerHTML = '<div class="vacio" style="padding:18px"><b>Visible para admin</b></div>';
+  } else if (!gastosRep.length){
+    $("rep-gastos").innerHTML = '<div class="vacio" style="padding:18px"><b>Sin gastos en el período</b><span style="font-size:13px">Cargalos desde la solapa Gastos.</span></div>';
+  } else {
+    const catsG = Object.entries(porCatG).sort((a,b) => b[1] - a[1]);
+    const maxG = Math.max(...catsG.map(c => c[1]), 1);
+    $("rep-gastos").innerHTML = catsG.map(([k, t]) => `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:4px">
+          <span>${esc(nombreCat(k))}</span><b class="num">${fmtARS.format(t)}</b></div>
+        <div style="height:8px;background:var(--agua-claro);border-radius:99px">
+          <div style="height:100%;width:${t / maxG * 100}%;background:var(--rojo);border-radius:99px"></div></div>
+      </div>`).join("") +
+      `<div style="display:flex;justify-content:space-between;padding-top:8px;font-size:15px">
+        <b>Total gastos</b><b class="num">${fmtARS.format(totalG)}</b></div>`;
   }
 
   // Detalle
@@ -3559,7 +3603,6 @@ async function exportarBackup(){
 
 /* ---------------- GASTOS ---------------- */
 const GASTO_CATS = [
-  { id:"mercaderia",   nombre:"Compra de mercadería / stock" },
   { id:"transporte",   nombre:"Uber / transporte" },
   { id:"peaje",        nombre:"Peaje" },
   { id:"combustible",  nombre:"Combustible" },
