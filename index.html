@@ -615,6 +615,22 @@ td.der,th.der{text-align:right}
       <div class="tabla-wrap" id="gastos-tabla"></div>
     </section>
 
+    <!-- ===== EL ESTUARIO ===== -->
+    <section class="vista" id="view-estuario">
+      <div class="vista-head">
+        <div><h2>El Estuario</h2><p>Negocio conjunto · gestiona Biotopium · ganancias 50/50 sobre costo real</p></div>
+        <div class="acciones" id="est-acciones"></div>
+      </div>
+      <div id="est-resumen" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div class="filtros" style="gap:6px">
+        <button class="btn btn-suave" id="est-tab-proyectos" onclick="estTab('proyectos')">Proyectos</button>
+        <button class="btn btn-borde" id="est-tab-leads" onclick="estTab('leads')">Leads</button>
+        <button class="btn btn-borde" id="est-tab-ventas" onclick="estTab('ventas')">Ventas</button>
+        <button class="btn btn-borde" id="est-tab-liquidacion" onclick="estTab('liquidacion')">Liquidación</button>
+      </div>
+      <div id="est-cuerpo"></div>
+    </section>
+
     <!-- ===== CONFIGURACIÓN ===== -->
     <section class="vista" id="view-config">
       <div class="vista-head">
@@ -748,7 +764,8 @@ const ICONOS = {
   presupuestos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>',
   smd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 11-5.5 1.5 1.6 2.3 3.4 2.5 5.5-.2 2.1-1 3.9-2.5 5.5-5 .5-9-1.5-11-5.5z"/><path d="M6.5 12 3 8.5c-.3 2.3-.3 4.7 0 7L6.5 12z"/><circle cx="15.5" cy="10.5" r="0.5" fill="currentColor"/></svg>',
   gastos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h5"/></svg>',
-  envios:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8h13v9H1z"/><path d="M14 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.8"/><circle cx="17.5" cy="19" r="1.8"/></svg>'
+  envios:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8h13v9H1z"/><path d="M14 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.8"/><circle cx="17.5" cy="19" r="1.8"/></svg>',
+  estuario:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M3 20c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M12 12a4 4 0 0 0 4-4c0-2.2-1.8-4-4-4S8 5.8 8 8a4 4 0 0 0 4 4z"/></svg>'
 };
 const VISTAS = [
   { id:"dashboard", nombre:"Inicio" },
@@ -761,6 +778,7 @@ const VISTAS = [
   { id:"reportes",  nombre:"Reportes" },
   { id:"gastos",    nombre:"Gastos" },
   { id:"smd",       nombre:"SM Discus", aparte:true },
+  { id:"estuario",  nombre:"El Estuario" },
   { id:"config",    nombre:"Configuración", admin:true }
 ];
 const NAV_MOBILE = ["dashboard","ventas","leads","productos","smd","reportes"];
@@ -768,11 +786,14 @@ let vistaActual = "dashboard";
 
 function construirNav(){
   const admin = state.perfil?.rol === "admin";
-  $("sb-nav").innerHTML = VISTAS.filter(v => !v.admin || admin).map(v =>
+  const partner = state.perfil?.rol === "partner";
+  const visibles = partner ? VISTAS.filter(v => v.id === "estuario")
+                           : VISTAS.filter(v => !v.admin || admin);
+  $("sb-nav").innerHTML = visibles.map(v =>
     (v.aparte ? '<div style="height:1px;background:rgba(255,255,255,.12);margin:10px 8px"></div>' : "") +
     `<button class="sb-item" data-v="${v.id}" onclick="nav('${v.id}')">${ICONOS[v.id]}<span>${v.nombre}</span></button>`
   ).join("");
-  $("bottom-nav").innerHTML = NAV_MOBILE.map(id => {
+  $("bottom-nav").innerHTML = (partner ? ["estuario"] : NAV_MOBILE).map(id => {
     const v = VISTAS.find(x => x.id === id);
     return `<button class="bn-item" data-v="${id}" onclick="nav('${id}')">${ICONOS[id]}<span>${v.nombre}</span></button>`;
   }).join("");
@@ -780,6 +801,7 @@ function construirNav(){
 
 function nav(id){
   if (id === "config" && state.perfil?.rol !== "admin") return;
+  if (state.perfil?.rol === "partner" && id !== "estuario") return;
   vistaActual = id;
   document.querySelectorAll(".vista").forEach(v => v.classList.remove("activa"));
   $("view-" + id).classList.add("activa");
@@ -792,6 +814,7 @@ function nav(id){
     clientes: cargarClientes, productos: cargarProductos, presupuestos: cargarPresupuestos,
     envios: cargarEnvios,
     smd: cargarSMD, reportes: cargarReporte, config: cargarConfigVista,
+    estuario: cargarEstuario,
     gastos: cargarGastos
   };
   cargas[id]?.();
@@ -993,6 +1016,11 @@ async function iniciarApp(){
   $("login").style.display = "none";
   $("app").style.display = "block";
   construirNav();
+  if (state.perfil.rol === "partner"){
+    // El socio solo ve el módulo El Estuario; el resto del CRM está bloqueado por RLS.
+    nav("estuario");
+    return;
+  }
   await Promise.all([cargarBase(), cargarProductosData(), cargarClientesData()]);
   traerCotizaciones(false);
   nav("dashboard");
@@ -1607,6 +1635,20 @@ async function renderDashboard(){
   ]);
   await cargarProductosData();
 
+  // El Estuario: ganancia del mes (tolerante a migración faltante)
+  let estGanMes = null;
+  { const [{ data: ev, error: eE1 }, { data: ep, error: eE2 }] = await Promise.all([
+      sb.from("est_ventas").select("ganancia,estado,created_at").gte("created_at", inicioMes.toISOString()),
+      sb.from("est_proyectos").select("precio_total,mano_obra,id,estado,cerrado_at")
+    ]);
+    if (!eE1 && !eE2){
+      const { data: ec } = await sb.from("est_costos").select("proyecto_id,monto");
+      const costoP = id => (ec || []).filter(c => c.proyecto_id === id).reduce((s,c) => s + Number(c.monto), 0);
+      estGanMes = (ev || []).filter(v => v.estado === "completada").reduce((s,v) => s + Number(v.ganancia), 0)
+        + (ep || []).filter(p => p.estado === "cerrado" && p.cerrado_at && new Date(p.cerrado_at) >= inicioMes)
+            .reduce((s,p) => s + Number(p.precio_total) - costoP(p.id) - Number(p.mano_obra || 0), 0);
+    } }
+
   // Envíos (query aparte y tolerante: si falta la migración SQL, la card no se muestra)
   let envMes = null, envPend = 0;
   { const { data: envs, error: eEnv } = await sb.from("ventas")
@@ -1614,6 +1656,13 @@ async function renderDashboard(){
     if (!eEnv){
       envMes = (envs || []).filter(v => new Date(v.created_at) >= inicioMes).length;
       envPend = (envs || []).filter(v => v.estado_envio === "pendiente").length;
+      // + envíos del negocio El Estuario (misma cola)
+      const { data: envsEst, error: eEnvEst } = await sb.from("est_ventas")
+        .select("id,created_at,estado,estado_envio").eq("entrega", "envio").neq("estado", "anulada");
+      if (!eEnvEst){
+        envMes += (envsEst || []).filter(v => new Date(v.created_at) >= inicioMes).length;
+        envPend += (envsEst || []).filter(v => v.estado_envio === "pendiente").length;
+      }
     } }
 
   const enARS = v => v.moneda === "USD" ? v.total * (v.tipo_cambio || 1) : v.total;
@@ -1691,6 +1740,11 @@ async function renderDashboard(){
       <div class="icono">🚚</div><div class="rotulo">Ventas con envío</div>
       <div class="valor num">${envMes}</div>
       <div class="extra">${envPend ? envPend + " pendiente" + (envPend > 1 ? "s" : "") + " de despacho" : "Nada pendiente de despachar"}</div></div>`}
+    ${estGanMes === null ? "" : `
+    <div class="metrica" data-g="b" style="cursor:pointer" onclick="nav('estuario')">
+      <div class="icono">🌊</div><div class="rotulo">El Estuario · ganancia mes</div>
+      <div class="valor num">${esAdmin ? fmtARS.format(estGanMes) : "—"}</div>
+      <div class="extra">${esAdmin ? "50% socio: " + fmtARS.format(estGanMes * 0.5) : "Visible para admin"}</div></div>`}
     <div class="metrica ok" data-g="c"><div class="icono">💬</div><div class="rotulo">Leads activos</div>
       <div class="valor num">${(leadsAct || []).length}</div>
       <div class="extra">En seguimiento</div></div>
@@ -3571,7 +3625,14 @@ async function cargarEnvios(){
         : esc(error.message)}</div>`;
     return;
   }
-  state.envios = data || [];
+  // Envíos del negocio El Estuario (si la migración existe, se suman a la cola)
+  const { data: dataEst } = await sb.from("est_ventas").select("*")
+    .eq("entrega", "envio").neq("estado", "anulada")
+    .order("created_at", { ascending: false }).limit(300);
+  state.envios = [
+    ...(data || []),
+    ...(dataEst || []).map(v => ({ ...v, _est: true, clientes: { nombre: v.cliente_nombre, telefono: v.cliente_telefono } }))
+  ].sort((a,b) => b.created_at.localeCompare(a.created_at));
   renderEnvios();
 }
 function renderEnvios(){
@@ -3590,8 +3651,8 @@ function renderEnvios(){
       <th>Venta</th><th>Fecha</th><th>Cliente</th><th>Dirección</th><th>Transporte</th>
       <th class="der">Total</th><th>Estado</th><th></th>
     </tr></thead><tbody>` +
-    lista.map(v => `<tr class="fila-click" onclick="verEnvio(${v.id})">
-      <td class="num"><b>#${v.id}</b></td>
+    lista.map(v => `<tr class="fila-click" onclick="verEnvio(${v.id}, ${!!v._est})">
+      <td class="num"><b>#${v.id}</b>${v._est ? '<br><span class="chip agua" style="font-size:10.5px;padding:1px 7px">Estuario</span>' : ""}</td>
       <td class="num">${fFecha(v.created_at)}</td>
       <td>${esc(v.clientes?.nombre || "Consumidor final")}</td>
       <td style="font-size:13.5px;color:var(--gris);max-width:220px">${esc(v.direccion_envio || "—")}</td>
@@ -3602,18 +3663,18 @@ function renderEnvios(){
         : '<span class="chip alerta">Pendiente</span>'}</td>
       <td class="der acciones-fila" onclick="event.stopPropagation()">
         ${v.estado_envio === "pendiente"
-          ? `<button class="btn btn-chico btn-primario" onclick="marcarEnviado(${v.id})">Marcar enviado</button>`
-          : `<button class="btn btn-chico btn-suave" onclick="volverPendiente(${v.id})">Volver a pendiente</button>`}
+          ? `<button class="btn btn-chico btn-primario" onclick="marcarEnviado(${v.id}, false, ${!!v._est})">Marcar enviado</button>`
+          : `<button class="btn btn-chico btn-suave" onclick="volverPendiente(${v.id}, ${!!v._est})">Volver a pendiente</button>`}
       </td>
     </tr>`).join("") + "</tbody></table>";
 }
 ["env-filtro-estado","env-busca"].forEach(id => $(id)?.addEventListener("input", renderEnvios));
 
-function verEnvio(id){
-  const v = state.envios.find(x => x.id === id);
+function verEnvio(id, esEst){
+  const v = state.envios.find(x => x.id === id && !!x._est === !!esEst);
   if (!v) return;
-  abrirModal(`Envío · Venta #${v.id}`, `
-    <form onsubmit="guardarEnvio(event, ${v.id})">
+  abrirModal(`Envío · Venta ${esEst ? "Estuario " : ""}#${v.id}`, `
+    <form onsubmit="guardarEnvio(event, ${v.id}, ${!!esEst})">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
         <span class="chip gris">${fFechaHora(v.created_at)}</span>
         <span class="chip ${v.estado_envio === "enviado" ? "ok" : "alerta"}">${v.estado_envio === "enviado" ? "Enviado" : "Pendiente"}</span>
@@ -3637,13 +3698,14 @@ function verEnvio(id){
         <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cerrar</button>
         <button type="submit" class="btn btn-suave">Guardar datos</button>
         ${v.estado_envio === "pendiente"
-          ? `<button type="button" class="btn btn-primario" onclick="marcarEnviado(${v.id}, true)">Marcar enviado</button>` : ""}
+          ? `<button type="button" class="btn btn-primario" onclick="marcarEnviado(${v.id}, true, ${!!esEst})">Marcar enviado</button>` : ""}
+        ${esEst ? `<button type="button" class="btn btn-suave" onclick="verVentaEst(${v.id})">Ver venta</button>` : ""}
       </div>
     </form>`);
 }
-async function guardarEnvio(e, id){
+async function guardarEnvio(e, id, esEst){
   e.preventDefault();
-  const { error } = await sb.from("ventas").update({
+  const { error } = await sb.from(esEst ? "est_ventas" : "ventas").update({
     direccion_envio: $("ge-dir").value.trim(),
     envio_transporte: $("ge-transporte").value || null,
     envio_seguimiento: $("ge-seguimiento").value.trim() || null
@@ -3652,27 +3714,938 @@ async function guardarEnvio(e, id){
   toast("Datos de envío actualizados", "ok");
   cerrarModal(); cargarEnvios();
 }
-async function marcarEnviado(id, desdeModal){
+async function marcarEnviado(id, desdeModal, esEst){
   // Si el modal está abierto con datos editados, los persiste antes de despachar.
   const extra = desdeModal ? {
     direccion_envio: $("ge-dir").value.trim(),
     envio_transporte: $("ge-transporte").value || null,
     envio_seguimiento: $("ge-seguimiento").value.trim() || null
   } : {};
-  const { error } = await sb.from("ventas")
+  const { error } = await sb.from(esEst ? "est_ventas" : "ventas")
     .update({ ...extra, estado_envio: "enviado", enviado_at: new Date().toISOString() }).eq("id", id);
   if (error) return toast("No se pudo marcar: " + error.message, "error");
   toast(`Venta #${id} marcada como enviada.`, "ok");
   if (desdeModal) cerrarModal();
   cargarEnvios();
 }
-async function volverPendiente(id){
-  const { error } = await sb.from("ventas")
+async function volverPendiente(id, esEst){
+  const { error } = await sb.from(esEst ? "est_ventas" : "ventas")
     .update({ estado_envio: "pendiente", enviado_at: null }).eq("id", id);
   if (error) return toast("No se pudo cambiar: " + error.message, "error");
   toast(`Venta #${id} vuelve a pendiente de envío.`, "ok");
   cargarEnvios();
 }
+
+/* ==================== EL ESTUARIO ==================== */
+/* Mini negocio con P&L propio: proyectos (acuarios a medida), ventas de
+   productos a costo real, envíos al interior y liquidación 50/50 sobre
+   ganancia cobrada. El socio (rol partner) ve todo, solo Biotopium opera. */
+const EST_SPLIT = 0.5;
+const EST_RUBROS = { pecera:"Pecera / vidrio", mueble:"Mueble", equipamiento:"Equipamiento",
+  sustrato_plantas:"Sustrato / plantas", peces:"Peces", insumos:"Insumos", flete:"Flete", otro:"Otro" };
+const EST_ESTADOS = { presupuestado:["alerta","Presupuestado"], senado:["agua","Señado"],
+  en_armado:["agua","En armado"], entregado:["ok","Entregado"], cerrado:["ok","Cerrado"],
+  cancelado:["rojo","Cancelado"] };
+let estTabActual = "proyectos";
+
+const estGanProyecto = p => Number(p.precio_total) - estCostoProyecto(p);
+function estCostoProyecto(p){
+  const costos = (state.estCostos || []).filter(c => c.proyecto_id === p.id)
+    .reduce((s,c) => s + Number(c.monto), 0);
+  return costos + Number(p.mano_obra || 0);
+}
+const estLiquidableVenta = v => v.estado === "completada" && !v.liquidacion_id && Number(v.cobrado) >= Number(v.total) - 0.5;
+const estLiquidableProy = p => p.estado === "cerrado" && !p.liquidacion_id && Number(p.cobrado) >= Number(p.precio_total) - 0.5;
+
+async function cargarEstuario(){
+  $("est-cuerpo").innerHTML = '<div class="cargando">Cargando El Estuario…</div>';
+  const [{ data: proys, error: e1 }, { data: costos }, { data: ventas }, { data: liqs }, { data: leads }] = await Promise.all([
+    sb.from("est_proyectos").select("*").order("created_at", { ascending: false }),
+    sb.from("est_costos").select("*").order("created_at"),
+    sb.from("est_ventas").select("*").order("created_at", { ascending: false }).limit(400),
+    sb.from("est_liquidaciones").select("*").order("created_at", { ascending: false }),
+    sb.from("est_leads").select("*").order("created_at", { ascending: false })
+  ]);
+  if (e1){
+    $("est-cuerpo").innerHTML = `<div class="vacio"><b>Falta la migración</b>
+      Corré migracion-estuario.sql en Supabase → SQL Editor y recargá.</div>`;
+    $("est-resumen").innerHTML = ""; $("est-acciones").innerHTML = "";
+    return;
+  }
+  state.estProyectos = proys || [];
+  state.estCostos = costos || [];
+  state.estVentas = ventas || [];
+  state.estLiqs = liqs || [];
+  state.estLeads = leads || [];
+  renderEstuario();
+}
+function estTab(t){ estTabActual = t;
+  ["proyectos","leads","ventas","liquidacion"].forEach(x =>
+    $("est-tab-" + x).className = "btn " + (x === t ? "btn-suave" : "btn-borde"));
+  renderEstuario();
+}
+function renderEstuario(){
+  const esPartner = state.perfil.rol === "partner";
+  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
+
+  // Resumen: ganancia del mes (operaciones del mes), pendiente de liquidar, saldo al socio
+  const ventasMes = state.estVentas.filter(v => v.estado === "completada" && new Date(v.created_at) >= inicioMes);
+  const ganMes = ventasMes.reduce((s,v) => s + Number(v.ganancia), 0)
+    + state.estProyectos.filter(p => p.estado === "cerrado" && p.cerrado_at && new Date(p.cerrado_at) >= inicioMes)
+        .reduce((s,p) => s + estGanProyecto(p), 0);
+  const pendLiq = state.estVentas.filter(estLiquidableVenta).reduce((s,v) => s + Number(v.ganancia), 0)
+    + state.estProyectos.filter(estLiquidableProy).reduce((s,p) => s + estGanProyecto(p), 0);
+  const saldoSocio = state.estLiqs.reduce((s,l) => s + Number(l.monto_socio) - Number(l.pagado_socio || 0), 0);
+  const enviosPend = state.estVentas.filter(v => v.estado === "completada" && v.estado_envio === "pendiente").length;
+  $("est-resumen").innerHTML = `
+    <span class="chip agua">Ganancia del mes: <b class="num" style="margin-left:4px">${fmtARS.format(ganMes)}</b></span>
+    <span class="chip ${pendLiq > 0 ? "alerta" : "gris"}">Pendiente de liquidar: <b class="num" style="margin-left:4px">${fmtARS.format(pendLiq)}</b></span>
+    <span class="chip ${saldoSocio > 0.5 ? "alerta" : "ok"}">Saldo al socio: <b class="num" style="margin-left:4px">${fmtARS.format(saldoSocio)}</b></span>
+    ${enviosPend ? `<span class="chip alerta">Envíos pendientes: <b class="num" style="margin-left:4px">${enviosPend}</b></span>` : ""}
+    ${(state.estLeads || []).filter(l => !["ganado","perdido"].includes(l.estado)).length
+      ? `<span class="chip gris">Leads activos: <b class="num" style="margin-left:4px">${state.estLeads.filter(l => !["ganado","perdido"].includes(l.estado)).length}</b></span>` : ""}`;
+
+  $("est-acciones").innerHTML =
+    estTabActual === "leads" ? '<button class="btn btn-primario" onclick="abrirLeadEst()">+ Nuevo lead</button>'
+    : esPartner ? ""
+    : estTabActual === "proyectos" ? '<button class="btn btn-primario" onclick="abrirProyectoEst()">+ Nuevo proyecto</button>'
+    : estTabActual === "ventas" ? '<button class="btn btn-primario" onclick="abrirVentaEst()">+ Nueva venta</button>'
+    : pendLiq > 0.5 ? '<button class="btn btn-primario" onclick="generarLiquidacionEst()">Generar liquidación</button>' : "";
+
+  if (estTabActual === "proyectos") renderEstProyectos(esPartner);
+  else if (estTabActual === "leads") renderEstLeads(esPartner);
+  else if (estTabActual === "ventas") renderEstVentas(esPartner);
+  else renderEstLiquidacion(esPartner);
+}
+
+/* ---------- Proyectos ---------- */
+function renderEstProyectos(esPartner){
+  const lista = state.estProyectos;
+  $("est-cuerpo").innerHTML = !lista.length
+    ? '<div class="vacio"><b>Sin proyectos</b>Cargá el primer acuario a medida con "+ Nuevo proyecto".</div>'
+    : `<div class="tabla-wrap"><table><thead><tr>
+        <th>Proyecto</th><th>Tipo</th><th>Estado</th><th class="der">Precio</th>
+        <th class="der">Cobrado</th><th class="der">Costo real</th><th class="der">Ganancia</th>
+      </tr></thead><tbody>` +
+      lista.map(p => { const c = estCostoProyecto(p), g = estGanProyecto(p);
+        const [cl, tx] = EST_ESTADOS[p.estado] || ["gris", p.estado]; return `
+        <tr class="fila-click" onclick="verProyectoEst(${p.id})">
+          <td><b>${esc(p.nombre)}</b><br><small style="color:var(--gris)">${esc(p.cliente_nombre || "—")}</small></td>
+          <td><span class="chip ${p.tipo === "marino" ? "agua" : "gris"}">${p.tipo === "marino" ? "Marino" : "Dulce"}</span></td>
+          <td><span class="chip ${cl}">${tx}</span>${p.liquidacion_id ? ` <span class="chip gris">Liq #${p.liquidacion_id}</span>` : ""}</td>
+          <td class="der num">${fmtARS.format(p.precio_total)}</td>
+          <td class="der num">${fmtARS.format(p.cobrado)}${Number(p.cobrado) < Number(p.precio_total) - 0.5 ? ' <span class="chip alerta" style="font-size:11px;padding:2px 8px">saldo</span>' : ""}</td>
+          <td class="der num">${fmtARS.format(c)}</td>
+          <td class="der num"><b style="color:${g >= 0 ? "var(--ok)" : "var(--rojo)"}">${fmtARS.format(g)}</b></td>
+        </tr>`; }).join("") + "</tbody></table></div>";
+}
+function abrirProyectoEst(id){
+  const p = id ? state.estProyectos.find(x => x.id === id) : null;
+  abrirModal(p ? "Editar proyecto" : "Nuevo proyecto · acuario a medida", `
+    <form onsubmit="guardarProyectoEst(event, ${id || "null"})">
+      <div class="field"><label>Nombre del proyecto *</label>
+        <input id="ep-nombre" required value="${esc(p?.nombre || "")}" placeholder="Ej: Marino 200L living Fernández"></div>
+      <div class="fila-2">
+        <div class="field"><label>Cliente</label><input id="ep-cli" value="${esc(p?.cliente_nombre || "")}"></div>
+        <div class="field"><label>Teléfono</label><input id="ep-tel" value="${esc(p?.cliente_telefono || "")}"></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>Tipo</label>
+          <select id="ep-tipo">
+            <option value="dulce" ${p?.tipo !== "marino" ? "selected" : ""}>Agua dulce</option>
+            <option value="marino" ${p?.tipo === "marino" ? "selected" : ""}>Marino</option></select></div>
+        <div class="field"><label>Estado</label>
+          <select id="ep-estado">
+            ${Object.entries(EST_ESTADOS).filter(([k]) => k !== "cerrado").map(([k,[,n]]) =>
+              `<option value="${k}" ${p?.estado === k ? "selected" : ""}>${n}</option>`).join("")}
+          </select></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>Precio total (ARS) *</label>
+          <input type="number" id="ep-precio" min="0" step="0.01" required value="${p?.precio_total || ""}"></div>
+        <div class="field"><label>Mano de obra (tarifa fija, costo antes del split)</label>
+          <input type="number" id="ep-mo" min="0" step="0.01" value="${p?.mano_obra || 0}"></div>
+      </div>
+      <div class="field"><label>Dirección de instalación</label><input id="ep-dir" value="${esc(p?.direccion || "")}"></div>
+      <div class="field"><label>Notas</label><input id="ep-notas" value="${esc(p?.notas || "")}"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="${p ? `verProyectoEst(${p.id})` : "cerrarModal()"}">Cancelar</button>
+        <button type="submit" class="btn btn-primario">${p ? "Guardar" : "Crear proyecto"}</button>
+      </div>
+    </form>`);
+}
+async function guardarProyectoEst(e, id){
+  e.preventDefault();
+  const datos = {
+    nombre: $("ep-nombre").value.trim(), cliente_nombre: $("ep-cli").value.trim(),
+    cliente_telefono: $("ep-tel").value.trim(), tipo: $("ep-tipo").value,
+    estado: $("ep-estado").value, precio_total: +$("ep-precio").value || 0,
+    mano_obra: +$("ep-mo").value || 0, direccion: $("ep-dir").value.trim(),
+    notas: $("ep-notas").value.trim(), updated_at: new Date().toISOString()
+  };
+  const { error } = id
+    ? await sb.from("est_proyectos").update(datos).eq("id", id)
+    : await sb.from("est_proyectos").insert(datos);
+  if (error) return toast("No se pudo guardar: " + error.message, "error");
+  toast(id ? "Proyecto actualizado" : "Proyecto creado", "ok");
+  cerrarModal(); cargarEstuario();
+}
+function verProyectoEst(id){
+  const p = state.estProyectos.find(x => x.id === id);
+  if (!p) return;
+  const esPartner = state.perfil.rol === "partner";
+  const costos = state.estCostos.filter(c => c.proyecto_id === id);
+  const costoTot = estCostoProyecto(p), gan = estGanProyecto(p);
+  const saldo = Number(p.precio_total) - Number(p.cobrado);
+  const [cl, tx] = EST_ESTADOS[p.estado] || ["gris", p.estado];
+  const bloqueado = !!p.liquidacion_id;
+  abrirModal(`Proyecto · ${p.nombre}`, `
+    <div class="modal-cuerpo">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip ${p.tipo === "marino" ? "agua" : "gris"}">${p.tipo === "marino" ? "Marino" : "Agua dulce"}</span>
+        <span class="chip ${cl}">${tx}</span>
+        ${bloqueado ? `<span class="chip gris">Liquidado #${p.liquidacion_id}</span>` : ""}
+        ${saldo > 0.5 ? `<span class="chip alerta">Saldo ${fmtARS.format(saldo)}</span>` : '<span class="chip ok">Cobrado 100%</span>'}
+      </div>
+      <div style="font-size:14px;color:var(--gris)">
+        ${esc(p.cliente_nombre || "Sin cliente")}${p.cliente_telefono ? " · 📞 " + esc(p.cliente_telefono) : ""}
+        ${p.direccion ? "<br>📍 " + esc(p.direccion) : ""}</div>
+
+      <div class="totales">
+        <div class="fila-total"><span>Precio del proyecto</span><b class="num">${fmtARS.format(p.precio_total)}</b></div>
+        <div class="fila-total"><span>Cobrado</span><span class="num">${fmtARS.format(p.cobrado)}</span></div>
+        <div class="fila-total"><span>Costos cargados</span><span class="num">− ${fmtARS.format(costoTot - Number(p.mano_obra || 0))}</span></div>
+        <div class="fila-total"><span>Mano de obra (Biotopium)</span><span class="num">− ${fmtARS.format(p.mano_obra || 0)}</span></div>
+        <div class="fila-total grande"><span>Ganancia</span><span class="num" style="color:${gan >= 0 ? "var(--ok)" : "var(--rojo)"}">${fmtARS.format(gan)}</span></div>
+        <div class="fila-total" style="color:var(--gris)"><span>50% El Estuario</span><span class="num">${fmtARS.format(gan * EST_SPLIT)}</span></div>
+      </div>
+
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <b style="font-size:14px">Costos del proyecto</b>
+          ${!esPartner && !bloqueado ? `<span style="display:flex;gap:6px">
+            <button class="btn btn-chico btn-suave" onclick="agregarCostoEst(${id})">+ Costo</button>
+            <button class="btn btn-chico btn-suave" onclick="usarStockEst(${id})">+ Desde stock</button></span>` : ""}
+        </div>
+        ${costos.length ? costos.map(c => `
+          <div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--linea);font-size:13.5px">
+            <span><span class="chip gris" style="font-size:11px;padding:2px 8px">${EST_RUBROS[c.rubro] || c.rubro}</span>
+              ${esc(c.descripcion || "")}${c.producto_id ? ' <span class="chip agua" style="font-size:11px;padding:2px 8px">stock</span>' : ""}</span>
+            <span style="white-space:nowrap"><b class="num">${fmtARS.format(c.monto)}</b>
+              ${!esPartner && !bloqueado ? ` <button class="item-quitar" style="vertical-align:middle" onclick="quitarCostoEst(${c.id}, ${c.producto_id ? "true" : "false"})" aria-label="Quitar">✕</button>` : ""}</span>
+          </div>`).join("") : '<div style="font-size:13px;color:var(--gris);padding:6px 0">Sin costos cargados todavía.</div>'}
+      </div>
+
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <b style="font-size:14px">Cobros (señas y pagos)</b>
+          ${!esPartner && !bloqueado && saldo > 0.5 ? `<button class="btn btn-chico btn-suave" onclick="cobrarProyectoEst(${id})">+ Registrar cobro</button>` : ""}
+        </div>
+        ${(p.pagos || []).length ? p.pagos.map(pg => `
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--linea);font-size:13.5px">
+            <span style="color:var(--gris)">${pg.fecha ? fFecha(pg.fecha) : ""} · ${nombreMetodo(pg.metodo)}${pg.nota ? " · " + esc(pg.nota) : ""}</span>
+            <b class="num">${fmtARS.format(pg.monto)}</b></div>`).join("") : '<div style="font-size:13px;color:var(--gris);padding:6px 0">Sin cobros registrados.</div>'}
+      </div>
+      ${p.notas ? `<p style="font-size:13.5px;color:var(--gris)">${esc(p.notas)}</p>` : ""}
+      <div class="modal-pie">
+        ${!esPartner && !bloqueado ? `<button class="btn btn-borde" onclick="abrirProyectoEst(${id})" style="margin-right:auto">✎ Editar</button>` : ""}
+        <button class="btn btn-borde" onclick="cerrarModal()">Cerrar</button>
+        ${!esPartner && !bloqueado && p.estado !== "cerrado" && p.estado !== "cancelado"
+          ? `<button class="btn btn-primario" onclick="cerrarProyectoEst(${id})">Cerrar proyecto</button>` : ""}
+      </div>
+    </div>`);
+}
+function agregarCostoEst(pid){
+  abrirModal("Agregar costo al proyecto", `
+    <form onsubmit="guardarCostoEst(event, ${pid})">
+      <div class="fila-2">
+        <div class="field"><label>Rubro</label>
+          <select id="ec-rubro">${Object.entries(EST_RUBROS).map(([k,n]) => `<option value="${k}">${n}</option>`).join("")}</select></div>
+        <div class="field"><label>Monto (ARS) *</label>
+          <input type="number" id="ec-monto" min="0.01" step="0.01" required></div>
+      </div>
+      <div class="field"><label>Descripción</label><input id="ec-desc" placeholder="Ej: pecera 120x50x50 vidrio 10mm"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="verProyectoEst(${pid})">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Agregar</button>
+      </div>
+    </form>`);
+}
+async function guardarCostoEst(e, pid){
+  e.preventDefault();
+  const { error } = await sb.from("est_costos").insert({
+    proyecto_id: pid, rubro: $("ec-rubro").value,
+    descripcion: $("ec-desc").value.trim(), monto: +$("ec-monto").value || 0
+  });
+  if (error) return toast("No se pudo agregar: " + error.message, "error");
+  toast("Costo agregado", "ok");
+  await cargarEstuarioData(); verProyectoEst(pid);
+}
+function usarStockEst(pid){
+  abrirModal("Usar stock Biotopium (a costo real)", `
+    <form onsubmit="guardarStockEst(event, ${pid})">
+      <p style="font-size:13px;color:var(--gris);margin-bottom:8px">
+        Descuenta stock del catálogo y carga el costo real al proyecto (el margen queda para el split).</p>
+      <div class="field sugerencias"><label>Producto *</label>
+        <input id="eu-busca" placeholder="Buscá por nombre o SKU…" autocomplete="off" oninput="estSugerir()">
+        <div class="sugerencias-lista" id="eu-sug" style="display:none"></div>
+        <input type="hidden" id="eu-pid"></div>
+      <div class="field"><label>Cantidad *</label>
+        <input type="text" inputmode="decimal" id="eu-cant" value="1" required></div>
+      <div id="eu-info" style="font-size:13px;color:var(--gris)"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="verProyectoEst(${pid})">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Descontar y cargar costo</button>
+      </div>
+    </form>`);
+}
+function estCostoARS(p){
+  const tc = Number(state.config.tipo_cambio) || 1;
+  return (p.costo_moneda === "ARS" ? Number(p.costo) : Number(p.costo_usd) || 0) *
+         (p.costo_moneda === "ARS" ? 1 : tc);
+}
+function estSugerir(){
+  const q = $("eu-busca").value.toLowerCase().trim();
+  const lista = !q ? [] : state.productos.filter(p => p.activo !== false && p.stock > 0 &&
+    (p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q))).slice(0, 8);
+  $("eu-sug").style.display = lista.length ? "block" : "none";
+  $("eu-sug").innerHTML = lista.map(p => `
+    <div class="sugerencia" onclick="estElegirProd(${p.id})" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--linea)">
+      <b>${esc(p.nombre)}</b> <small style="color:var(--gris)">stock ${p.stock} · costo ${fmtARS.format(estCostoARS(p))}</small></div>`).join("");
+}
+function estElegirProd(id){
+  const p = state.productos.find(x => x.id === id);
+  $("eu-pid").value = id; $("eu-busca").value = p.nombre;
+  $("eu-sug").style.display = "none";
+  $("eu-info").textContent = `Costo real: ${fmtARS.format(estCostoARS(p))} c/u · stock disponible: ${p.stock}`;
+}
+async function guardarStockEst(e, pid){
+  e.preventDefault();
+  const prodId = +$("eu-pid").value;
+  if (!prodId) return toast("Elegí un producto de la lista.", "error");
+  const cant = numDec($("eu-cant").value);
+  if (!cant || cant <= 0) return toast("Cantidad inválida", "error");
+  const { error } = await sb.rpc("est_usar_stock", { p_proyecto_id: pid, p_producto_id: prodId, p_cantidad: cant });
+  if (error) return toast("No se pudo: " + error.message, "error");
+  toast("Stock descontado y costo cargado.", "ok");
+  await Promise.all([cargarEstuarioData(), cargarProductosData()]);
+  verProyectoEst(pid);
+}
+async function quitarCostoEst(cid, esStock){
+  if (!confirm(esStock ? "¿Quitar este costo? El stock vuelve al catálogo." : "¿Quitar este costo?")) return;
+  const c = state.estCostos.find(x => x.id === cid);
+  const { error } = esStock
+    ? await sb.rpc("est_quitar_costo", { p_costo_id: cid })
+    : await sb.from("est_costos").delete().eq("id", cid);
+  if (error) return toast("No se pudo quitar: " + error.message, "error");
+  toast("Costo quitado", "ok");
+  await Promise.all([cargarEstuarioData(), esStock ? cargarProductosData() : Promise.resolve()]);
+  if (c) verProyectoEst(c.proyecto_id);
+}
+function cobrarProyectoEst(id){
+  const p = state.estProyectos.find(x => x.id === id);
+  const saldo = Number(p.precio_total) - Number(p.cobrado);
+  abrirModal(`Registrar cobro · ${p.nombre}`, `
+    <form onsubmit="guardarCobroEst(event, ${id})">
+      <div style="background:var(--alerta-bg);color:var(--alerta);border-radius:11px;padding:11px 13px;font-size:13.5px;margin-bottom:4px">
+        Saldo pendiente: <b class="num">${fmtARS.format(saldo)}</b></div>
+      <div class="fila-2">
+        <div class="field"><label>Monto *</label>
+          <input type="number" id="ecb-monto" min="0.01" max="${saldo}" step="0.01" value="${saldo}" required></div>
+        <div class="field"><label>Método</label>
+          <select id="ecb-metodo">${METODOS_PAGO.map(([v,n]) => `<option value="${v}">${n}</option>`).join("")}</select></div>
+      </div>
+      <div class="field"><label>Nota</label><input id="ecb-nota" placeholder="Ej: seña 50%"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="verProyectoEst(${id})">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar</button>
+      </div>
+    </form>`);
+}
+async function guardarCobroEst(e, id){
+  e.preventDefault();
+  const p = state.estProyectos.find(x => x.id === id);
+  const monto = +$("ecb-monto").value || 0;
+  if (monto <= 0) return toast("Monto inválido", "error");
+  const pagos = [...(p.pagos || []), { fecha: hoyISO(), metodo: $("ecb-metodo").value, monto, nota: $("ecb-nota").value.trim() }];
+  const { error } = await sb.from("est_proyectos").update({
+    pagos, cobrado: Number(p.cobrado) + monto,
+    estado: p.estado === "presupuestado" ? "senado" : p.estado,
+    updated_at: new Date().toISOString()
+  }).eq("id", id);
+  if (error) return toast("No se pudo registrar: " + error.message, "error");
+  toast("Cobro registrado", "ok");
+  await cargarEstuarioData(); verProyectoEst(id);
+}
+async function cerrarProyectoEst(id){
+  const p = state.estProyectos.find(x => x.id === id);
+  const saldo = Number(p.precio_total) - Number(p.cobrado);
+  const gan = estGanProyecto(p);
+  let msg = `Cerrar "${p.nombre}".\nGanancia: ${fmtARS.format(gan)} → 50% socio: ${fmtARS.format(gan * EST_SPLIT)}.`;
+  if (saldo > 0.5) msg += `\n\n⚠️ Falta cobrar ${fmtARS.format(saldo)}: el proyecto NO entra a liquidación hasta cobrarse 100%.`;
+  if (!confirm(msg + "\n\n¿Confirmar cierre?")) return;
+  const { error } = await sb.from("est_proyectos").update({
+    estado: "cerrado", cerrado_at: new Date().toISOString(), updated_at: new Date().toISOString()
+  }).eq("id", id);
+  if (error) return toast("No se pudo cerrar: " + error.message, "error");
+  toast("Proyecto cerrado.", "ok");
+  cerrarModal(); cargarEstuario();
+}
+/* Recarga liviana de datos sin re-render de tab */
+async function cargarEstuarioData(){
+  const [{ data: proys }, { data: costos }, { data: ventas }, { data: liqs }, { data: leads }] = await Promise.all([
+    sb.from("est_proyectos").select("*").order("created_at", { ascending: false }),
+    sb.from("est_costos").select("*").order("created_at"),
+    sb.from("est_ventas").select("*").order("created_at", { ascending: false }).limit(400),
+    sb.from("est_liquidaciones").select("*").order("created_at", { ascending: false }),
+    sb.from("est_leads").select("*").order("created_at", { ascending: false })
+  ]);
+  state.estProyectos = proys || []; state.estCostos = costos || [];
+  state.estVentas = ventas || []; state.estLiqs = liqs || []; state.estLeads = leads || [];
+}
+
+/* ---------- Leads del socio ---------- */
+const EST_LEAD_ESTADOS = { nuevo:["alerta","Nuevo"], contactado:["agua","Contactado"],
+  cotizado:["agua","Cotizado"], ganado:["ok","Ganado"], perdido:["rojo","Perdido"] };
+const EST_LEAD_TIPOS = { proyecto:"Acuario a medida", productos:"Productos", otro:"Otro" };
+let estLeadsFiltro = "activos";
+function renderEstLeads(esPartner){
+  const lista = (state.estLeads || []).filter(l =>
+    estLeadsFiltro === "todos" ? true : !["ganado","perdido"].includes(l.estado));
+  $("est-cuerpo").innerHTML = `
+    <div class="filtros" style="margin-bottom:10px">
+      <select onchange="estLeadsFiltro=this.value;renderEstuario()">
+        <option value="activos" ${estLeadsFiltro === "activos" ? "selected" : ""}>Activos</option>
+        <option value="todos" ${estLeadsFiltro === "todos" ? "selected" : ""}>Todos (con ganados/perdidos)</option>
+      </select></div>
+    ${!lista.length
+      ? '<div class="vacio"><b>Sin leads</b>Cargá acá todo lo que El Estuario va pasando, para no perder ningún seguimiento.</div>'
+      : `<div class="tabla-wrap"><table><thead><tr>
+          <th>Fecha</th><th>Lead</th><th>Interés</th><th>Estado</th><th></th>
+        </tr></thead><tbody>` +
+        lista.map(l => `<tr>
+          <td class="num">${fFecha(l.created_at)}</td>
+          <td><b>${esc(l.nombre)}</b>${l.contacto ? `<br><small style="color:var(--gris)">${esc(l.contacto)}</small>` : ""}</td>
+          <td><span class="chip ${l.tipo === "proyecto" ? "agua" : "gris"}" style="font-size:11px;padding:2px 8px">${EST_LEAD_TIPOS[l.tipo] || "—"}</span>
+            ${l.interes ? " " + esc(l.interes) : ""}${l.notas ? `<br><small style="color:var(--gris)">${esc(l.notas)}</small>` : ""}</td>
+          <td><select onchange="estLeadEstado(${l.id}, this.value)"
+              style="border:1.5px solid var(--linea);border-radius:8px;padding:5px 8px;font-size:13px">
+              ${Object.entries(EST_LEAD_ESTADOS).map(([k,[,n]]) =>
+                `<option value="${k}" ${l.estado === k ? "selected" : ""}>${n}</option>`).join("")}
+            </select></td>
+          <td class="der acciones-fila" style="white-space:nowrap">
+            <button class="btn btn-chico btn-borde" onclick="abrirLeadEst(${l.id})">✎</button>
+            ${!esPartner ? `<button class="btn btn-chico btn-suave" onclick="estLeadAProyecto(${l.id})">→ Proyecto</button>` : ""}
+            ${state.perfil.rol === "admin" ? `<button class="btn btn-chico btn-peligro" onclick="borrarLeadEst(${l.id})">✕</button>` : ""}
+          </td>
+        </tr>`).join("") + "</tbody></table></div>"}`;
+}
+function abrirLeadEst(id){
+  const l = id ? state.estLeads.find(x => x.id === id) : null;
+  abrirModal(l ? "Editar lead" : "Nuevo lead · El Estuario", `
+    <form onsubmit="guardarLeadEst(event, ${id || "null"})">
+      <div class="fila-2">
+        <div class="field"><label>Nombre *</label>
+          <input id="el-nombre" required value="${esc(l?.nombre || "")}" placeholder="Cliente o negocio"></div>
+        <div class="field"><label>Contacto</label>
+          <input id="el-contacto" value="${esc(l?.contacto || "")}" placeholder="Teléfono, IG, email…"></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>Tipo de interés</label>
+          <select id="el-tipo">
+            ${Object.entries(EST_LEAD_TIPOS).map(([k,n]) =>
+              `<option value="${k}" ${(l?.tipo || "productos") === k ? "selected" : ""}>${n}</option>`).join("")}
+          </select></div>
+        <div class="field"><label>Estado</label>
+          <select id="el-estado">
+            ${Object.entries(EST_LEAD_ESTADOS).map(([k,[,n]]) =>
+              `<option value="${k}" ${(l?.estado || "nuevo") === k ? "selected" : ""}>${n}</option>`).join("")}
+          </select></div>
+      </div>
+      <div class="field"><label>Interés</label>
+        <input id="el-interes" value="${esc(l?.interes || "")}" placeholder="Ej: marino 300L para local comercial"></div>
+      <div class="field"><label>Notas de seguimiento</label>
+        <input id="el-notas" value="${esc(l?.notas || "")}" placeholder="Próximo paso, qué quedó pendiente…"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">${l ? "Guardar" : "Crear lead"}</button>
+      </div>
+    </form>`);
+}
+async function guardarLeadEst(e, id){
+  e.preventDefault();
+  const datos = {
+    nombre: $("el-nombre").value.trim(), contacto: $("el-contacto").value.trim(),
+    tipo: $("el-tipo").value, estado: $("el-estado").value,
+    interes: $("el-interes").value.trim(), notas: $("el-notas").value.trim(),
+    updated_at: new Date().toISOString()
+  };
+  const { error } = id
+    ? await sb.from("est_leads").update(datos).eq("id", id)
+    : await sb.from("est_leads").insert(datos);
+  if (error) return toast("No se pudo guardar: " + error.message, "error");
+  toast(id ? "Lead actualizado" : "Lead cargado", "ok");
+  cerrarModal();
+  await cargarEstuarioData(); renderEstuario();
+}
+async function estLeadEstado(id, estado){
+  const { error } = await sb.from("est_leads").update({ estado, updated_at: new Date().toISOString() }).eq("id", id);
+  if (error) return toast("No se pudo actualizar: " + error.message, "error");
+  const l = state.estLeads.find(x => x.id === id); if (l) l.estado = estado;
+  toast("Lead → " + (EST_LEAD_ESTADOS[estado]?.[1] || estado), "ok");
+  renderEstuario();
+}
+async function borrarLeadEst(id){
+  if (!confirm("¿Eliminar este lead?")) return;
+  const { error } = await sb.from("est_leads").delete().eq("id", id);
+  if (error) return toast("No se pudo eliminar: " + error.message, "error");
+  toast("Lead eliminado", "ok");
+  await cargarEstuarioData(); renderEstuario();
+}
+function estLeadAProyecto(id){
+  const l = state.estLeads.find(x => x.id === id);
+  if (!l) return;
+  abrirProyectoEst();
+  $("ep-nombre").value = l.interes || ("Proyecto " + l.nombre);
+  $("ep-cli").value = l.nombre;
+  $("ep-tel").value = l.contacto || "";
+  $("ep-notas").value = ("Origen: lead El Estuario #" + l.id + (l.notas ? " · " + l.notas : ""));
+  toast("Prefilled desde el lead. Completá precio y tipo.", "ok");
+}
+
+/* ---------- Ventas de productos ---------- */
+function renderEstVentas(esPartner){
+  const lista = state.estVentas;
+  $("est-cuerpo").innerHTML = !lista.length
+    ? '<div class="vacio"><b>Sin ventas</b>Registrá la primera con "+ Nueva venta".</div>'
+    : `<div class="tabla-wrap"><table><thead><tr>
+        <th>N°</th><th>Fecha</th><th>Cliente</th><th class="der">Total</th>
+        <th class="der">Costo</th><th class="der">Ganancia</th><th>Envío</th><th>Estado</th>
+      </tr></thead><tbody>` +
+      lista.map(v => `<tr class="fila-click" onclick="verVentaEst(${v.id})">
+        <td class="num"><b>#${v.id}</b></td>
+        <td class="num">${fFecha(v.created_at)}</td>
+        <td>${esc(v.cliente_nombre)}</td>
+        <td class="der num"><b>${fmtARS.format(v.total)}</b>${Number(v.cobrado) < Number(v.total) - 0.5 ? ' <span class="chip alerta" style="font-size:11px;padding:2px 8px">saldo</span>' : ""}</td>
+        <td class="der num">${fmtARS.format(v.costo_total)}</td>
+        <td class="der num"><b style="color:${Number(v.ganancia) >= 0 ? "var(--ok)" : "var(--rojo)"}">${fmtARS.format(v.ganancia)}</b></td>
+        <td>${v.entrega === "envio"
+          ? `<span class="chip ${v.estado_envio === "enviado" ? "ok" : "alerta"}">${v.estado_envio === "enviado" ? "Enviado" : "Pendiente"}</span>` : '<span class="chip gris">Local</span>'}</td>
+        <td><span class="chip ${v.estado === "anulada" ? "rojo" : "ok"}">${v.estado}</span>${v.liquidacion_id ? ` <span class="chip gris">Liq #${v.liquidacion_id}</span>` : ""}</td>
+      </tr>`).join("") + "</tbody></table></div>";
+}
+function abrirVentaEst(){
+  state.estCarrito = [];
+  state.estPagos = [{ metodo: "efectivo", monto: 0 }];
+  state.estPagoTocado = false;
+  abrirModal("Nueva venta · El Estuario", `
+    <div class="modal-cuerpo">
+      <div class="fila-2">
+        <div class="field"><label>Cliente</label><input id="ev2-cli" placeholder="Consumidor final"></div>
+        <div class="field"><label>Teléfono</label><input id="ev2-tel"></div>
+      </div>
+      <div class="field sugerencias"><label>Agregar producto (a costo real Biotopium)</label>
+        <input id="ev2-busca" placeholder="Buscá por nombre o SKU…" autocomplete="off" oninput="estVentaSugerir()">
+        <div class="sugerencias-lista" id="ev2-sug" style="display:none"></div></div>
+      <div id="ev2-items" style="display:grid;gap:8px"></div>
+      <div class="fila-2">
+        <div class="field"><label>Entrega</label>
+          <select id="ev2-entrega" onchange="estEntregaCambio()">
+            <option value="local">Retiro / local</option>
+            <option value="envio">Envío al interior</option></select></div>
+        <div class="field"><label>Descuento ($)</label>
+          <input type="number" id="ev2-desc" min="0" step="0.01" value="0" oninput="estVentaTotales()"></div>
+      </div>
+      <div id="ev2-envio-wrap" style="display:none">
+        <div class="fila-2">
+          <div class="field"><label>Flete cobrado al cliente</label>
+            <input type="number" id="ev2-envio-cobrado" min="0" step="0.01" value="0" oninput="estVentaTotales()"></div>
+          <div class="field"><label>Flete pagado (costo)</label>
+            <input type="number" id="ev2-envio-costo" min="0" step="0.01" value="0" oninput="estVentaTotales()"></div>
+        </div>
+        <div class="field"><label>Dirección de envío</label><input id="ev2-dir" placeholder="Calle, localidad, provincia…"></div>
+        <div class="fila-2">
+          <div class="field"><label>Se envía por</label>
+            <select id="ev2-transporte">
+              <option value="">Sin definir</option>
+              <option>Andreani</option><option>Correo Argentino</option><option>OCA</option>
+              <option>Vía Cargo</option><option>Moto / mensajería</option><option>Entrega propia</option>
+              <option>Otro</option></select></div>
+          <div class="field"><label>N° de seguimiento</label><input id="ev2-track"></div>
+        </div>
+      </div>
+      <div class="totales">
+        <div class="fila-total"><span>Subtotal</span><b class="num" id="ev2-sub">—</b></div>
+        <div class="fila-total grande"><span>Total</span><span class="num" id="ev2-total">—</span></div>
+        <div class="fila-total" style="color:var(--gris)"><span>Ganancia estimada</span><span class="num" id="ev2-gan">—</span></div>
+      </div>
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center">Pago
+          <button type="button" class="btn btn-chico btn-suave" onclick="estAgregarPago()">+ Dividir pago</button></label>
+        <div id="ev2-pagos" style="display:grid;gap:8px"></div>
+        <div id="ev2-dif" style="font-size:12.5px;margin-top:6px"></div>
+      </div>
+      <div class="field"><label>Notas</label><input id="ev2-notas"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="ev2-confirmar" onclick="confirmarVentaEst()" disabled>Confirmar venta</button>
+      </div>
+    </div>`);
+  estRenderPagos();
+}
+function estEntregaCambio(){
+  $("ev2-envio-wrap").style.display = $("ev2-entrega").value === "envio" ? "block" : "none";
+  estVentaTotales();
+}
+function estVentaSugerir(){
+  const q = $("ev2-busca").value.toLowerCase().trim();
+  const lista = !q ? [] : state.productos.filter(p => p.activo !== false && p.stock > 0 &&
+    (p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) || (p.codigo_barras || "") === q)).slice(0, 8);
+  $("ev2-sug").style.display = lista.length ? "block" : "none";
+  $("ev2-sug").innerHTML = lista.map(p => `
+    <div class="sugerencia" onclick="estVentaAgregar(${p.id})" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--linea)">
+      <b>${esc(p.nombre)}</b> <small style="color:var(--gris)">stock ${p.stock} · ${fmtARS.format(p.precio_ars)}</small></div>`).join("");
+}
+function estVentaAgregar(id){
+  const p = state.productos.find(x => x.id === id);
+  const ya = state.estCarrito.find(i => i.producto_id === id);
+  if (ya){ if (ya.cantidad + 1 <= p.stock) ya.cantidad++; }
+  else state.estCarrito.push({ producto_id: id, nombre: p.nombre, cantidad: 1,
+    precio_unit: Number(p.precio_ars) || 0, costo_unit: Math.round(estCostoARS(p) * 100) / 100, stock: Number(p.stock) });
+  $("ev2-busca").value = ""; $("ev2-sug").style.display = "none";
+  estRenderCarrito();
+}
+function estRenderCarrito(){
+  $("ev2-items").innerHTML = state.estCarrito.length ? state.estCarrito.map((i, ix) => `
+    <div class="item-linea"><div class="il-main">
+      <div><b>${esc(i.nombre)}</b><small>Stock: ${i.stock} · costo real ${fmtARS.format(i.costo_unit)}</small></div>
+      <input type="number" min="1" max="${i.stock}" step="1" value="${i.cantidad}" aria-label="Cantidad"
+        onchange="estEditarItem(${ix},'cantidad',this.value)">
+      <input type="number" min="0" step="0.01" value="${i.precio_unit}" aria-label="Precio"
+        onchange="estEditarItem(${ix},'precio_unit',this.value)">
+      <button class="item-quitar" onclick="estQuitarItem(${ix})" aria-label="Quitar">✕</button>
+    </div></div>`).join("")
+    : '<div class="vacio" style="padding:16px"><b>Sin productos</b>Buscá arriba y agregalos.</div>';
+  estVentaTotales();
+}
+function estEditarItem(ix, campo, val){
+  const i = state.estCarrito[ix];
+  if (campo === "cantidad"){ let c = Math.max(1, Math.floor(+val || 1));
+    if (c > i.stock){ c = i.stock; toast("Máximo disponible: " + i.stock, "error"); } i.cantidad = c; }
+  else i.precio_unit = Math.max(0, +val || 0);
+  estRenderCarrito();
+}
+function estQuitarItem(ix){ state.estCarrito.splice(ix, 1); estRenderCarrito(); }
+function estTotalesCalc(){
+  const sub = state.estCarrito.reduce((s,i) => s + i.cantidad * i.precio_unit, 0);
+  const costoItems = state.estCarrito.reduce((s,i) => s + i.cantidad * i.costo_unit, 0);
+  const desc = Math.min(sub, +$("ev2-desc")?.value || 0);
+  const envio = $("ev2-entrega")?.value === "envio";
+  const envC = envio ? (+$("ev2-envio-cobrado")?.value || 0) : 0;
+  const envP = envio ? (+$("ev2-envio-costo")?.value || 0) : 0;
+  const total = sub - desc + envC;
+  const costoTotal = costoItems + envP;
+  return { sub, desc, envC, envP, total, costoTotal, gan: total - costoTotal };
+}
+function estVentaTotales(){
+  const t = estTotalesCalc();
+  $("ev2-sub").textContent = fmtARS.format(t.sub);
+  $("ev2-total").textContent = fmtARS.format(t.total);
+  $("ev2-gan").textContent = fmtARS.format(t.gan) + ` · 50% socio: ${fmtARS.format(t.gan * EST_SPLIT)}`;
+  if (state.estPagos.length === 1 && !state.estPagoTocado){ state.estPagos[0].monto = t.total; estRenderPagos(); }
+  else estDifPago();
+  $("ev2-confirmar").disabled = !state.estCarrito.length;
+}
+function estRenderPagos(){
+  const uno = state.estPagos.length === 1;
+  $("ev2-pagos").innerHTML = state.estPagos.map((pg, ix) => `
+    <div style="display:grid;grid-template-columns:1fr 120px ${uno ? "" : "34px"};gap:8px;align-items:center">
+      <select onchange="estEditarPago(${ix},'metodo',this.value)"
+        style="border:1.5px solid var(--linea);border-radius:9px;padding:8px 10px">
+        ${METODOS_PAGO.map(([v,n]) => `<option value="${v}" ${pg.metodo===v?"selected":""}>${n}</option>`).join("")}
+      </select>
+      <input type="number" min="0" step="0.01" value="${pg.monto}" aria-label="Monto"
+        style="border:1.5px solid var(--linea);border-radius:9px;padding:8px 10px;text-align:right"
+        oninput="estEditarPago(${ix},'monto',this.value)">
+      ${uno ? "" : `<button class="item-quitar" onclick="estQuitarPago(${ix})" aria-label="Quitar">✕</button>`}
+    </div>`).join("");
+  estDifPago();
+}
+function estAgregarPago(){ state.estPagos.push({ metodo: "transferencia", monto: 0 }); state.estPagoTocado = true; estRenderPagos(); }
+function estQuitarPago(ix){ state.estPagos.splice(ix,1); if (!state.estPagos.length) state.estPagos=[{metodo:"efectivo",monto:0}]; estRenderPagos(); }
+function estEditarPago(ix, campo, val){
+  state.estPagos[ix][campo] = campo === "monto" ? Math.max(0, +val || 0) : val;
+  if (campo === "monto"){ state.estPagoTocado = true; estDifPago(); }
+}
+function estDifPago(){
+  const { total } = estTotalesCalc();
+  const pagado = state.estPagos.reduce((s,p) => s + (+p.monto || 0), 0);
+  const dif = +(total - pagado).toFixed(2);
+  $("ev2-dif").innerHTML = Math.abs(dif) < 0.5
+    ? '<span style="color:var(--ok)">Pago completo ✓ · entra a la próxima liquidación</span>'
+    : dif > 0
+      ? `<span style="color:var(--alerta)">Queda ${fmtARS.format(dif)} pendiente · NO liquida hasta cobrarse 100%</span>`
+      : `<span style="color:var(--rojo)">El pago supera el total por ${fmtARS.format(-dif)}</span>`;
+}
+async function confirmarVentaEst(){
+  if (!state.estCarrito.length) return;
+  const t = estTotalesCalc();
+  const pagos = state.estPagos.filter(p => +p.monto > 0).map(p => ({ metodo: p.metodo, monto: +p.monto }));
+  const pagado = pagos.reduce((s,p) => s + p.monto, 0);
+  if (pagado > t.total + 0.5) return toast("El pago supera el total.", "error");
+  const entrega = $("ev2-entrega").value;
+  if (entrega === "envio" && !$("ev2-dir").value.trim()
+      && !confirm("Marcaste envío sin dirección. ¿Guardar igual?")) return;
+  const btn = $("ev2-confirmar"); btn.disabled = true; btn.textContent = "Guardando…";
+  const { data, error } = await sb.rpc("est_vender", {
+    p_cliente_nombre: $("ev2-cli").value.trim(), p_cliente_telefono: $("ev2-tel").value.trim(),
+    p_items: state.estCarrito.map(i => ({ producto_id: i.producto_id, nombre: i.nombre,
+      cantidad: i.cantidad, precio_unit: i.precio_unit, costo_unit: i.costo_unit })),
+    p_descuento: t.desc, p_envio_cobrado: t.envC, p_envio_costo: t.envP,
+    p_entrega: entrega, p_direccion: entrega === "envio" ? $("ev2-dir").value.trim() : "",
+    p_transporte: entrega === "envio" ? $("ev2-transporte").value : "",
+    p_seguimiento: entrega === "envio" ? $("ev2-track").value.trim() : "",
+    p_pagos: pagos, p_notas: $("ev2-notas").value.trim()
+  });
+  if (error){ btn.disabled = false; btn.textContent = "Confirmar venta";
+    return toast("No se pudo guardar: " + error.message, "error"); }
+  toast(`Venta Estuario #${data} registrada. Stock descontado.`, "ok");
+  cerrarModal();
+  await Promise.all([cargarEstuarioData(), cargarProductosData()]);
+  renderEstuario();
+}
+function verVentaEst(id){
+  const v = state.estVentas.find(x => x.id === id);
+  if (!v) return;
+  const esPartner = state.perfil.rol === "partner";
+  const saldo = Number(v.total) - Number(v.cobrado);
+  abrirModal(`Venta Estuario #${v.id}`, `
+    <div class="modal-cuerpo">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip gris">${fFechaHora(v.created_at)}</span>
+        <span class="chip ${v.estado === "anulada" ? "rojo" : "ok"}">${v.estado}</span>
+        ${v.liquidacion_id ? `<span class="chip gris">Liq #${v.liquidacion_id}</span>` : ""}
+        ${saldo > 0.5 && v.estado === "completada" ? `<span class="chip alerta">Saldo ${fmtARS.format(saldo)}</span>` : ""}
+      </div>
+      <div style="font-size:14px;color:var(--gris)">
+        Cliente: <b style="color:var(--tinta)">${esc(v.cliente_nombre)}</b>${v.cliente_telefono ? " · 📞 " + esc(v.cliente_telefono) : ""}
+        ${v.entrega === "envio" ? `<br>🚚 ${esc(v.envio_transporte || "Transporte sin definir")}${v.envio_seguimiento ? " · " + esc(v.envio_seguimiento) : ""}
+          <span class="chip ${v.estado_envio === "enviado" ? "ok" : "alerta"}" style="font-size:11px;padding:2px 8px">${v.estado_envio === "enviado" ? "Enviado" : "Pendiente"}</span>
+          ${v.direccion_envio ? "<br>📍 " + esc(v.direccion_envio) : ""}` : ""}</div>
+      ${(v.items || []).map(i => `
+        <div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--linea);font-size:14px">
+          <span>${esc(i.nombre)} <small style="color:var(--gris)">× ${i.cantidad} · costo ${fmtARS.format(i.costo_unit)}</small></span>
+          <b class="num">${fmtARS.format(i.cantidad * i.precio_unit)}</b></div>`).join("")}
+      <div class="totales">
+        ${Number(v.descuento) > 0 ? `<div class="fila-total"><span>Descuento</span><span class="num">− ${fmtARS.format(v.descuento)}</span></div>` : ""}
+        ${Number(v.envio_cobrado) > 0 ? `<div class="fila-total"><span>Flete cobrado</span><span class="num">${fmtARS.format(v.envio_cobrado)}</span></div>` : ""}
+        <div class="fila-total grande"><span>Total</span><span class="num">${fmtARS.format(v.total)}</span></div>
+        <div class="fila-total"><span>Costo total (items + flete)</span><span class="num">− ${fmtARS.format(v.costo_total)}</span></div>
+        <div class="fila-total"><span>Ganancia</span><b class="num" style="color:${Number(v.ganancia) >= 0 ? "var(--ok)" : "var(--rojo)"}">${fmtARS.format(v.ganancia)}</b></div>
+        <div class="fila-total" style="color:var(--gris)"><span>50% El Estuario</span><span class="num">${fmtARS.format(v.ganancia * EST_SPLIT)}</span></div>
+      </div>
+      ${(v.pagos || []).length ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${v.pagos.map(pg => `<span class="chip gris">${nombreMetodo(pg.metodo)}: <b class="num" style="margin-left:4px">${fmtARS.format(pg.monto)}</b></span>`).join("")}</div>` : ""}
+      ${v.notas ? `<p style="font-size:13.5px;color:var(--gris)">${esc(v.notas)}</p>` : ""}
+      <div class="modal-pie">
+        ${!esPartner && v.estado === "completada" && !v.liquidacion_id
+          ? `<button class="btn btn-peligro" onclick="anularVentaEst(${v.id})" style="margin-right:auto">Anular</button>` : ""}
+        ${!esPartner && v.estado === "completada" && saldo > 0.5
+          ? `<button class="btn btn-suave" onclick="cobrarVentaEst(${v.id})">Registrar pago</button>` : ""}
+        <button class="btn btn-borde" onclick="cerrarModal()">Cerrar</button>
+      </div>
+    </div>`);
+}
+async function anularVentaEst(id){
+  if (!confirm("¿Anular la venta? El stock vuelve al catálogo Biotopium.")) return;
+  const { error } = await sb.rpc("est_anular_venta", { p_id: id });
+  if (error) return toast("No se pudo anular: " + error.message, "error");
+  toast("Venta anulada. Stock devuelto.", "ok");
+  cerrarModal();
+  await Promise.all([cargarEstuarioData(), cargarProductosData()]);
+  renderEstuario();
+}
+function cobrarVentaEst(id){
+  const v = state.estVentas.find(x => x.id === id);
+  const saldo = Number(v.total) - Number(v.cobrado);
+  abrirModal(`Pago · Venta Estuario #${id}`, `
+    <form onsubmit="guardarPagoVentaEst(event, ${id})">
+      <div style="background:var(--alerta-bg);color:var(--alerta);border-radius:11px;padding:11px 13px;font-size:13.5px;margin-bottom:4px">
+        Saldo pendiente: <b class="num">${fmtARS.format(saldo)}</b></div>
+      <div class="fila-2">
+        <div class="field"><label>Monto *</label>
+          <input type="number" id="pve-monto" min="0.01" max="${saldo}" step="0.01" value="${saldo}" required></div>
+        <div class="field"><label>Método</label>
+          <select id="pve-metodo">${METODOS_PAGO.map(([v2,n]) => `<option value="${v2}">${n}</option>`).join("")}</select></div>
+      </div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="verVentaEst(${id})">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar pago</button>
+      </div>
+    </form>`);
+}
+async function guardarPagoVentaEst(e, id){
+  e.preventDefault();
+  const v = state.estVentas.find(x => x.id === id);
+  const monto = +$("pve-monto").value || 0;
+  if (monto <= 0) return toast("Monto inválido", "error");
+  const { error } = await sb.from("est_ventas").update({
+    pagos: [...(v.pagos || []), { metodo: $("pve-metodo").value, monto }],
+    cobrado: Number(v.cobrado) + monto
+  }).eq("id", id);
+  if (error) return toast("No se pudo registrar: " + error.message, "error");
+  toast("Pago registrado", "ok");
+  await cargarEstuarioData(); verVentaEst(id);
+}
+
+/* ---------- Liquidación ---------- */
+function renderEstLiquidacion(esPartner){
+  const ventasPend = state.estVentas.filter(estLiquidableVenta);
+  const proysPend = state.estProyectos.filter(estLiquidableProy);
+  const ganPend = ventasPend.reduce((s,v) => s + Number(v.ganancia), 0)
+    + proysPend.reduce((s,p) => s + estGanProyecto(p), 0);
+  const pendHtml = (ventasPend.length + proysPend.length)
+    ? `<div class="card" style="margin-bottom:16px"><h3>Pendiente de liquidar (cobrado 100%)</h3>
+        ${proysPend.map(p => `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--linea);font-size:13.5px">
+          <span><span class="chip agua" style="font-size:11px;padding:2px 8px">Proyecto</span> ${esc(p.nombre)}</span>
+          <b class="num" style="color:var(--ok)">${fmtARS.format(estGanProyecto(p))}</b></div>`).join("")}
+        ${ventasPend.map(v => `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--linea);font-size:13.5px">
+          <span><span class="chip gris" style="font-size:11px;padding:2px 8px">Venta #${v.id}</span> ${esc(v.cliente_nombre)}</span>
+          <b class="num" style="color:var(--ok)">${fmtARS.format(v.ganancia)}</b></div>`).join("")}
+        <div style="display:flex;justify-content:space-between;padding-top:10px;font-size:15px">
+          <b>Ganancia a liquidar</b><b class="num">${fmtARS.format(ganPend)}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--gris)">
+          <span>50% El Estuario</span><b class="num">${fmtARS.format(ganPend * EST_SPLIT)}</b></div>
+      </div>`
+    : '<div class="vacio" style="margin-bottom:16px"><b>Nada pendiente de liquidar</b>Las operaciones entran cuando están cobradas al 100% (proyectos, además, cerrados).</div>';
+
+  const liqsHtml = state.estLiqs.length
+    ? `<div class="card"><h3>Liquidaciones</h3><div class="tabla-wrap" style="box-shadow:none;border-radius:0">
+        <table><thead><tr><th>N°</th><th>Fecha</th><th class="der">Ganancia</th><th class="der">50% socio</th>
+          <th class="der">Pagado</th><th>Estado</th></tr></thead><tbody>` +
+        state.estLiqs.map(l => `<tr class="fila-click" onclick="verLiquidacionEst(${l.id})">
+          <td class="num"><b>#${l.id}</b></td>
+          <td class="num">${fFecha(l.created_at)}</td>
+          <td class="der num">${fmtARS.format(l.ganancia)}</td>
+          <td class="der num"><b>${fmtARS.format(l.monto_socio)}</b></td>
+          <td class="der num">${fmtARS.format(l.pagado_socio || 0)}</td>
+          <td><span class="chip ${l.estado === "pagada" ? "ok" : "alerta"}">${l.estado === "pagada" ? "Pagada" : "Pendiente"}</span></td>
+        </tr>`).join("") + "</tbody></table></div></div>"
+    : "";
+  $("est-cuerpo").innerHTML = pendHtml + liqsHtml;
+}
+async function generarLiquidacionEst(){
+  const ventasPend = state.estVentas.filter(estLiquidableVenta);
+  const proysPend = state.estProyectos.filter(estLiquidableProy);
+  const gan = ventasPend.reduce((s,v) => s + Number(v.ganancia), 0)
+    + proysPend.reduce((s,p) => s + estGanProyecto(p), 0);
+  if (!confirm(`Generar liquidación con ${proysPend.length} proyecto(s) y ${ventasPend.length} venta(s).\n` +
+    `Ganancia: ${fmtARS.format(gan)} → 50% El Estuario: ${fmtARS.format(gan * EST_SPLIT)}.\n\n` +
+    `Las operaciones quedan selladas en esta liquidación. ¿Continuar?`)) return;
+  const { data, error } = await sb.rpc("est_generar_liquidacion", { p_hasta: hoyISO() });
+  if (error) return toast("No se pudo generar: " + error.message, "error");
+  toast(`Liquidación #${data} generada.`, "ok");
+  await cargarEstuarioData(); estTab("liquidacion"); verLiquidacionEst(data);
+}
+function verLiquidacionEst(id){
+  const l = state.estLiqs.find(x => x.id === id);
+  if (!l) return;
+  const esPartner = state.perfil.rol === "partner";
+  const saldo = Number(l.monto_socio) - Number(l.pagado_socio || 0);
+  abrirModal(`Liquidación #${l.id}`, `
+    <div class="modal-cuerpo">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip gris">${fFecha(l.created_at)} · hasta ${fFecha(l.hasta)}</span>
+        <span class="chip ${l.estado === "pagada" ? "ok" : "alerta"}">${l.estado === "pagada" ? "Pagada" : "Pendiente"}</span>
+      </div>
+      ${(l.detalle || []).map(d => `
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--linea);font-size:13.5px">
+          <span><span class="chip ${d.tipo === "proyecto" ? "agua" : "gris"}" style="font-size:11px;padding:2px 8px">${d.tipo === "proyecto" ? "Proyecto" : "Venta #" + d.id}</span> ${esc(d.nombre || "")}</span>
+          <b class="num">${fmtARS.format(d.ganancia)}</b></div>`).join("")}
+      <div class="totales">
+        <div class="fila-total"><span>Ingresos</span><span class="num">${fmtARS.format(l.ingresos)}</span></div>
+        <div class="fila-total"><span>Costos directos</span><span class="num">− ${fmtARS.format(l.costos)}</span></div>
+        <div class="fila-total grande"><span>Ganancia</span><span class="num">${fmtARS.format(l.ganancia)}</span></div>
+        <div class="fila-total"><span><b>50% El Estuario</b></span><b class="num">${fmtARS.format(l.monto_socio)}</b></div>
+        <div class="fila-total"><span>Pagado al socio</span><span class="num">${fmtARS.format(l.pagado_socio || 0)}</span></div>
+        ${saldo > 0.5 ? `<div class="fila-total" style="color:var(--alerta)"><span>Saldo al socio</span><b class="num">${fmtARS.format(saldo)}</b></div>` : ""}
+      </div>
+      ${(l.pagos || []).length ? `<div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${l.pagos.map(pg => `<span class="chip gris">${pg.fecha ? fFecha(pg.fecha) + " · " : ""}${nombreMetodo(pg.metodo)}: <b class="num" style="margin-left:4px">${fmtARS.format(pg.monto)}</b></span>`).join("")}</div>` : ""}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn btn-suave btn-chico" onclick="generarLiquidacionPDF(${l.id})">📄 PDF para el socio</button>
+      </div>
+      <div class="modal-pie">
+        <button class="btn btn-borde" onclick="cerrarModal()">Cerrar</button>
+        ${!esPartner && saldo > 0.5 ? `<button class="btn btn-primario" onclick="pagarSocioEst(${l.id})">Registrar pago al socio</button>` : ""}
+      </div>
+    </div>`);
+}
+function pagarSocioEst(id){
+  const l = state.estLiqs.find(x => x.id === id);
+  const saldo = Number(l.monto_socio) - Number(l.pagado_socio || 0);
+  abrirModal(`Pago al socio · Liquidación #${id}`, `
+    <form onsubmit="guardarPagoSocioEst(event, ${id})">
+      <div class="fila-2">
+        <div class="field"><label>Monto *</label>
+          <input type="number" id="ps-monto" min="0.01" max="${saldo}" step="0.01" value="${saldo}" required></div>
+        <div class="field"><label>Método</label>
+          <select id="ps-metodo">${METODOS_PAGO.map(([v,n]) => `<option value="${v}">${n}</option>`).join("")}</select></div>
+      </div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="verLiquidacionEst(${id})">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar</button>
+      </div>
+    </form>`);
+}
+async function guardarPagoSocioEst(e, id){
+  e.preventDefault();
+  const l = state.estLiqs.find(x => x.id === id);
+  const monto = +$("ps-monto").value || 0;
+  if (monto <= 0) return toast("Monto inválido", "error");
+  const pagadoNuevo = Number(l.pagado_socio || 0) + monto;
+  const { error } = await sb.from("est_liquidaciones").update({
+    pagos: [...(l.pagos || []), { fecha: hoyISO(), metodo: $("ps-metodo").value, monto }],
+    pagado_socio: pagadoNuevo,
+    estado: pagadoNuevo >= Number(l.monto_socio) - 0.5 ? "pagada" : "pendiente"
+  }).eq("id", id);
+  if (error) return toast("No se pudo registrar: " + error.message, "error");
+  toast("Pago al socio registrado", "ok");
+  await cargarEstuarioData(); verLiquidacionEst(id);
+}
+async function generarLiquidacionPDF(id){
+  if (!window.jspdf) return toast("La librería de PDF todavía está cargando.", "error");
+  const l = state.estLiqs.find(x => x.id === id);
+  const doc = new window.jspdf.jsPDF();
+  doc.setFillColor(11, 57, 72); doc.rect(0, 0, 210, 32, "F");
+  doc.setTextColor(255).setFontSize(18).setFont(undefined, "bold");
+  doc.text("Biotopium × El Estuario", 14, 15);
+  doc.setFontSize(11).setFont(undefined, "normal");
+  doc.text(`Liquidación #${l.id} · ${fFecha(l.created_at)}`, 14, 24);
+  doc.setTextColor(20).setFontSize(10);
+  doc.text(`Operaciones cobradas al 100% hasta el ${fFecha(l.hasta)} · Split 50/50 sobre ganancia (costo real + mano de obra)`, 14, 42);
+  doc.autoTable({
+    startY: 50,
+    head: [["Operación", "Detalle", "Ganancia"]],
+    body: (l.detalle || []).map(d => [d.tipo === "proyecto" ? "Proyecto" : "Venta #" + d.id,
+      d.nombre || "", fmtARS.format(d.ganancia)]),
+    styles: { fontSize: 9, cellPadding: 2.5 },
+    headStyles: { fillColor: [47, 167, 202] },
+    alternateRowStyles: { fillColor: [243, 248, 250] }
+  });
+  let y = doc.lastAutoTable.finalY + 10;
+  const linea = (t, val, bold) => { doc.setFont(undefined, bold ? "bold" : "normal");
+    doc.text(t, 110, y); doc.text(val, 196, y, { align: "right" }); y += 6; };
+  linea("Ingresos", fmtARS.format(l.ingresos));
+  linea("Costos directos", "− " + fmtARS.format(l.costos));
+  linea("Ganancia", fmtARS.format(l.ganancia), true);
+  linea("50% El Estuario", fmtARS.format(l.monto_socio), true);
+  linea("Pagado", fmtARS.format(l.pagado_socio || 0));
+  doc.setFontSize(8).setTextColor(130);
+  doc.text("Liquidación El Estuario · generada por Biotopium CRM", 14, 285);
+  doc.save(`liquidacion-estuario-${l.id}.pdf`);
+}
+
 </script>
 <script>
 /* ---------------- REPORTES ---------------- */
