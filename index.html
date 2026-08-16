@@ -449,6 +449,25 @@ td.der,th.der{text-align:right}
       <div class="tabla-wrap" id="presu-tabla"></div>
     </section>
 
+    <!-- ===== ENVÍOS ===== -->
+    <section class="vista" id="view-envios">
+      <div class="vista-head">
+        <div><h2>Envíos</h2><p>Ventas con envío: pendientes de despacho e historial</p></div>
+      </div>
+      <div class="filtros">
+        <select id="env-filtro-estado">
+          <option value="pendiente">Pendientes de enviar</option>
+          <option value="enviado">Enviados (historial)</option>
+          <option value="">Todos</option>
+        </select>
+        <div class="buscador">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="env-busca" placeholder="Buscar por cliente, n° de venta o transporte…">
+        </div>
+      </div>
+      <div class="tabla-wrap" id="env-tabla"></div>
+    </section>
+
     <!-- ===== SANTA MARÍA DISCUS ===== -->
     <section class="vista" id="view-smd">
       <div class="vista-head">
@@ -476,6 +495,10 @@ td.der,th.der{text-align:right}
       <div class="card">
         <h3>Últimas ventas</h3>
         <div class="tabla-wrap" id="smd-ventas" style="box-shadow:none;border-radius:0"></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Bajas registradas <span style="font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:400;color:var(--gris)">· muertes y descartes, descuentan stock</span></h3>
+        <div class="tabla-wrap" id="smd-bajas" style="box-shadow:none;border-radius:0"></div>
       </div>
     </section>
 
@@ -512,6 +535,7 @@ td.der,th.der{text-align:right}
         <div class="acciones">
           <button class="btn btn-borde" onclick="abrirMovimientos()">Movimientos</button>
           <button class="btn btn-borde" id="btn-importar" onclick="abrirImportador()" style="display:none">Importar</button>
+          <button class="btn btn-borde" onclick="abrirAumentoMasivo()">% Precios masivo</button>
           <button class="btn btn-borde" onclick="exportarProductos()">Exportar</button>
           <button class="btn btn-primario" onclick="abrirProducto()">+ Nuevo producto</button>
         </div>
@@ -723,12 +747,14 @@ const ICONOS = {
   config:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>',
   presupuestos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>',
   smd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 11-5.5 1.5 1.6 2.3 3.4 2.5 5.5-.2 2.1-1 3.9-2.5 5.5-5 .5-9-1.5-11-5.5z"/><path d="M6.5 12 3 8.5c-.3 2.3-.3 4.7 0 7L6.5 12z"/><circle cx="15.5" cy="10.5" r="0.5" fill="currentColor"/></svg>',
-  gastos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h5"/></svg>'
+  gastos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h5"/></svg>',
+  envios:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8h13v9H1z"/><path d="M14 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.8"/><circle cx="17.5" cy="19" r="1.8"/></svg>'
 };
 const VISTAS = [
   { id:"dashboard", nombre:"Inicio" },
   { id:"ventas",    nombre:"Ventas" },
   { id:"presupuestos", nombre:"Presupuestos" },
+  { id:"envios",    nombre:"Envíos" },
   { id:"leads",     nombre:"Leads" },
   { id:"clientes",  nombre:"Clientes" },
   { id:"productos", nombre:"Productos" },
@@ -764,6 +790,7 @@ function nav(id){
   const cargas = {
     dashboard: renderDashboard, ventas: cargarVentas, leads: cargarLeads,
     clientes: cargarClientes, productos: cargarProductos, presupuestos: cargarPresupuestos,
+    envios: cargarEnvios,
     smd: cargarSMD, reportes: cargarReporte, config: cargarConfigVista,
     gastos: cargarGastos
   };
@@ -1212,9 +1239,10 @@ const SMD_UBICACION = { biotopium: "Biotopium", santa_maria: "SM Discus" };
 async function cargarSMD(){
   $("smd-tabla").innerHTML = '<div class="cargando">Cargando stock…</div>';
   $("smd-ventas").innerHTML = "";
-  const [{ data: stock, error: e1 }, { data: ventas }] = await Promise.all([
+  const [{ data: stock, error: e1 }, { data: ventas }, { data: bajas, error: eB }] = await Promise.all([
     sb.from("smd_stock").select("*").order("especie"),
-    sb.from("smd_ventas").select("*, perfiles(nombre)").order("created_at", { ascending: false }).limit(60)
+    sb.from("smd_ventas").select("*, perfiles(nombre)").order("created_at", { ascending: false }).limit(60),
+    sb.from("smd_bajas").select("*").order("created_at", { ascending: false }).limit(60)
   ]);
   if (e1 && /smd_stock/.test(e1.message)){
     $("smd-tabla").innerHTML = '<div class="vacio"><b>Falta la migración</b>Corré migracion-smd.sql en Supabase → SQL Editor y recargá.</div>';
@@ -1222,6 +1250,8 @@ async function cargarSMD(){
   }
   state.smdStock = stock || [];
   state.smdVentas = ventas || [];
+  state.smdBajas = bajas || [];
+  state.smdBajasSinMigrar = !!eB;
   renderSMD();
 }
 function renderSMD(){
@@ -1242,6 +1272,7 @@ function renderSMD(){
         <td class="der" style="white-space:nowrap">
           <button class="btn btn-chico btn-primario" onclick="venderSMD(${s.id})" ${Number(s.cantidad) <= 0 ? "disabled" : ""}>Vender</button>
           <button class="btn btn-chico btn-suave" onclick="ingresoSMD(${s.id})">+ Ingreso</button>
+          <button class="btn btn-chico btn-borde" style="color:var(--rojo);border-color:var(--rojo-bg)" onclick="bajaSMD(${s.id})" ${Number(s.cantidad) <= 0 ? "disabled" : ""}>Baja</button>
           <button class="btn btn-chico btn-borde" onclick="abrirEspecieSMD(${s.id})">Editar</button>
         </td>
       </tr>`).join("") + "</tbody></table>";
@@ -1257,6 +1288,68 @@ function renderSMD(){
         <td><span class="chip ${v.envio === "retiro" ? "gris" : "ok"}">${SMD_ENVIO[v.envio] || v.envio}</span></td>
         ${esAdmin ? `<td class="der"><button class="btn btn-chico btn-peligro" onclick="anularVentaSMD(${v.id})">Deshacer</button></td>` : ""}
       </tr>`).join("") + "</tbody></table>";
+
+  // Bajas (muertes / descartes)
+  const CAUSAS_BAJA = { muerte: "Muerte", enfermedad: "Enfermedad", manejo: "Accidente / manejo", otro: "Otro" };
+  $("smd-bajas").innerHTML = state.smdBajasSinMigrar
+    ? '<div class="vacio" style="padding:18px"><b>Falta la migración de bajas</b>Corré migracion-smd-bajas.sql en Supabase → SQL Editor y recargá.</div>'
+    : !state.smdBajas.length
+      ? '<div class="vacio" style="padding:18px"><b>Sin bajas registradas</b>Usá el botón "Baja" en la fila de la especie.</div>'
+      : `<table><thead><tr><th>Fecha</th><th>Especie</th><th class="der">Cant.</th><th>Causa</th>${esAdmin ? "<th></th>" : ""}</tr></thead><tbody>` +
+        state.smdBajas.map(b => `<tr>
+          <td class="num">${fFecha(b.created_at)}</td>
+          <td>${esc(b.especie)}${b.tamano ? ` <small style="color:var(--gris)">${esc(b.tamano)}</small>` : ""}</td>
+          <td class="der num"><b style="color:var(--rojo)">− ${b.cantidad}</b></td>
+          <td><span class="chip rojo">${CAUSAS_BAJA[b.causa] || esc(b.causa || "—")}</span>${b.detalle ? ` <small style="color:var(--gris)">${esc(b.detalle)}</small>` : ""}</td>
+          ${esAdmin ? `<td class="der"><button class="btn btn-chico btn-peligro" onclick="anularBajaSMD(${b.id})">Deshacer</button></td>` : ""}
+        </tr>`).join("") + "</tbody></table>";
+}
+
+/* ----- Bajas SMD: muertes y descartes que descuentan stock ----- */
+function bajaSMD(id){
+  const s = state.smdStock.find(x => x.id === id);
+  if (!s) return;
+  abrirModal("Registrar baja · " + s.especie, `
+    <form onsubmit="guardarBajaSMD(event, ${id})">
+      <div style="background:var(--rojo-bg);border-radius:11px;padding:11px 13px;font-size:13.5px;color:var(--rojo);margin-bottom:4px">
+        La baja descuenta stock y queda en el historial. Stock actual: <b class="num">${s.cantidad}</b>${s.tamano ? " · " + esc(s.tamano) : ""}</div>
+      <div class="fila-2">
+        <div class="field"><label>Cantidad *</label>
+          <input type="text" inputmode="numeric" id="sb-cant" value="1" required></div>
+        <div class="field"><label>Causa</label>
+          <select id="sb-causa">
+            <option value="muerte">Muerte</option>
+            <option value="enfermedad">Enfermedad</option>
+            <option value="manejo">Accidente / manejo</option>
+            <option value="otro">Otro</option></select></div>
+      </div>
+      <div class="field"><label>Detalle</label>
+        <input id="sb-detalle" placeholder="Opcional · ej: apareció muerto en pecera 3, sin síntomas previos"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-peligro">Registrar baja</button>
+      </div>
+    </form>`);
+}
+async function guardarBajaSMD(e, id){
+  e.preventDefault();
+  const cant = numDec($("sb-cant").value);
+  if (!cant || cant <= 0) return toast("Ingresá una cantidad válida", "error");
+  const { error } = await sb.rpc("smd_baja", {
+    p_stock_id: id, p_cantidad: cant,
+    p_causa: $("sb-causa").value, p_detalle: $("sb-detalle").value.trim()
+  });
+  if (error) return toast(error.message.includes("smd_baja")
+    ? "Falta la migración de bajas (migracion-smd-bajas.sql)." : "No se pudo registrar: " + error.message, "error");
+  toast("Baja registrada. Stock descontado.", "ok");
+  cerrarModal(); cargarSMD();
+}
+async function anularBajaSMD(id){
+  if (!confirm("¿Deshacer esta baja? El stock se devuelve a la especie.")) return;
+  const { error } = await sb.rpc("smd_anular_baja", { p_id: id });
+  if (error) return toast("No se pudo deshacer: " + error.message, "error");
+  toast("Baja anulada. Stock devuelto.", "ok");
+  cargarSMD();
 }
 function abrirEspecieSMD(id){
   const s = id ? state.smdStock.find(x => x.id === id) : null;
@@ -1370,9 +1463,10 @@ async function renderDashSMD(){
   if (!cont) return;
   try {
     const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
-    const [{ data: stock, error: e1 }, { data: ventasMes }] = await Promise.all([
+    const [{ data: stock, error: e1 }, { data: ventasMes }, { data: bajasMes }] = await Promise.all([
       sb.from("smd_stock").select("especie,cantidad,ubicacion").order("cantidad", { ascending: false }),
-      sb.from("smd_ventas").select("cantidad,vendido_por").gte("created_at", inicioMes.toISOString())
+      sb.from("smd_ventas").select("cantidad,vendido_por").gte("created_at", inicioMes.toISOString()),
+      sb.from("smd_bajas").select("cantidad").gte("created_at", inicioMes.toISOString())
     ]);
     if (e1) throw e1;
     if (!stock || !stock.length){
@@ -1386,6 +1480,7 @@ async function renderDashSMD(){
     const max = Math.max(...top.map(x => Number(x.cantidad)), 1);
     const vBio = (ventasMes || []).filter(v => v.vendido_por === "biotopium").reduce((s,v) => s + Number(v.cantidad), 0);
     const vSMD = (ventasMes || []).filter(v => v.vendido_por === "santa_maria").reduce((s,v) => s + Number(v.cantidad), 0);
+    const bajasTot = (bajasMes || []).reduce((s,b) => s + Number(b.cantidad), 0);
     cont.innerHTML = `
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <span class="chip agua">Total: <b class="num" style="margin-left:4px">${total}</b></span>
@@ -1393,6 +1488,7 @@ async function renderDashSMD(){
         <span class="chip gris">En SM Discus: <b class="num" style="margin-left:4px">${enSMD}</b></span>
         <span class="chip gris">Vendidos este mes · Biotopium: <b class="num" style="margin-left:4px">${vBio}</b></span>
         <span class="chip gris">Santa María: <b class="num" style="margin-left:4px">${vSMD}</b></span>
+        ${bajasTot ? `<span class="chip rojo">Bajas del mes: <b class="num" style="margin-left:4px">${bajasTot}</b></span>` : ""}
       </div>` +
       top.map(x => `
         <div style="margin-bottom:9px">
@@ -1511,6 +1607,15 @@ async function renderDashboard(){
   ]);
   await cargarProductosData();
 
+  // Envíos (query aparte y tolerante: si falta la migración SQL, la card no se muestra)
+  let envMes = null, envPend = 0;
+  { const { data: envs, error: eEnv } = await sb.from("ventas")
+      .select("id,created_at,estado,estado_envio").eq("entrega", "envio").neq("estado", "anulada");
+    if (!eEnv){
+      envMes = (envs || []).filter(v => new Date(v.created_at) >= inicioMes).length;
+      envPend = (envs || []).filter(v => v.estado_envio === "pendiente").length;
+    } }
+
   const enARS = v => v.moneda === "USD" ? v.total * (v.tipo_cambio || 1) : v.total;
   const ok = (ventas30 || []).filter(v => v.estado === "completada");
   const mesActual = ok.filter(v => new Date(v.created_at) >= inicioMes);
@@ -1581,6 +1686,11 @@ async function renderDashboard(){
     <div class="metrica"><div class="icono">🛒</div><div class="rotulo">Ventas del mes</div>
       <div class="valor num">${mesActual.length}</div>
       <div class="extra">Ticket promedio ${fmtARS.format(ticket)}</div></div>
+    ${envMes === null ? "" : `
+    <div class="metrica ${envPend ? "alerta" : ""}" data-g="${envPend ? "d" : "b"}" style="cursor:pointer" onclick="nav('envios')">
+      <div class="icono">🚚</div><div class="rotulo">Ventas con envío</div>
+      <div class="valor num">${envMes}</div>
+      <div class="extra">${envPend ? envPend + " pendiente" + (envPend > 1 ? "s" : "") + " de despacho" : "Nada pendiente de despachar"}</div></div>`}
     <div class="metrica ok" data-g="c"><div class="icono">💬</div><div class="rotulo">Leads activos</div>
       <div class="valor num">${(leadsAct || []).length}</div>
       <div class="extra">En seguimiento</div></div>
@@ -1822,6 +1932,124 @@ async function guardarProducto(e, id){
   }
   toast(id ? "Producto actualizado" : "Producto creado", "ok");
   cerrarModal(); cargarProductos();
+}
+
+/* ---------------- AUMENTO MASIVO DE PRECIOS ---------------- */
+function abrirAumentoMasivo(){
+  state.amSel = new Set();
+  const cats = state.categorias.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join("");
+  const marcas = [...new Set(state.productos.map(p => (p.marca || "").trim()).filter(Boolean))].sort()
+    .map(m => `<option>${esc(m)}</option>`).join("");
+  abrirModal("Aumento masivo de precios", `
+    <div class="modal-cuerpo">
+      <div class="fila-2">
+        <div class="field"><label>Ajuste (%) · usá negativo para bajar</label>
+          <input type="number" id="am-pct" step="0.1" value="15" oninput="amResumen()"></div>
+        <div class="field"><label>Redondear precios ARS a</label>
+          <select id="am-redondeo">
+            <option value="0">Sin redondeo</option>
+            <option value="10">$10</option>
+            <option value="100" selected>$100</option>
+            <option value="500">$500</option>
+            <option value="1000">$1.000</option></select></div>
+      </div>
+      <div class="field"><label>Qué campos ajustar</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px">
+          ${[["costo","Costo"],["precio_ars","Precio ARS"],["precio_mayorista_ars","Precio mayorista"],["precio_usd","Precio USD"]]
+            .map(([v,n]) => `<label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:400">
+              <input type="checkbox" class="am-campo" value="${v}" checked style="width:17px;height:17px;accent-color:var(--agua)">${n}</label>`).join("")}
+        </div></div>
+      <div class="fila-2">
+        <div class="field"><label>Filtrar por categoría</label>
+          <select id="am-cat" onchange="amRenderLista()"><option value="">Todas</option>${cats}</select></div>
+        <div class="field"><label>Filtrar por marca</label>
+          <select id="am-marca" onchange="amRenderLista()"><option value="">Todas</option>${marcas}</select></div>
+      </div>
+      <div class="field sugerencias"><label>Buscar</label>
+        <input id="am-busca" placeholder="Nombre, SKU o marca…" oninput="amRenderLista()"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;text-transform:none;letter-spacing:0;font-weight:600">
+          <input type="checkbox" id="am-todos" onchange="amToggleTodos(this.checked)" style="width:18px;height:18px;accent-color:var(--agua)">
+          Seleccionar todos los filtrados</label>
+        <span id="am-count" class="chip agua">0 seleccionados</span>
+      </div>
+      <div id="am-lista" style="max-height:300px;overflow:auto;border:1.5px solid var(--linea);border-radius:12px;padding:6px"></div>
+      <div id="am-resumen" style="background:var(--alerta-bg);color:var(--alerta);border-radius:11px;padding:11px 13px;font-size:13.5px;display:none"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="am-aplicar" onclick="aplicarAumentoMasivo()" disabled>Aplicar ajuste</button>
+      </div>
+    </div>`);
+  amRenderLista();
+}
+function amFiltrados(){
+  const q = ($("am-busca")?.value || "").toLowerCase();
+  const cat = $("am-cat")?.value, marca = $("am-marca")?.value;
+  return state.productos.filter(p => p.activo !== false &&
+    (!q || p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) || (p.marca || "").toLowerCase().includes(q)) &&
+    (!cat || String(p.categoria_id) === cat) &&
+    (!marca || (p.marca || "") === marca));
+}
+function amRenderLista(){
+  const lista = amFiltrados();
+  $("am-lista").innerHTML = lista.length ? lista.map(p => `
+    <label style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid var(--linea);font-size:13.5px;text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer">
+      <input type="checkbox" ${state.amSel.has(p.id) ? "checked" : ""} onchange="amToggle(${p.id}, this.checked)"
+        style="width:17px;height:17px;accent-color:var(--agua);flex:none">
+      <span style="flex:1"><b>${esc(p.nombre)}</b>${p.marca ? ` <small style="color:var(--gris)">· ${esc(p.marca)}</small>` : ""}</span>
+      <span class="num" style="color:var(--gris)">${fmtARS.format(p.precio_ars)}</span>
+    </label>`).join("")
+    : '<div class="vacio" style="padding:16px"><b>Sin productos con ese filtro</b></div>';
+  const idsF = new Set(lista.map(p => p.id));
+  $("am-todos").checked = lista.length > 0 && lista.every(p => state.amSel.has(p.id));
+  amResumen();
+}
+function amToggle(id, on){ on ? state.amSel.add(id) : state.amSel.delete(id); amResumen();
+  const lista = amFiltrados(); $("am-todos").checked = lista.length > 0 && lista.every(p => state.amSel.has(p.id)); }
+function amToggleTodos(on){ amFiltrados().forEach(p => on ? state.amSel.add(p.id) : state.amSel.delete(p.id)); amRenderLista(); }
+function amResumen(){
+  const n = state.amSel.size, pct = +$("am-pct")?.value || 0;
+  $("am-count").textContent = n + " seleccionado" + (n === 1 ? "" : "s");
+  const r = $("am-resumen");
+  if (n && pct){
+    r.style.display = "";
+    r.innerHTML = `⚠️ Vas a aplicar <b>${pct > 0 ? "+" : ""}${pct}%</b> sobre <b>${n} producto${n === 1 ? "" : "s"}</b> en los campos marcados. Esta acción pisa los valores actuales y no tiene deshacer.`;
+  } else r.style.display = "none";
+  $("am-aplicar").disabled = !(n && pct);
+}
+async function aplicarAumentoMasivo(){
+  const pct = +$("am-pct").value || 0;
+  const factor = 1 + pct / 100;
+  const red = +$("am-redondeo").value || 0;
+  const campos = [...document.querySelectorAll(".am-campo:checked")].map(c => c.value);
+  if (!campos.length) return toast("Elegí al menos un campo a ajustar.", "error");
+  const ids = [...state.amSel];
+  if (!ids.length || !pct) return;
+  if (!confirm(`Aplicar ${pct > 0 ? "+" : ""}${pct}% a ${ids.length} producto(s). ¿Continuar?`)) return;
+  const btn = $("am-aplicar"); btn.disabled = true;
+  const r2 = x => Math.round(x * 100) / 100;
+  const redondear = x => red > 0 ? Math.round(x / red) * red : r2(x);
+  let hechos = 0, errores = 0;
+  const items = ids.map(id => state.productos.find(p => p.id === id)).filter(Boolean);
+  for (let i = 0; i < items.length; i += 15){
+    const lote = items.slice(i, i + 15);
+    await Promise.all(lote.map(p => {
+      const d = { updated_at: new Date().toISOString() };
+      if (campos.includes("costo")){
+        d.costo = r2((Number(p.costo != null ? p.costo : p.costo_usd) || 0) * factor);
+        d.costo_usd = r2((Number(p.costo_usd) || 0) * factor);
+      }
+      if (campos.includes("precio_ars") && Number(p.precio_ars) > 0) d.precio_ars = redondear(Number(p.precio_ars) * factor);
+      if (campos.includes("precio_mayorista_ars") && Number(p.precio_mayorista_ars) > 0) d.precio_mayorista_ars = redondear(Number(p.precio_mayorista_ars) * factor);
+      if (campos.includes("precio_usd") && Number(p.precio_usd) > 0) d.precio_usd = r2(Number(p.precio_usd) * factor);
+      return sb.from("productos").update(d).eq("id", p.id)
+        .then(({ error }) => error ? errores++ : hechos++);
+    }));
+    btn.textContent = `Aplicando… ${Math.min(i + 15, items.length)}/${items.length}`;
+  }
+  toast(errores ? `Listo con errores: ${hechos} actualizados, ${errores} fallaron.` : `${hechos} productos actualizados (${pct > 0 ? "+" : ""}${pct}%).`, errores ? "error" : "ok");
+  cerrarModal();
+  cargarProductos();
 }
 
 /* Margen automático: (precio − costo en ARS) / precio. Se pisa a mano si querés. */
@@ -2271,6 +2499,7 @@ function renderVentas(){
 /* ----- Nueva venta ----- */
 function abrirNuevaVenta(clienteId, modo){
   state.carrito = [];
+  state.presupuestoEditando = null;
   state.modoVenta = modo === "presupuesto" ? "presupuesto" : "venta";
   const esPresu = state.modoVenta === "presupuesto";
   const opciones = state.clientes.map(c =>
@@ -2328,6 +2557,16 @@ function abrirNuevaVenta(clienteId, modo){
       </div>
       <div class="field" id="v-envio-dir-wrap" style="display:none"><label>Dirección de envío</label>
         <input id="v-direccion" placeholder="Calle, número, localidad…"></div>
+      <div class="fila-2" id="v-envio-extra-wrap" style="display:none">
+        <div class="field"><label>Se envía por</label>
+          <select id="v-envio-transporte">
+            <option value="">Sin definir</option>
+            <option>Andreani</option><option>Correo Argentino</option><option>OCA</option>
+            <option>Vía Cargo</option><option>Moto / mensajería</option><option>Entrega propia</option>
+            <option>Otro</option></select></div>
+        <div class="field"><label>N° de seguimiento (opcional)</label>
+          <input id="v-envio-seguimiento" placeholder="Tracking / guía"></div>
+      </div>
 
       <div class="fila-2">
         <div class="field"><label>Margen de ganancia (%) · automático</label>
@@ -2425,6 +2664,7 @@ function entregaCambio(){
   const envio = $("v-entrega").value === "envio";
   $("v-envio-costo-wrap").style.display = envio ? "" : "none";
   $("v-envio-dir-wrap").style.display = envio ? "" : "none";
+  if ($("v-envio-extra-wrap")) $("v-envio-extra-wrap").style.display = envio ? "grid" : "none";
   $("v-envio-linea").style.display = envio ? "flex" : "none";
   if (!envio) $("v-costo-envio").value = 0;
   totalesCarrito();
@@ -2678,6 +2918,28 @@ async function confirmarVenta(){
 
   if (state.modoVenta === "presupuesto"){
     const btnP = $("v-confirmar"); btnP.disabled = true; btnP.textContent = "Guardando…";
+
+    // Edición de un presupuesto existente: se pisa la fila, no se crea otro.
+    if (state.presupuestoEditando){
+      const idEd = state.presupuestoEditando;
+      const sub = state.carrito.reduce((s,i) => s + i.cantidad * i.precio_unit, 0);
+      const { error: eEd } = await sb.from("presupuestos").update({
+        cliente_id: $("v-cliente").value ? +$("v-cliente").value : null,
+        tipo: $("v-tipo").value, moneda,
+        tipo_cambio: moneda === "USD" ? tcVenta() : 1,
+        descuento: desc, total: Math.round((sub - desc) * 100) / 100,
+        margen_pct: margenVenta(),
+        notas: $("v-notas").value.trim(),
+        items: state.carrito.map(i => ({ producto_id: i.producto_id, producto_nombre: i.producto_nombre, cantidad: i.cantidad, precio_unit: i.precio_unit }))
+      }).eq("id", idEd).is("venta_id", null);
+      if (eEd){ btnP.disabled = false; btnP.textContent = "Guardar cambios"; return toast("No se pudo actualizar: " + eEd.message, "error"); }
+      toast(`Presupuesto #${idEd} actualizado.`, "ok");
+      state.presupuestoEditando = null;
+      cerrarModal();
+      if (vistaActual === "presupuestos") cargarPresupuestos();
+      return;
+    }
+
     const { data, error } = await sb.rpc("crear_presupuesto", {
       p_cliente_id: $("v-cliente").value ? +$("v-cliente").value : null,
       p_tipo: $("v-tipo").value, p_moneda: moneda,
@@ -2729,6 +2991,15 @@ async function confirmarVenta(){
       ? error.message.replace(/^.*Stock/, "Stock") : "No se pudo guardar: " + error.message, "error");
   }
   toast(`Venta #${data} registrada. Stock actualizado.`, "ok");
+  // Si lleva envío, entra a la cola de despacho (columnas de la migración de envíos).
+  if (entrega === "envio"){
+    const { error: eEnv } = await sb.from("ventas").update({
+      estado_envio: "pendiente",
+      envio_transporte: $("v-envio-transporte")?.value || null,
+      envio_seguimiento: $("v-envio-seguimiento")?.value.trim() || null
+    }).eq("id", data);
+    if (eEnv) toast("La venta se guardó, pero no se pudo registrar en Envíos. ¿Corriste la migración SQL de envíos?", "error");
+  }
   cerrarModal();
   await cargarProductosData();
   if (vistaActual === "ventas") cargarVentas();
@@ -2760,7 +3031,9 @@ async function verVenta(id){
         Cliente: <b style="color:var(--tinta)">${esc(v.clientes?.nombre || "Consumidor final")}</b>
         · Vendedor: ${esc(v.perfiles?.nombre || "—")}
         · Entrega: <b style="color:var(--tinta)">${v.entrega === "envio" ? "Envío" : "Retiro / local"}</b>
-        ${v.entrega === "envio" && v.direccion_envio ? `<br>📍 ${esc(v.direccion_envio)}` : ""}</div>
+        ${v.entrega === "envio" && v.estado_envio ? ` <span class="chip ${v.estado_envio === "enviado" ? "ok" : "alerta"}">${v.estado_envio === "enviado" ? "Enviado" : "Pendiente de envío"}</span>` : ""}
+        ${v.entrega === "envio" && v.direccion_envio ? `<br>📍 ${esc(v.direccion_envio)}` : ""}
+        ${v.entrega === "envio" && v.envio_transporte ? `<br>🚚 ${esc(v.envio_transporte)}${v.envio_seguimiento ? " · Seguimiento: " + esc(v.envio_seguimiento) : ""}` : ""}</div>
       ${(items || []).map(i => `
         <div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--linea);font-size:14px">
           <span>${esc(i.producto_nombre)} <small style="color:var(--gris)">× ${i.cantidad}</small></span>
@@ -2851,14 +3124,16 @@ async function generarRecibo(id){
 function editarVenta(id){
   const v = state.ventas.find(x => x.id === id);
   if (!v) return;
+  state.editPagos = (v.pagos || []).map(p => ({ metodo: p.metodo, monto: Number(p.monto) }));
+  if (!state.editPagos.length) state.editPagos = [{ metodo: "efectivo", monto: 0 }];
   const opciones = state.clientes.map(c =>
     `<option value="${c.id}" ${c.id === v.cliente_id ? "selected" : ""}>${esc(c.nombre)}</option>`).join("");
   abrirModal(`Editar venta #${v.id}`, `
     <form onsubmit="guardarEdicionVenta(event, ${v.id})">
       <p style="color:var(--gris);font-size:13px;margin-bottom:4px">
-        Podés corregir cliente, margen, entrega y notas. Para cambiar productos o cantidades, anulá la venta y rehacela.</p>
+        Podés corregir cliente, margen, entrega, forma de pago y notas. Para cambiar productos o cantidades, anulá la venta y rehacela.</p>
       <div class="field"><label>Cliente</label>
-        <select id="ev-cliente"><option value="">Consumidor final</option>${opciones}</select></div>
+        <select id="ev-cliente" onchange="epDif(${v.id})"><option value="">Consumidor final</option>${opciones}</select></div>
       <div class="fila-2">
         <div class="field"><label>Margen de ganancia (%)</label>
           <input type="number" id="ev-margen" min="0" max="100" step="1" value="${v.margen_pct || 0}"></div>
@@ -2868,7 +3143,23 @@ function editarVenta(id){
             <option value="envio" ${v.entrega === "envio" ? "selected" : ""}>Envío</option></select></div>
       </div>
       <div class="field" id="ev-dir-wrap" style="display:${v.entrega === "envio" ? "block" : "none"}">
-        <label>Dirección de envío</label><input id="ev-dir" value="${esc(v.direccion_envio || "")}"></div>
+        <label>Dirección de envío</label><input id="ev-dir" value="${esc(v.direccion_envio || "")}">
+        <div class="fila-2" style="margin-top:8px">
+          <div class="field"><label>Se envía por</label>
+            <select id="ev-transporte">
+              ${["","Andreani","Correo Argentino","OCA","Vía Cargo","Moto / mensajería","Entrega propia","Otro"]
+                .map(t => `<option value="${t}" ${(v.envio_transporte || "") === t ? "selected" : ""}>${t || "Sin definir"}</option>`).join("")}
+              ${v.envio_transporte && !["Andreani","Correo Argentino","OCA","Vía Cargo","Moto / mensajería","Entrega propia","Otro"].includes(v.envio_transporte) ? `<option selected>${esc(v.envio_transporte)}</option>` : ""}
+            </select></div>
+          <div class="field"><label>N° de seguimiento</label>
+            <input id="ev-seguimiento" value="${esc(v.envio_seguimiento || "")}"></div>
+        </div></div>
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center">Forma de pago
+          <button type="button" class="btn btn-chico btn-suave" onclick="epAgregar(${v.id})">+ Dividir pago</button></label>
+        <div id="ep-pagos" style="display:grid;gap:8px"></div>
+        <div id="ep-dif" style="font-size:12.5px;margin-top:6px"></div>
+      </div>
       <div class="fila-2">
         <div class="field"><label>Fecha de la venta</label>
           <input type="date" id="ev-fecha" value="${new Date(v.created_at).toISOString().slice(0,10)}"></div>
@@ -2879,22 +3170,81 @@ function editarVenta(id){
         <button type="submit" class="btn btn-primario">Guardar cambios</button>
       </div>
     </form>`);
+  epRender(v.id);
+}
+/* ----- Editor de pagos dentro de Editar venta ----- */
+function epRender(vid){
+  const v = state.ventas.find(x => x.id === vid);
+  const uno = state.editPagos.length === 1;
+  $("ep-pagos").innerHTML = state.editPagos.map((pg, ix) => `
+    <div style="display:grid;grid-template-columns:1fr 120px ${uno ? "" : "34px"};gap:8px;align-items:center">
+      <select onchange="epEditar(${vid},${ix},'metodo',this.value)"
+        style="border:1.5px solid var(--linea);border-radius:9px;padding:8px 10px">
+        ${METODOS_PAGO.map(([m,n]) => `<option value="${m}" ${pg.metodo===m?"selected":""}>${n}</option>`).join("")}
+      </select>
+      <input type="number" min="0" step="0.01" value="${pg.monto}" aria-label="Monto"
+        style="border:1.5px solid var(--linea);border-radius:9px;padding:8px 10px;text-align:right"
+        oninput="epEditar(${vid},${ix},'monto',this.value)">
+      ${uno ? "" : `<button type="button" class="item-quitar" onclick="epQuitar(${vid},${ix})" aria-label="Quitar">✕</button>`}
+    </div>`).join("");
+  epDif(vid);
+}
+function epAgregar(vid){ state.editPagos.push({ metodo: "transferencia", monto: 0 }); epRender(vid); }
+function epQuitar(vid, ix){ state.editPagos.splice(ix,1);
+  if (!state.editPagos.length) state.editPagos = [{ metodo: "efectivo", monto: 0 }]; epRender(vid); }
+function epEditar(vid, ix, campo, val){
+  state.editPagos[ix][campo] = campo === "monto" ? Math.max(0, +val || 0) : val;
+  if (campo === "monto") epDif(vid);
+}
+function epDif(vid){
+  const v = state.ventas.find(x => x.id === vid);
+  const pagado = state.editPagos.reduce((s,p) => s + (+p.monto || 0), 0);
+  const dif = +(Number(v.total) - pagado).toFixed(2);
+  const pagadoAntes = Number(v.pagado || 0);
+  const cambio = Math.abs(pagado - pagadoAntes) > 0.5
+    ? ` · antes: ${fMoneda(pagadoAntes, v.moneda)}` : "";
+  $("ep-dif").innerHTML = Math.abs(dif) < 0.5
+    ? `<span style="color:var(--ok)">Pago completo ✓</span><span style="color:var(--gris)">${cambio}</span>`
+    : dif > 0
+      ? `<span style="color:var(--alerta)">Queda ${fMoneda(dif, v.moneda)} como saldo en cuenta corriente${$("ev-cliente") && !$("ev-cliente").value ? " · <b>necesita cliente asignado</b>" : ""}</span><span style="color:var(--gris)">${cambio}</span>`
+      : `<span style="color:var(--rojo)">El pago supera el total de la venta por ${fMoneda(-dif, v.moneda)}</span>`;
 }
 async function guardarEdicionVenta(e, id){
   e.preventDefault();
   const v0 = state.ventas.find(x => x.id === id);
   const entrega = $("ev-entrega").value;
+  // Pagos editados: mismas reglas que al crear la venta
+  const pagosNuevos = state.editPagos.filter(p => +p.monto > 0).map(p => ({ metodo: p.metodo, monto: +p.monto }));
+  const pagado = pagosNuevos.reduce((s,p) => s + p.monto, 0);
+  const clienteId = $("ev-cliente").value ? +$("ev-cliente").value : null;
+  if (pagado > Number(v0.total) + 0.5)
+    return toast(`El pago (${fMoneda(pagado, v0.moneda)}) supera el total de la venta. Ajustá los montos.`, "error");
+  if (pagado < Number(v0.total) - 0.5 && !clienteId)
+    return toast("Para dejar saldo pendiente tenés que asignar un cliente.", "error");
+  const cambioPago = Math.abs(pagado - Number(v0.pagado || 0)) > 0.5
+    || JSON.stringify(pagosNuevos) !== JSON.stringify((v0.pagos || []).map(p => ({ metodo: p.metodo, monto: Number(p.monto) })));
+  if (cambioPago && pagado < Number(v0.total) - 0.5 &&
+      !confirm(`Con este cambio queda ${fMoneda(v0.total - pagado, v0.moneda)} como saldo en la cuenta corriente del cliente. ¿Confirmar?`)) return;
   const datos = {
-    cliente_id: $("ev-cliente").value ? +$("ev-cliente").value : null,
+    cliente_id: clienteId,
     margen_pct: Math.max(0, Math.min(100, +$("ev-margen").value || 0)),
     entrega, direccion_envio: entrega === "envio" ? $("ev-dir").value.trim() : "",
-    notas: $("ev-notas").value.trim()
+    notas: $("ev-notas").value.trim(),
+    pagos: pagosNuevos, pagado
   };
   const fNueva = $("ev-fecha").value;
   if (fNueva && fNueva !== new Date(v0.created_at).toISOString().slice(0,10))
     datos.created_at = new Date(fNueva + "T12:00:00").toISOString();
   const { error } = await sb.from("ventas").update(datos).eq("id", id);
   if (error) return toast("No se pudo guardar: " + error.message, "error");
+  // Campos de envío (columnas de la migración): en un update aparte para no romper si falta la migración.
+  const datosEnv = entrega === "envio"
+    ? { envio_transporte: $("ev-transporte")?.value || null,
+        envio_seguimiento: $("ev-seguimiento")?.value.trim() || null,
+        estado_envio: v0.estado_envio || "pendiente" }
+    : { estado_envio: null, envio_transporte: null, envio_seguimiento: null, enviado_at: null };
+  const { error: eEnv } = await sb.from("ventas").update(datosEnv).eq("id", id);
+  if (eEnv && entrega === "envio") toast("Se guardó la venta, pero no los datos de envío. ¿Corriste la migración SQL?", "error");
   toast("Venta actualizada", "ok");
   cerrarModal(); cargarVentas();
 }
@@ -2986,6 +3336,7 @@ async function verPresupuesto(id){
       ${p.notas ? `<p style="font-size:13.5px;color:var(--gris)">${esc(p.notas)}</p>` : ""}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
         <button class="btn btn-suave btn-chico" onclick="generarPresupuestoPDF(${p.id})">📄 PDF</button>
+        ${!p.venta_id ? `<button class="btn btn-suave btn-chico" onclick="editarPresupuesto(${p.id})">✎ Editar</button>` : ""}
       </div>
       <div class="modal-pie">
         ${!p.venta_id ? `<button class="btn btn-peligro" onclick="borrarPresupuesto(${p.id})" style="margin-right:auto">Eliminar</button>` : ""}
@@ -2994,14 +3345,176 @@ async function verPresupuesto(id){
       </div>
     </div>`);
 }
-async function convertirPresupuesto(id){
+/* ----- Editar presupuesto: reusa el modal de venta en modo presupuesto y pisa la fila ----- */
+function editarPresupuesto(id){
+  const p = state.presupuestos.find(x => x.id === id);
+  if (!p || p.venta_id) return;
+  abrirNuevaVenta(p.cliente_id || null, "presupuesto");
+  state.presupuestoEditando = p.id;
+  $("modal-titulo").textContent = `Editar presupuesto #${p.id}`;
+  $("v-confirmar").textContent = "Guardar cambios";
+  if (p.tipo) $("v-tipo").value = p.tipo;
+  $("v-moneda").value = p.moneda || "ARS";
+  monedaCambio();
+  if (p.moneda === "USD"){ $("v-tc-fuente").value = "manual"; $("v-tc").value = p.tipo_cambio || state.config.tipo_cambio || ""; }
+  $("v-notas").value = p.notas || "";
+  // Descuento guardado como monto
+  if (Number(p.descuento) > 0){ $("v-desc-tipo").value = "monto"; $("v-descuento").value = Number(p.descuento); }
+  // Ítems → carrito (si el producto ya no existe, se mantiene el ítem con stock libre)
+  state.carrito = (p.items || []).map(i => {
+    const prod = state.productos.find(x => x.id === i.producto_id);
+    return {
+      producto_id: i.producto_id, producto_nombre: i.producto_nombre,
+      cantidad: Number(i.cantidad), precio_unit: Number(i.precio_unit),
+      costo_unit: prod ? costoProducto(prod) : 0,
+      stock: prod ? Math.max(Number(prod.stock), Number(i.cantidad)) : Number(i.cantidad) + 9999,
+      unidad: prod?.unidad || "unidad", costoManual: false
+    };
+  });
+  renderCarrito();
+}
+
+/* ----- Convertir en venta: método de pago, descuento (ej. por efectivo) y envío ----- */
+function convertirPresupuesto(id){
+  const p = state.presupuestos.find(x => x.id === id);
+  if (!p || p.venta_id) return;
+  state.convPagos = [{ metodo: "efectivo", monto: Number(p.total) }];
+  state.convPagoTocado = false;
+  abrirModal(`Convertir presupuesto #${p.id} en venta`, `
+    <div class="modal-cuerpo">
+      <div style="font-size:14px;color:var(--gris)">
+        Cliente: <b style="color:var(--tinta)">${esc(p.clientes?.nombre || "Consumidor final")}</b>
+        · Total del presupuesto: <b class="num" style="color:var(--tinta)">${fMoneda(p.total, p.moneda)}</b></div>
+
+      <div class="fila-2">
+        <div class="field"><label>Descuento extra (ej. pago en efectivo)</label>
+          <div style="display:flex;gap:6px">
+            <select id="cv-desc-tipo" onchange="convRecalcular(${p.id})"
+              style="border:1.5px solid var(--linea);border-radius:8px;padding:6px 8px">
+              <option value="pct">%</option><option value="monto">$</option></select>
+            <input type="number" id="cv-descuento" min="0" step="0.01" value="0"
+              style="flex:1;border:1.5px solid var(--linea);border-radius:8px;padding:6px 9px;text-align:right"
+              oninput="convRecalcular(${p.id})"></div></div>
+        <div class="field"><label>Total a cobrar</label>
+          <div style="padding:10px 0;font-weight:700;font-size:17px" class="num" id="cv-total">${fMoneda(p.total, p.moneda)}</div></div>
+      </div>
+
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center">Pago
+          <button type="button" class="btn btn-chico btn-suave" onclick="convAgregarPago(${p.id})">+ Dividir pago</button></label>
+        <div id="cv-pagos" style="display:grid;gap:8px"></div>
+        <div id="cv-pago-dif" style="font-size:12.5px;margin-top:6px"></div>
+      </div>
+
+      <div class="field"><label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cv-envio" onchange="$('cv-envio-wrap').style.display=this.checked?'grid':'none'"
+          style="width:18px;height:18px;accent-color:var(--agua)"> La venta lleva envío</label></div>
+      <div id="cv-envio-wrap" style="display:none;gap:10px">
+        <div class="field"><label>Dirección de envío</label>
+          <input id="cv-direccion" placeholder="Calle, número, localidad…"></div>
+        <div class="fila-2">
+          <div class="field"><label>Se envía por</label>
+            <select id="cv-transporte">
+              <option value="">Sin definir</option>
+              <option>Andreani</option><option>Correo Argentino</option><option>OCA</option>
+              <option>Vía Cargo</option><option>Moto / mensajería</option><option>Entrega propia</option>
+              <option>Otro</option></select></div>
+          <div class="field"><label>N° de seguimiento (opcional)</label>
+            <input id="cv-seguimiento" placeholder="Tracking / guía"></div>
+        </div>
+        <p style="font-size:12.5px;color:var(--gris);margin:0">Si el envío se cobra aparte, agregalo como ítem del presupuesto antes de convertir (botón Editar).</p>
+      </div>
+
+      <p style="font-size:12.5px;color:var(--gris)">Al convertir se descuenta stock y el presupuesto queda marcado como aceptado.</p>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="verPresupuesto(${p.id})">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="cv-confirmar" onclick="ejecutarConversion(${p.id})">Convertir en venta</button>
+      </div>
+    </div>`);
+  convRenderPagos(p);
+}
+function convTotal(p){
+  const tipo = $("cv-desc-tipo")?.value || "pct";
+  const dv = +$("cv-descuento")?.value || 0;
+  const base = Number(p.total);
+  const extra = Math.min(base, tipo === "pct" ? base * dv / 100 : dv);
+  return { extra: Math.round(extra * 100) / 100, total: Math.round((base - extra) * 100) / 100 };
+}
+function convRecalcular(id){
+  const p = state.presupuestos.find(x => x.id === id);
+  const { total } = convTotal(p);
+  $("cv-total").textContent = fMoneda(total, p.moneda);
+  if (state.convPagos.length === 1 && !state.convPagoTocado){ state.convPagos[0].monto = total; convRenderPagos(p); }
+  else convDifPago(p);
+}
+function convRenderPagos(p){
+  const uno = state.convPagos.length === 1;
+  $("cv-pagos").innerHTML = state.convPagos.map((pg, ix) => `
+    <div style="display:grid;grid-template-columns:1fr 120px ${uno ? "" : "34px"};gap:8px;align-items:center">
+      <select onchange="convEditarPago(${p.id},${ix},'metodo',this.value)"
+        style="border:1.5px solid var(--linea);border-radius:9px;padding:8px 10px">
+        ${METODOS_PAGO.map(([v,n]) => `<option value="${v}" ${pg.metodo===v?"selected":""}>${n}</option>`).join("")}
+      </select>
+      <input type="number" min="0" step="0.01" value="${pg.monto}" aria-label="Monto"
+        style="border:1.5px solid var(--linea);border-radius:9px;padding:8px 10px;text-align:right"
+        oninput="convEditarPago(${p.id},${ix},'monto',this.value)">
+      ${uno ? "" : `<button class="item-quitar" onclick="convQuitarPago(${p.id},${ix})" aria-label="Quitar">✕</button>`}
+    </div>`).join("");
+  convDifPago(p);
+}
+function convAgregarPago(id){ const p = state.presupuestos.find(x => x.id === id);
+  state.convPagos.push({ metodo: "transferencia", monto: 0 }); state.convPagoTocado = true; convRenderPagos(p); }
+function convQuitarPago(id, ix){ const p = state.presupuestos.find(x => x.id === id);
+  state.convPagos.splice(ix,1); if (!state.convPagos.length) state.convPagos=[{metodo:"efectivo",monto:0}]; convRenderPagos(p); }
+function convEditarPago(id, ix, campo, val){
+  state.convPagos[ix][campo] = campo === "monto" ? Math.max(0, +val || 0) : val;
+  if (campo === "monto"){ state.convPagoTocado = true; convDifPago(state.presupuestos.find(x => x.id === id)); }
+}
+function convDifPago(p){
+  const { total } = convTotal(p);
+  const pagado = state.convPagos.reduce((s,x) => s + (+x.monto || 0), 0);
+  const dif = +(total - pagado).toFixed(2);
+  $("cv-pago-dif").innerHTML = Math.abs(dif) < 0.5
+    ? '<span style="color:var(--ok)">Pago completo ✓</span>'
+    : dif > 0
+      ? `<span style="color:var(--alerta)">Queda ${fMoneda(dif, p.moneda)} como saldo en cuenta corriente${p.cliente_id ? "" : " · <b>necesita cliente asignado</b>"}</span>`
+      : `<span style="color:var(--rojo)">El pago supera el total por ${fMoneda(-dif, p.moneda)}</span>`;
+}
+async function ejecutarConversion(id){
   const p = state.presupuestos.find(x => x.id === id);
   if (!p) return;
-  if (!confirm(`Convertir el presupuesto #${id} en venta. Esto descuenta stock. ¿Continuar?`)) return;
-  // Pago: por defecto se cobra el total al convertir
-  const pagos = [{ metodo: "efectivo", monto: Number(p.total) }];
+  const { extra, total } = convTotal(p);
+  const pagos = state.convPagos.filter(x => +x.monto > 0).map(x => ({ metodo: x.metodo, monto: +x.monto }));
+  const pagado = pagos.reduce((s,x) => s + x.monto, 0);
+  if (pagado > total + 0.5) return toast("El pago supera el total. Ajustá los montos.", "error");
+  if (pagado < total - 0.5 && !p.cliente_id)
+    return toast("Para dejar saldo pendiente el presupuesto tiene que tener cliente asignado.", "error");
+  if (pagado < total - 0.5 &&
+      !confirm(`Se registra un pago parcial. Queda ${fMoneda(total - pagado, p.moneda)} en la cuenta corriente. ¿Confirmar?`)) return;
+  const conEnvio = $("cv-envio").checked;
+  const btn = $("cv-confirmar"); btn.disabled = true; btn.textContent = "Convirtiendo…";
+
+  // 1) Si hay descuento extra, se pisa el presupuesto para que la venta salga con el total correcto.
+  if (extra > 0){
+    const { error: eD } = await sb.from("presupuestos")
+      .update({ descuento: Math.round((Number(p.descuento || 0) + extra) * 100) / 100, total })
+      .eq("id", id).is("venta_id", null);
+    if (eD){ btn.disabled = false; btn.textContent = "Convertir en venta"; return toast("No se pudo aplicar el descuento: " + eD.message, "error"); }
+  }
+  // 2) Conversión (descuenta stock y registra pagos con su método).
   const { data, error } = await sb.rpc("convertir_presupuesto", { p_id: id, p_pagos: pagos });
-  if (error) return toast("No se pudo convertir: " + error.message, "error");
+  if (error){ btn.disabled = false; btn.textContent = "Convertir en venta"; return toast("No se pudo convertir: " + error.message, "error"); }
+  // 3) Datos de envío sobre la venta creada.
+  if (conEnvio){
+    const { error: eEnv } = await sb.from("ventas").update({
+      entrega: "envio",
+      direccion_envio: $("cv-direccion").value.trim(),
+      estado_envio: "pendiente",
+      envio_transporte: $("cv-transporte").value || null,
+      envio_seguimiento: $("cv-seguimiento").value.trim() || null
+    }).eq("id", data);
+    if (eEnv) toast("La venta se creó, pero no se pudo registrar el envío. ¿Corriste la migración SQL?", "error");
+  }
   toast(`Presupuesto convertido en la venta #${data}.`, "ok");
   cerrarModal();
   await cargarProductosData();
@@ -3042,6 +3555,123 @@ async function generarPresupuestoPDF(id){
   doc.setFont(undefined, "normal").setFontSize(8).setTextColor(130);
   doc.text("Presupuesto válido por 7 días · Biotopium", 14, 285);
   doc.save(`presupuesto-biotopium-${p.id}.pdf`);
+}
+
+/* ---------------- ENVÍOS ---------------- */
+async function cargarEnvios(){
+  $("env-tabla").innerHTML = '<div class="cargando">Cargando envíos…</div>';
+  const { data, error } = await sb.from("ventas")
+    .select("*, clientes(nombre,telefono)")
+    .eq("entrega", "envio").neq("estado", "anulada")
+    .order("created_at", { ascending: false }).limit(500);
+  if (error){
+    $("env-tabla").innerHTML = `<div class="vacio"><b>No se pudo cargar Envíos</b>
+      ${error.message.includes("estado_envio") || error.message.includes("column")
+        ? "Falta correr la migración SQL de envíos en Supabase (columnas estado_envio, envio_transporte, envio_seguimiento, enviado_at en la tabla ventas)."
+        : esc(error.message)}</div>`;
+    return;
+  }
+  state.envios = data || [];
+  renderEnvios();
+}
+function renderEnvios(){
+  const fe = $("env-filtro-estado").value;
+  const q = ($("env-busca").value || "").toLowerCase();
+  const lista = state.envios.filter(v =>
+    (fe === "" ? true : fe === "pendiente" ? v.estado_envio === "pendiente" : v.estado_envio === "enviado") &&
+    (!q || String(v.id).includes(q) || (v.clientes?.nombre || "").toLowerCase().includes(q) ||
+      (v.envio_transporte || "").toLowerCase().includes(q) || (v.direccion_envio || "").toLowerCase().includes(q)));
+  if (!lista.length){
+    $("env-tabla").innerHTML = `<div class="vacio"><b>${fe === "enviado" ? "Sin envíos en el historial" : "Sin envíos pendientes"}</b>
+      Las ventas con entrega "Envío" aparecen acá automáticamente.</div>`;
+    return;
+  }
+  $("env-tabla").innerHTML = `<table><thead><tr>
+      <th>Venta</th><th>Fecha</th><th>Cliente</th><th>Dirección</th><th>Transporte</th>
+      <th class="der">Total</th><th>Estado</th><th></th>
+    </tr></thead><tbody>` +
+    lista.map(v => `<tr class="fila-click" onclick="verEnvio(${v.id})">
+      <td class="num"><b>#${v.id}</b></td>
+      <td class="num">${fFecha(v.created_at)}</td>
+      <td>${esc(v.clientes?.nombre || "Consumidor final")}</td>
+      <td style="font-size:13.5px;color:var(--gris);max-width:220px">${esc(v.direccion_envio || "—")}</td>
+      <td style="font-size:13.5px">${esc(v.envio_transporte || "—")}${v.envio_seguimiento ? `<br><small style="color:var(--gris)">${esc(v.envio_seguimiento)}</small>` : ""}</td>
+      <td class="der num"><b>${fMoneda(v.total, v.moneda)}</b></td>
+      <td>${v.estado_envio === "enviado"
+        ? `<span class="chip ok">Enviado</span>${v.enviado_at ? `<br><small style="color:var(--gris)">${fFecha(v.enviado_at)}</small>` : ""}`
+        : '<span class="chip alerta">Pendiente</span>'}</td>
+      <td class="der acciones-fila" onclick="event.stopPropagation()">
+        ${v.estado_envio === "pendiente"
+          ? `<button class="btn btn-chico btn-primario" onclick="marcarEnviado(${v.id})">Marcar enviado</button>`
+          : `<button class="btn btn-chico btn-suave" onclick="volverPendiente(${v.id})">Volver a pendiente</button>`}
+      </td>
+    </tr>`).join("") + "</tbody></table>";
+}
+["env-filtro-estado","env-busca"].forEach(id => $(id)?.addEventListener("input", renderEnvios));
+
+function verEnvio(id){
+  const v = state.envios.find(x => x.id === id);
+  if (!v) return;
+  abrirModal(`Envío · Venta #${v.id}`, `
+    <form onsubmit="guardarEnvio(event, ${v.id})">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <span class="chip gris">${fFechaHora(v.created_at)}</span>
+        <span class="chip ${v.estado_envio === "enviado" ? "ok" : "alerta"}">${v.estado_envio === "enviado" ? "Enviado" : "Pendiente"}</span>
+        <span class="chip gris num">${fMoneda(v.total, v.moneda)}</span>
+      </div>
+      <div style="font-size:14px;color:var(--gris);margin-bottom:10px">
+        Cliente: <b style="color:var(--tinta)">${esc(v.clientes?.nombre || "Consumidor final")}</b>
+        ${v.clientes?.telefono ? " · 📞 " + esc(v.clientes.telefono) : ""}</div>
+      <div class="field"><label>Dirección de envío</label>
+        <input id="ge-dir" value="${esc(v.direccion_envio || "")}"></div>
+      <div class="fila-2">
+        <div class="field"><label>Se envía por</label>
+          <select id="ge-transporte">
+            ${["","Andreani","Correo Argentino","OCA","Vía Cargo","Moto / mensajería","Entrega propia","Otro"]
+              .map(t => `<option value="${t}" ${(v.envio_transporte || "") === t ? "selected" : ""}>${t || "Sin definir"}</option>`).join("")}
+          </select></div>
+        <div class="field"><label>N° de seguimiento</label>
+          <input id="ge-seguimiento" value="${esc(v.envio_seguimiento || "")}"></div>
+      </div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cerrar</button>
+        <button type="submit" class="btn btn-suave">Guardar datos</button>
+        ${v.estado_envio === "pendiente"
+          ? `<button type="button" class="btn btn-primario" onclick="marcarEnviado(${v.id}, true)">Marcar enviado</button>` : ""}
+      </div>
+    </form>`);
+}
+async function guardarEnvio(e, id){
+  e.preventDefault();
+  const { error } = await sb.from("ventas").update({
+    direccion_envio: $("ge-dir").value.trim(),
+    envio_transporte: $("ge-transporte").value || null,
+    envio_seguimiento: $("ge-seguimiento").value.trim() || null
+  }).eq("id", id);
+  if (error) return toast("No se pudo guardar: " + error.message, "error");
+  toast("Datos de envío actualizados", "ok");
+  cerrarModal(); cargarEnvios();
+}
+async function marcarEnviado(id, desdeModal){
+  // Si el modal está abierto con datos editados, los persiste antes de despachar.
+  const extra = desdeModal ? {
+    direccion_envio: $("ge-dir").value.trim(),
+    envio_transporte: $("ge-transporte").value || null,
+    envio_seguimiento: $("ge-seguimiento").value.trim() || null
+  } : {};
+  const { error } = await sb.from("ventas")
+    .update({ ...extra, estado_envio: "enviado", enviado_at: new Date().toISOString() }).eq("id", id);
+  if (error) return toast("No se pudo marcar: " + error.message, "error");
+  toast(`Venta #${id} marcada como enviada.`, "ok");
+  if (desdeModal) cerrarModal();
+  cargarEnvios();
+}
+async function volverPendiente(id){
+  const { error } = await sb.from("ventas")
+    .update({ estado_envio: "pendiente", enviado_at: null }).eq("id", id);
+  if (error) return toast("No se pudo cambiar: " + error.message, "error");
+  toast(`Venta #${id} vuelve a pendiente de envío.`, "ok");
+  cargarEnvios();
 }
 </script>
 <script>
@@ -3274,7 +3904,7 @@ function renderReporte(){
     state.repVentas.map(v => `<tr>
       <td class="num">#${v.id}</td><td class="num">${fFecha(v.created_at)}</td>
       <td>${esc(v.clientes?.nombre || "Consumidor final")}</td><td>${v.tipo}</td>
-      <td>${v.entrega === "envio" ? "Envío" : "Local"}</td>
+      <td>${v.entrega === "envio" ? "Envío" + (v.estado_envio ? ` <span class="chip ${v.estado_envio === "enviado" ? "ok" : "alerta"}" style="font-size:11px;padding:2px 8px">${v.estado_envio}</span>` : "") : "Local"}</td>
       <td class="der num">${fMoneda(v.total, v.moneda)}</td>
       <td><span class="chip ${v.estado === "anulada" ? "rojo" : "ok"}">${v.estado}</span></td>
     </tr>`).join("") + "</tbody></table>"
