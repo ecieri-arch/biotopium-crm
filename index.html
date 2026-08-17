@@ -623,7 +623,8 @@ td.der,th.der{text-align:right}
       </div>
       <div id="est-resumen" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
       <div class="filtros" style="gap:6px">
-        <button class="btn btn-suave" id="est-tab-proyectos" onclick="estTab('proyectos')">Proyectos</button>
+        <button class="btn btn-suave" id="est-tab-resumen" onclick="estTab('resumen')">Resumen</button>
+        <button class="btn btn-borde" id="est-tab-proyectos" onclick="estTab('proyectos')">Proyectos</button>
         <button class="btn btn-borde" id="est-tab-leads" onclick="estTab('leads')">Leads</button>
         <button class="btn btn-borde" id="est-tab-ventas" onclick="estTab('ventas')">Ventas</button>
         <button class="btn btn-borde" id="est-tab-liquidacion" onclick="estTab('liquidacion')">Liquidación</button>
@@ -659,9 +660,10 @@ td.der,th.der{text-align:right}
         </div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <h3>Equipo</h3>
+        <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px">Equipo
+          <button class="btn btn-chico btn-primario" onclick="abrirNuevoUsuario()" style="font-family:'DM Sans',sans-serif">+ Nuevo usuario</button></h3>
         <p style="color:var(--gris);font-size:13.5px;margin-bottom:12px">
-          Los usuarios se crean desde Supabase → Authentication → Users. Acá asignás el rol de cada uno.</p>
+          Alta, rol, contraseña y baja del equipo. Desactivar conserva el historial; eliminar solo se permite sin ventas registradas.</p>
         <div style="overflow:auto" id="cfg-usuarios"></div>
       </div>
       <div class="card">
@@ -1635,20 +1637,6 @@ async function renderDashboard(){
   ]);
   await cargarProductosData();
 
-  // El Estuario: ganancia del mes (tolerante a migración faltante)
-  let estGanMes = null;
-  { const [{ data: ev, error: eE1 }, { data: ep, error: eE2 }] = await Promise.all([
-      sb.from("est_ventas").select("ganancia,estado,created_at").gte("created_at", inicioMes.toISOString()),
-      sb.from("est_proyectos").select("precio_total,mano_obra,id,estado,cerrado_at")
-    ]);
-    if (!eE1 && !eE2){
-      const { data: ec } = await sb.from("est_costos").select("proyecto_id,monto");
-      const costoP = id => (ec || []).filter(c => c.proyecto_id === id).reduce((s,c) => s + Number(c.monto), 0);
-      estGanMes = (ev || []).filter(v => v.estado === "completada").reduce((s,v) => s + Number(v.ganancia), 0)
-        + (ep || []).filter(p => p.estado === "cerrado" && p.cerrado_at && new Date(p.cerrado_at) >= inicioMes)
-            .reduce((s,p) => s + Number(p.precio_total) - costoP(p.id) - Number(p.mano_obra || 0), 0);
-    } }
-
   // Envíos (query aparte y tolerante: si falta la migración SQL, la card no se muestra)
   let envMes = null, envPend = 0;
   { const { data: envs, error: eEnv } = await sb.from("ventas")
@@ -1740,11 +1728,6 @@ async function renderDashboard(){
       <div class="icono">🚚</div><div class="rotulo">Ventas con envío</div>
       <div class="valor num">${envMes}</div>
       <div class="extra">${envPend ? envPend + " pendiente" + (envPend > 1 ? "s" : "") + " de despacho" : "Nada pendiente de despachar"}</div></div>`}
-    ${estGanMes === null ? "" : `
-    <div class="metrica" data-g="b" style="cursor:pointer" onclick="nav('estuario')">
-      <div class="icono">🌊</div><div class="rotulo">El Estuario · ganancia mes</div>
-      <div class="valor num">${esAdmin ? fmtARS.format(estGanMes) : "—"}</div>
-      <div class="extra">${esAdmin ? "50% socio: " + fmtARS.format(estGanMes * 0.5) : "Visible para admin"}</div></div>`}
     <div class="metrica ok" data-g="c"><div class="icono">💬</div><div class="rotulo">Leads activos</div>
       <div class="valor num">${(leadsAct || []).length}</div>
       <div class="extra">En seguimiento</div></div>
@@ -3746,7 +3729,7 @@ const EST_RUBROS = { pecera:"Pecera / vidrio", mueble:"Mueble", equipamiento:"Eq
 const EST_ESTADOS = { presupuestado:["alerta","Presupuestado"], senado:["agua","Señado"],
   en_armado:["agua","En armado"], entregado:["ok","Entregado"], cerrado:["ok","Cerrado"],
   cancelado:["rojo","Cancelado"] };
-let estTabActual = "proyectos";
+let estTabActual = "resumen";
 
 const estGanProyecto = p => Number(p.precio_total) - estCostoProyecto(p);
 function estCostoProyecto(p){
@@ -3780,7 +3763,7 @@ async function cargarEstuario(){
   renderEstuario();
 }
 function estTab(t){ estTabActual = t;
-  ["proyectos","leads","ventas","liquidacion"].forEach(x =>
+  ["resumen","proyectos","leads","ventas","liquidacion"].forEach(x =>
     $("est-tab-" + x).className = "btn " + (x === t ? "btn-suave" : "btn-borde"));
   renderEstuario();
 }
@@ -3810,9 +3793,10 @@ function renderEstuario(){
     : esPartner ? ""
     : estTabActual === "proyectos" ? '<button class="btn btn-primario" onclick="abrirProyectoEst()">+ Nuevo proyecto</button>'
     : estTabActual === "ventas" ? '<button class="btn btn-primario" onclick="abrirVentaEst()">+ Nueva venta</button>'
-    : pendLiq > 0.5 ? '<button class="btn btn-primario" onclick="generarLiquidacionEst()">Generar liquidación</button>' : "";
+    : estTabActual === "liquidacion" && pendLiq > 0.5 ? '<button class="btn btn-primario" onclick="generarLiquidacionEst()">Generar liquidación</button>' : "";
 
-  if (estTabActual === "proyectos") renderEstProyectos(esPartner);
+  if (estTabActual === "resumen") renderEstResumen(esPartner);
+  else if (estTabActual === "proyectos") renderEstProyectos(esPartner);
   else if (estTabActual === "leads") renderEstLeads(esPartner);
   else if (estTabActual === "ventas") renderEstVentas(esPartner);
   else renderEstLiquidacion(esPartner);
@@ -4102,6 +4086,114 @@ async function cargarEstuarioData(){
   ]);
   state.estProyectos = proys || []; state.estCostos = costos || [];
   state.estVentas = ventas || []; state.estLiqs = liqs || []; state.estLeads = leads || [];
+}
+
+/* ---------- Resumen: dashboard propio del negocio (solo datos est_*) ---------- */
+const estAbrev = v => v >= 1e6 ? "$" + (v / 1e6).toFixed(1).replace(".", ",") + "M"
+  : v >= 1e3 ? "$" + Math.round(v / 1e3) + "k" : fmtARS.format(v);
+function renderEstResumen(){
+  const hoy = new Date();
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  // Serie mensual (últimos 6 meses): ventas por fecha, proyectos por fecha de cierre
+  const meses = [];
+  for (let i = 5; i >= 0; i--){
+    const d0 = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    meses.push({ y: d0.getFullYear(), m: d0.getMonth(),
+      label: d0.toLocaleDateString("es-AR", { month: "short" }).replace(".", ""), gan: 0, ing: 0 });
+  }
+  const bucket = f => { const x = new Date(f); return meses.find(b => b.y === x.getFullYear() && b.m === x.getMonth()); };
+  const ventasOk = state.estVentas.filter(v => v.estado === "completada");
+  ventasOk.forEach(v => { const b = bucket(v.created_at); if (b){ b.gan += Number(v.ganancia); b.ing += Number(v.total); } });
+  const proysCerrados = state.estProyectos.filter(p => p.estado === "cerrado" && p.cerrado_at);
+  proysCerrados.forEach(p => { const b = bucket(p.cerrado_at); if (b){ b.gan += estGanProyecto(p); b.ing += Number(p.precio_total); } });
+  const maxGan = Math.max(...meses.map(b => b.gan), 1);
+  const mesAct = meses[5];
+
+  // Split del mes por línea
+  const ganProdMes = ventasOk.filter(v => new Date(v.created_at) >= inicioMes)
+    .reduce((s,v) => s + Number(v.ganancia), 0);
+  const ganProyMes = proysCerrados.filter(p => new Date(p.cerrado_at) >= inicioMes)
+    .reduce((s,p) => s + estGanProyecto(p), 0);
+
+  // Métricas
+  const pendLiq = state.estVentas.filter(estLiquidableVenta).reduce((s,v) => s + Number(v.ganancia), 0)
+    + state.estProyectos.filter(estLiquidableProy).reduce((s,p) => s + estGanProyecto(p), 0);
+  const nPendLiq = state.estVentas.filter(estLiquidableVenta).length + state.estProyectos.filter(estLiquidableProy).length;
+  const saldoSocio = state.estLiqs.reduce((s,l) => s + Number(l.monto_socio) - Number(l.pagado_socio || 0), 0);
+  const pagadoHist = state.estLiqs.reduce((s,l) => s + Number(l.pagado_socio || 0), 0);
+  const proysActivos = state.estProyectos.filter(p => !["cerrado","cancelado"].includes(p.estado));
+  const cartera = proysActivos.reduce((s,p) => s + Number(p.precio_total), 0);
+  const leadsActivos = (state.estLeads || []).filter(l => !["ganado","perdido"].includes(l.estado)).length;
+  const enviosPend = ventasOk.filter(v => v.estado_envio === "pendiente").length;
+
+  const ESTADOS_ACTIVOS = ["presupuestado","senado","en_armado","entregado"];
+  const chipsEstados = ESTADOS_ACTIVOS.map(k => {
+    const n = state.estProyectos.filter(p => p.estado === k).length;
+    return n ? `<span class="chip ${EST_ESTADOS[k][0]}">${EST_ESTADOS[k][1]}: <b class="num" style="margin-left:4px">${n}</b></span>` : "";
+  }).join("");
+
+  $("est-cuerpo").innerHTML = `
+    <div class="metricas" style="margin-bottom:16px">
+      <div class="metrica" data-g="b"><div class="icono">💰</div><div class="rotulo">Ganancia del mes</div>
+        <div class="valor num">${fmtARS.format(mesAct.gan)}</div>
+        <div class="extra">50% El Estuario: ${fmtARS.format(mesAct.gan * EST_SPLIT)}</div></div>
+      <div class="metrica"><div class="icono">🧾</div><div class="rotulo">Ingresos del mes</div>
+        <div class="valor num">${fmtARS.format(mesAct.ing)}</div>
+        <div class="extra">${ventasOk.filter(v => new Date(v.created_at) >= inicioMes).length} venta(s) · ${proysCerrados.filter(p => new Date(p.cerrado_at) >= inicioMes).length} proyecto(s) cerrados</div></div>
+      <div class="metrica ${nPendLiq ? "alerta" : ""}" data-g="${nPendLiq ? "d" : "b"}" style="cursor:pointer" onclick="estTab('liquidacion')">
+        <div class="icono">⚖️</div><div class="rotulo">Pendiente de liquidar</div>
+        <div class="valor num">${fmtARS.format(pendLiq)}</div>
+        <div class="extra">${nPendLiq ? nPendLiq + " operación(es) cobradas 100%" : "Nada pendiente"}</div></div>
+      <div class="metrica"><div class="icono">🤝</div><div class="rotulo">Saldo al socio</div>
+        <div class="valor num">${fmtARS.format(saldoSocio)}</div>
+        <div class="extra">Pagado histórico: ${fmtARS.format(pagadoHist)}</div></div>
+      <div class="metrica" style="cursor:pointer" onclick="estTab('proyectos')">
+        <div class="icono">🛠️</div><div class="rotulo">Proyectos en curso</div>
+        <div class="valor num">${proysActivos.length}</div>
+        <div class="extra">Cartera: ${fmtARS.format(cartera)}</div></div>
+      <div class="metrica" style="cursor:pointer" onclick="estTab('leads')">
+        <div class="icono">📋</div><div class="rotulo">Leads activos</div>
+        <div class="valor num">${leadsActivos}</div>
+        <div class="extra">${enviosPend ? enviosPend + " envío(s) pendiente(s)" : "Sin envíos pendientes"}</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3>Ganancia por mes <span style="font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:400;color:var(--gris)">· últimos 6 meses · ventas por fecha, proyectos al cierre</span></h3>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end;height:160px;padding-top:6px">
+        ${meses.map(b => `
+          <div style="display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end">
+            <small class="num" style="font-size:10.5px;color:var(--gris)">${b.gan ? estAbrev(b.gan) : ""}</small>
+            <div style="width:100%;max-width:48px;border-radius:9px 9px 3px 3px;background:linear-gradient(180deg,var(--agua),#1d7d9c);height:${Math.max(3, Math.round(b.gan / maxGan * 100))}%" title="${fmtARS.format(b.gan)}"></div>
+            <small style="color:var(--gris);text-transform:capitalize">${b.label}</small>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+      <div class="card">
+        <h3>Ganancia del mes por línea</h3>
+        ${[["Acuarios a medida", ganProyMes], ["Productos y envíos", ganProdMes]].map(([n, g]) => {
+          const tot = ganProyMes + ganProdMes;
+          const pct = tot > 0 ? Math.round(g / tot * 100) : 0;
+          return `<div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px">
+              <span>${n}</span><b class="num">${fmtARS.format(g)} <small style="color:var(--gris)">${pct}%</small></b></div>
+            <div style="height:9px;border-radius:99px;background:var(--linea)">
+              <div style="height:100%;border-radius:99px;background:var(--agua);width:${pct}%"></div></div>
+          </div>`; }).join("")}
+      </div>
+      <div class="card">
+        <h3>Proyectos por estado</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px">
+          ${chipsEstados || '<span style="font-size:13.5px;color:var(--gris)">Sin proyectos activos.</span>'}
+        </div>
+        ${proysActivos.length ? `<div style="margin-top:12px">${proysActivos.slice(0, 4).map(p => `
+          <div class="fila-click" style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--linea);font-size:13.5px;cursor:pointer" onclick="verProyectoEst(${p.id})">
+            <span><b>${esc(p.nombre)}</b></span>
+            <span class="chip ${EST_ESTADOS[p.estado][0]}" style="font-size:11px;padding:2px 8px">${EST_ESTADOS[p.estado][1]}</span>
+          </div>`).join("")}</div>` : ""}
+      </div>
+    </div>`;
 }
 
 /* ---------- Leads del socio ---------- */
@@ -5435,17 +5527,22 @@ async function cargarConfigVista(){
   const { data } = await sb.from("perfiles").select("*").order("nombre");
   state.perfiles = data || [];
   $("cfg-usuarios").innerHTML = `<table><thead><tr>
-      <th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th>
+      <th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th></th>
     </tr></thead><tbody>` +
     state.perfiles.map(u => `<tr>
       <td><b>${esc(u.nombre)}</b></td>
       <td style="color:var(--gris)">${esc(u.email)}</td>
       <td><select onchange="cambiarRol('${u.id}', this.value)" ${u.id === state.user.id ? "disabled" : ""}>
         <option value="vendedor" ${u.rol === "vendedor" ? "selected" : ""}>Vendedor</option>
-        <option value="admin" ${u.rol === "admin" ? "selected" : ""}>Admin</option></select></td>
+        <option value="admin" ${u.rol === "admin" ? "selected" : ""}>Admin</option>
+        <option value="partner" ${u.rol === "partner" ? "selected" : ""}>Partner (El Estuario)</option></select></td>
       <td><button class="btn btn-chico ${u.activo ? "btn-borde" : "btn-suave"}"
         ${u.id === state.user.id ? "disabled" : ""}
         onclick="alternarActivo('${u.id}', ${!u.activo})">${u.activo ? "Desactivar" : "Activar"}</button></td>
+      <td class="der" style="white-space:nowrap">
+        <button class="btn btn-chico btn-borde" onclick="abrirResetClave('${u.id}', '${esc(u.nombre || u.email)}')">🔑 Clave</button>
+        ${u.id !== state.user.id ? `<button class="btn btn-chico btn-peligro" onclick="eliminarUsuario('${u.id}', '${esc(u.nombre || u.email)}')">✕</button>` : ""}
+      </td>
     </tr>`).join("") + "</tbody></table>";
 }
 function renderCategoriasCfg(){
@@ -5506,6 +5603,70 @@ async function borrarCategoria(id){
   const { error } = await sb.from("categorias").delete().eq("id", id);
   if (error) return toast("No se pudo eliminar: " + error.message, "error");
   await cargarBase(); renderCategoriasCfg();
+}
+/* ----- ABM de usuarios vía Edge Function admin-users ----- */
+async function invocarAdminUsers(body){
+  try {
+    const { data, error } = await sb.functions.invoke("admin-users", { body });
+    if (error) return { ok: false, error: "No se pudo contactar la función admin-users. ¿Está deployada en Supabase → Edge Functions?" };
+    return data || { ok: false, error: "Respuesta vacía" };
+  } catch (e){ return { ok: false, error: e.message }; }
+}
+function abrirNuevoUsuario(){
+  abrirModal("Nuevo usuario", `
+    <form onsubmit="guardarNuevoUsuario(event)">
+      <div class="fila-2">
+        <div class="field"><label>Nombre *</label><input id="nu-nombre" required placeholder="Ej: Natalia"></div>
+        <div class="field"><label>Rol</label>
+          <select id="nu-rol">
+            <option value="vendedor">Vendedor</option>
+            <option value="admin">Admin</option>
+            <option value="partner">Partner (El Estuario)</option></select></div>
+      </div>
+      <div class="field"><label>Email *</label>
+        <input type="email" id="nu-email" required placeholder="usuario@biotopium.com.ar" autocomplete="off"></div>
+      <div class="field"><label>Contraseña * <small style="color:var(--gris);text-transform:none;letter-spacing:0">(mín. 8 caracteres — pasásela por un canal seguro)</small></label>
+        <input type="text" id="nu-pass" required minlength="8" autocomplete="new-password"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario" id="nu-crear">Crear usuario</button>
+      </div>
+    </form>`);
+}
+async function guardarNuevoUsuario(e){
+  e.preventDefault();
+  const btn = $("nu-crear"); btn.disabled = true; btn.textContent = "Creando…";
+  const r = await invocarAdminUsers({ accion: "crear",
+    email: $("nu-email").value.trim(), password: $("nu-pass").value,
+    nombre: $("nu-nombre").value.trim(), rol: $("nu-rol").value });
+  if (!r.ok){ btn.disabled = false; btn.textContent = "Crear usuario"; return toast(r.error, "error"); }
+  toast("Usuario creado. Ya puede iniciar sesión.", "ok");
+  cerrarModal(); cargarConfigVista();
+}
+function abrirResetClave(id, nombre){
+  abrirModal("Resetear contraseña · " + nombre, `
+    <form onsubmit="guardarResetClave(event, '${id}')">
+      <div class="field"><label>Nueva contraseña * <small style="color:var(--gris);text-transform:none;letter-spacing:0">(mín. 8 caracteres)</small></label>
+        <input type="text" id="rc-pass" required minlength="8" autocomplete="new-password"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Cambiar contraseña</button>
+      </div>
+    </form>`);
+}
+async function guardarResetClave(e, id){
+  e.preventDefault();
+  const r = await invocarAdminUsers({ accion: "resetear", user_id: id, password: $("rc-pass").value });
+  if (!r.ok) return toast(r.error, "error");
+  toast("Contraseña actualizada", "ok");
+  cerrarModal();
+}
+async function eliminarUsuario(id, nombre){
+  if (!confirm(`Eliminar el usuario "${nombre}" definitivamente.\nSi tiene ventas registradas la función lo va a rechazar (usá Desactivar).\n\n¿Continuar?`)) return;
+  const r = await invocarAdminUsers({ accion: "eliminar", user_id: id });
+  if (!r.ok) return toast(r.error, "error");
+  toast("Usuario eliminado", "ok");
+  cargarConfigVista();
 }
 async function cambiarRol(id, rol){
   const { error } = await sb.from("perfiles").update({ rol }).eq("id", id);
