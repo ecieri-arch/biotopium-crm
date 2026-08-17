@@ -5608,7 +5608,18 @@ async function borrarCategoria(id){
 async function invocarAdminUsers(body){
   try {
     const { data, error } = await sb.functions.invoke("admin-users", { body });
-    if (error) return { ok: false, error: "No se pudo contactar la función admin-users. ¿Está deployada en Supabase → Edge Functions?" };
+    if (error){
+      // La función respondió con error HTTP: leer estado y cuerpo para diagnosticar
+      if (error.context && typeof error.context.text === "function"){
+        const st = error.context.status;
+        let txt = ""; try { txt = await error.context.text(); } catch(_){}
+        if (st === 401) return { ok: false, error: "401: el gateway rechazó la llamada. Desactivá \"Enforce JWT verification\" en Edge Functions → admin-users → Details (la función valida el token por su cuenta)." };
+        if (st === 404) return { ok: false, error: "404: no existe una función con el nombre exacto admin-users. Revisá el slug en Supabase → Edge Functions." };
+        return { ok: false, error: `La función respondió ${st}: ${(txt || "").slice(0, 200)}` };
+      }
+      // Ni siquiera hubo respuesta: CORS/preflight bloqueado, nombre inexistente o sin conexión
+      return { ok: false, error: "Sin respuesta de admin-users (preflight CORS bloqueado o función inexistente). Si \"Enforce JWT verification\" está activado en la función, desactivalo. Detalle: " + (error.message || error.name || "desconocido") };
+    }
     return data || { ok: false, error: "Respuesta vacía" };
   } catch (e){ return { ok: false, error: e.message }; }
 }
