@@ -334,6 +334,24 @@ td.der,th.der{text-align:right}
   .content{margin:0;padding:0}
   body{background:var(--card)}
 }
+/* ---------- FINANZAS ---------- */
+.fin-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.fin-cuentas-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px;margin-bottom:14px}
+.fin-cta{background:var(--card);border-radius:var(--radio);box-shadow:var(--sombra);padding:14px 16px}
+.fin-cta .fc-nom{font-size:11.5px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fin-cta .fc-saldo{font-size:19px;font-weight:700;margin-top:6px;color:var(--tinta)}
+.fin-cta .fc-tipo{font-size:12px;color:var(--gris);margin-top:2px}
+.fin-cta.inactiva{opacity:.55}
+.fin-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px;margin-bottom:16px}
+.fin-kpi{background:var(--card);border-radius:var(--radio);box-shadow:var(--sombra);padding:13px 15px}
+.fin-kpi .fk-valor{font-size:18px;font-weight:700}
+.fin-kpi .fk-label{font-size:11px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;margin-top:4px}
+.fin-pos{color:var(--ok)}.fin-neg{color:var(--rojo)}.fin-azul{color:var(--agua-fuerte)}.fin-oro{color:var(--alerta)}
+.fin-panel{background:var(--card);border-radius:var(--radio);box-shadow:var(--sombra);padding:18px;margin-bottom:16px}
+.fin-panel h4{font-size:13px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.fin-nota{color:var(--gris);font-size:12.5px;text-align:right;margin-bottom:10px}
+.fin-mini{font-size:12px;color:var(--gris);display:block}
+@media(max-width:760px){.fin-kpis{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -632,6 +650,24 @@ td.der,th.der{text-align:right}
       <div id="est-cuerpo"></div>
     </section>
 
+    <!-- ===== FINANZAS (solo admin) ===== -->
+    <section class="vista" id="view-finanzas">
+      <div class="vista-head">
+        <div><h2>Finanzas</h2><p>Consolidado en US$ con el TC congelado de cada movimiento · las transferencias no cuentan como ingreso/egreso</p></div>
+        <div class="acciones">
+          <button class="btn btn-borde" onclick="abrirFinCC()">+ Deuda</button>
+          <button class="btn btn-primario" onclick="abrirFinMov()">+ Movimiento de dinero</button>
+        </div>
+      </div>
+      <div class="fin-tabs">
+        <button class="btn btn-suave" id="fin-tab-resumen" onclick="finTab('resumen')">Resumen</button>
+        <button class="btn btn-borde" id="fin-tab-movs" onclick="finTab('movs')">Movimientos</button>
+        <button class="btn btn-borde" id="fin-tab-cc" onclick="finTab('cc')">Ctas. corrientes</button>
+        <button class="btn btn-borde" id="fin-tab-cuentas" onclick="finTab('cuentas')">Cajas y cuentas</button>
+      </div>
+      <div id="fin-cuerpo"><div class="cargando">Cargando finanzas…</div></div>
+    </section>
+
     <!-- ===== CONFIGURACIÓN ===== -->
     <section class="vista" id="view-config">
       <div class="vista-head">
@@ -712,7 +748,8 @@ const state = {
   repVentas: [], repVentasPrev: [], repVentas6m: [],
   repItems: [], repMovs: [],
   repCompras: [], repComprasPrev: [], repCompras6m: [],
-  carrito: [], pagos: [], modoVenta: "venta"
+  carrito: [], pagos: [], modoVenta: "venta",
+  fin: { cuentas: [], movs: [], cc: [], tab: "resumen", cargado: false }
 };
 
 const $ = id => document.getElementById(id);
@@ -767,7 +804,8 @@ const ICONOS = {
   smd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 12c2-4 6-6 11-5.5 1.5 1.6 2.3 3.4 2.5 5.5-.2 2.1-1 3.9-2.5 5.5-5 .5-9-1.5-11-5.5z"/><path d="M6.5 12 3 8.5c-.3 2.3-.3 4.7 0 7L6.5 12z"/><circle cx="15.5" cy="10.5" r="0.5" fill="currentColor"/></svg>',
   gastos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h5"/></svg>',
   envios:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8h13v9H1z"/><path d="M14 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.8"/><circle cx="17.5" cy="19" r="1.8"/></svg>',
-  estuario:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M3 20c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M12 12a4 4 0 0 0 4-4c0-2.2-1.8-4-4-4S8 5.8 8 8a4 4 0 0 0 4 4z"/></svg>'
+  estuario:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M3 20c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M12 12a4 4 0 0 0 4-4c0-2.2-1.8-4-4-4S8 5.8 8 8a4 4 0 0 0 4 4z"/></svg>',
+  finanzas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M2 10h20"/><circle cx="12" cy="14.5" r="2.3"/><path d="M5.5 14.5h.01M18.5 14.5h.01"/></svg>'
 };
 const VISTAS = [
   { id:"dashboard", nombre:"Inicio" },
@@ -781,6 +819,7 @@ const VISTAS = [
   { id:"gastos",    nombre:"Gastos" },
   { id:"smd",       nombre:"SM Discus", aparte:true },
   { id:"estuario",  nombre:"El Estuario" },
+  { id:"finanzas",  nombre:"Finanzas", admin:true, aparte:true },
   { id:"config",    nombre:"Configuración", admin:true }
 ];
 const NAV_MOBILE = ["dashboard","ventas","leads","productos","smd","reportes"];
@@ -795,14 +834,14 @@ function construirNav(){
     (v.aparte ? '<div style="height:1px;background:rgba(255,255,255,.12);margin:10px 8px"></div>' : "") +
     `<button class="sb-item" data-v="${v.id}" onclick="nav('${v.id}')">${ICONOS[v.id]}<span>${v.nombre}</span></button>`
   ).join("");
-  $("bottom-nav").innerHTML = (partner ? ["estuario"] : NAV_MOBILE).map(id => {
+  $("bottom-nav").innerHTML = (partner ? ["estuario"] : admin ? [...NAV_MOBILE, "finanzas"] : NAV_MOBILE).map(id => {
     const v = VISTAS.find(x => x.id === id);
     return `<button class="bn-item" data-v="${id}" onclick="nav('${id}')">${ICONOS[id]}<span>${v.nombre}</span></button>`;
   }).join("");
 }
 
 function nav(id){
-  if (id === "config" && state.perfil?.rol !== "admin") return;
+  if ((id === "config" || id === "finanzas") && state.perfil?.rol !== "admin") return;
   if (state.perfil?.rol === "partner" && id !== "estuario") return;
   vistaActual = id;
   document.querySelectorAll(".vista").forEach(v => v.classList.remove("activa"));
@@ -817,7 +856,8 @@ function nav(id){
     envios: cargarEnvios,
     smd: cargarSMD, reportes: cargarReporte, config: cargarConfigVista,
     estuario: cargarEstuario,
-    gastos: cargarGastos
+    gastos: cargarGastos,
+    finanzas: cargarFinanzas
   };
   cargas[id]?.();
 }
@@ -1980,10 +2020,20 @@ function abrirAumentoMasivo(){
   abrirModal("Aumento masivo de precios", `
     <div class="modal-cuerpo">
       <div class="fila-2">
+        <div class="field"><label>Aplicar a</label>
+          <select id="am-alcance" onchange="amAlcanceCambio()">
+            <option value="todos">Todos los productos activos</option>
+            <option value="categoria">Una categoría completa</option>
+            <option value="manual">Selección manual</option>
+          </select></div>
+        <div class="field" id="am-cat-wrap" style="display:none"><label id="am-cat-label">Categoría</label>
+          <select id="am-cat" onchange="amCatCambio()"><option value="">Elegí una categoría…</option>${cats}</select></div>
+      </div>
+      <div class="fila-2">
         <div class="field"><label>Ajuste (%) · usá negativo para bajar</label>
           <input type="number" id="am-pct" step="0.1" value="15" oninput="amResumen()"></div>
         <div class="field"><label>Redondear precios ARS a</label>
-          <select id="am-redondeo">
+          <select id="am-redondeo" onchange="amResumen()">
             <option value="0">Sin redondeo</option>
             <option value="10">$10</option>
             <option value="100" selected>$100</option>
@@ -1996,28 +2046,48 @@ function abrirAumentoMasivo(){
             .map(([v,n]) => `<label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:400">
               <input type="checkbox" class="am-campo" value="${v}" checked style="width:17px;height:17px;accent-color:var(--agua)">${n}</label>`).join("")}
         </div></div>
-      <div class="fila-2">
-        <div class="field"><label>Filtrar por categoría</label>
-          <select id="am-cat" onchange="amRenderLista()"><option value="">Todas</option>${cats}</select></div>
+      <div id="am-manual-wrap" style="display:none">
         <div class="field"><label>Filtrar por marca</label>
           <select id="am-marca" onchange="amRenderLista()"><option value="">Todas</option>${marcas}</select></div>
+        <div class="field sugerencias"><label>Buscar</label>
+          <input id="am-busca" placeholder="Nombre, SKU o marca…" oninput="amRenderLista()"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label style="display:flex;align-items:center;gap:8px;font-size:14px;text-transform:none;letter-spacing:0;font-weight:600">
+            <input type="checkbox" id="am-todos" onchange="amToggleTodos(this.checked)" style="width:18px;height:18px;accent-color:var(--agua)">
+            Seleccionar todos los filtrados</label>
+          <span id="am-count" class="chip agua">0 seleccionados</span>
+        </div>
+        <div id="am-lista" style="max-height:260px;overflow:auto;border:1.5px solid var(--linea);border-radius:12px;padding:6px"></div>
       </div>
-      <div class="field sugerencias"><label>Buscar</label>
-        <input id="am-busca" placeholder="Nombre, SKU o marca…" oninput="amRenderLista()"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <label style="display:flex;align-items:center;gap:8px;font-size:14px;text-transform:none;letter-spacing:0;font-weight:600">
-          <input type="checkbox" id="am-todos" onchange="amToggleTodos(this.checked)" style="width:18px;height:18px;accent-color:var(--agua)">
-          Seleccionar todos los filtrados</label>
-        <span id="am-count" class="chip agua">0 seleccionados</span>
-      </div>
-      <div id="am-lista" style="max-height:300px;overflow:auto;border:1.5px solid var(--linea);border-radius:12px;padding:6px"></div>
       <div id="am-resumen" style="background:var(--alerta-bg);color:var(--alerta);border-radius:11px;padding:11px 13px;font-size:13.5px;display:none"></div>
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
         <button type="button" class="btn btn-primario" id="am-aplicar" onclick="aplicarAumentoMasivo()" disabled>Aplicar ajuste</button>
       </div>
     </div>`);
-  amRenderLista();
+  amAlcanceCambio();
+}
+/* Alcance: todos / una categoría / manual. En los dos primeros no hay que tildar nada. */
+function amItemsAlcance(){
+  const a = $("am-alcance")?.value || "todos";
+  const activos = state.productos.filter(p => p.activo !== false);
+  if (a === "todos") return activos;
+  if (a === "categoria"){
+    const c = $("am-cat")?.value;
+    return c ? activos.filter(p => String(p.categoria_id) === c) : [];
+  }
+  return [...state.amSel].map(id => state.productos.find(p => p.id === id)).filter(Boolean);
+}
+function amAlcanceCambio(){
+  const a = $("am-alcance").value;
+  $("am-cat-wrap").style.display = a === "categoria" || a === "manual" ? "block" : "none";
+  $("am-cat-label").textContent = a === "manual" ? "Filtrar por categoría" : "Categoría";
+  $("am-cat").options[0].textContent = a === "manual" ? "Todas" : "Elegí una categoría…";
+  $("am-manual-wrap").style.display = a === "manual" ? "block" : "none";
+  if (a === "manual") amRenderLista(); else amResumen();
+}
+function amCatCambio(){
+  $("am-alcance").value === "manual" ? amRenderLista() : amResumen();
 }
 function amFiltrados(){
   const q = ($("am-busca")?.value || "").toLowerCase();
@@ -2045,12 +2115,26 @@ function amToggle(id, on){ on ? state.amSel.add(id) : state.amSel.delete(id); am
   const lista = amFiltrados(); $("am-todos").checked = lista.length > 0 && lista.every(p => state.amSel.has(p.id)); }
 function amToggleTodos(on){ amFiltrados().forEach(p => on ? state.amSel.add(p.id) : state.amSel.delete(p.id)); amRenderLista(); }
 function amResumen(){
-  const n = state.amSel.size, pct = +$("am-pct")?.value || 0;
-  $("am-count").textContent = n + " seleccionado" + (n === 1 ? "" : "s");
+  const items = amItemsAlcance();
+  const n = items.length, pct = +$("am-pct")?.value || 0;
+  if ($("am-count")) $("am-count").textContent = n + " seleccionado" + (n === 1 ? "" : "s");
   const r = $("am-resumen");
   if (n && pct){
+    const alcance = $("am-alcance").value;
+    const nomCat = alcance === "categoria"
+      ? (state.categorias.find(c => String(c.id) === $("am-cat").value)?.nombre || "")
+      : "";
+    const quien = alcance === "todos" ? `<b>TODOS los productos activos (${n})</b>`
+      : alcance === "categoria" ? `<b>${n} producto${n === 1 ? "" : "s"}</b> de la categoría <b>${esc(nomCat)}</b>`
+      : `<b>${n} producto${n === 1 ? "" : "s"} seleccionado${n === 1 ? "" : "s"}</b>`;
+    /* Ejemplo con el primer producto que tenga precio ARS, para verificar % y redondeo */
+    const red = +$("am-redondeo")?.value || 0;
+    const factor = 1 + pct / 100;
+    const ej = items.find(p => Number(p.precio_ars) > 0);
+    const ejTxt = ej ? `<br><span style="opacity:.85">Ejemplo: ${esc(ej.nombre)} · ${fmtARS.format(ej.precio_ars)} → <b>${
+      fmtARS.format(red > 0 ? Math.round(ej.precio_ars * factor / red) * red : Math.round(ej.precio_ars * factor * 100) / 100)}</b></span>` : "";
     r.style.display = "";
-    r.innerHTML = `⚠️ Vas a aplicar <b>${pct > 0 ? "+" : ""}${pct}%</b> sobre <b>${n} producto${n === 1 ? "" : "s"}</b> en los campos marcados. Esta acción pisa los valores actuales y no tiene deshacer.`;
+    r.innerHTML = `⚠️ Vas a aplicar <b>${pct > 0 ? "+" : ""}${pct}%</b> sobre ${quien} en los campos marcados. Pisa los valores actuales y no tiene deshacer.${ejTxt}`;
   } else r.style.display = "none";
   $("am-aplicar").disabled = !(n && pct);
 }
@@ -2060,14 +2144,15 @@ async function aplicarAumentoMasivo(){
   const red = +$("am-redondeo").value || 0;
   const campos = [...document.querySelectorAll(".am-campo:checked")].map(c => c.value);
   if (!campos.length) return toast("Elegí al menos un campo a ajustar.", "error");
-  const ids = [...state.amSel];
-  if (!ids.length || !pct) return;
-  if (!confirm(`Aplicar ${pct > 0 ? "+" : ""}${pct}% a ${ids.length} producto(s). ¿Continuar?`)) return;
+  const items = amItemsAlcance();
+  if (!items.length || !pct) return;
+  const alcance = $("am-alcance").value;
+  const aviso = alcance === "todos" ? `TODOS los productos activos (${items.length})` : `${items.length} producto(s)`;
+  if (!confirm(`Aplicar ${pct > 0 ? "+" : ""}${pct}% a ${aviso}. ¿Continuar?`)) return;
   const btn = $("am-aplicar"); btn.disabled = true;
   const r2 = x => Math.round(x * 100) / 100;
   const redondear = x => red > 0 ? Math.round(x / red) * red : r2(x);
   let hechos = 0, errores = 0;
-  const items = ids.map(id => state.productos.find(p => p.id === id)).filter(Boolean);
   for (let i = 0; i < items.length; i += 15){
     const lote = items.slice(i, i + 15);
     await Promise.all(lote.map(p => {
@@ -5688,6 +5773,666 @@ async function alternarActivo(id, activo){
   const { error } = await sb.from("perfiles").update({ activo }).eq("id", id);
   if (error) return toast("No se pudo actualizar: " + error.message, "error");
   cargarConfigVista();
+}
+
+/* ==================================================================
+   FINANZAS (solo admin) — cajas y cuentas, movimientos con TC
+   congelado, cuentas corrientes y resumen consolidado en US$.
+   Las tablas fin_* tienen RLS admin-only: aunque un vendedor fuerce
+   el front, la base no le devuelve nada.
+   ================================================================== */
+const FIN_TIPOS = {
+  cobro_cliente:  { nombre:"Cobro cliente",  dir:+1, chip:"ok" },
+  ingreso:        { nombre:"Ingreso",        dir:+1, chip:"ok" },
+  pago_proveedor: { nombre:"Pago proveedor", dir:-1, chip:"rojo" },
+  gasto:          { nombre:"Gasto",          dir:-1, chip:"alerta" },
+  transferencia:  { nombre:"Transferencia",  dir:0,  chip:"agua" },
+  ajuste:         { nombre:"Ajuste arqueo",  dir:0,  chip:"gris" }
+};
+const FIN_CTA_TIPOS = [["efectivo","Efectivo"],["banco","Banco"],["billetera","Billetera"]];
+const finNombreTipoCta = t => (FIN_CTA_TIPOS.find(x => x[0] === t) || [,t])[1];
+const fmtUSD2 = fmtUSD; // 2 decimales, ya definido arriba
+/* TC "vivo" para valuar saldos y deudas hoy (los movimientos usan su TC congelado) */
+const finTC = () => tcDeFuente(state.tcFuente) || Number(state.config.tipo_cambio) || 1;
+const finUSD = (monto, moneda, tc) => moneda === "USD" ? Number(monto || 0) : Number(monto || 0) / (Number(tc) || finTC());
+const finCta = id => state.fin.cuentas.find(c => c.id === id);
+const fMonCta = (monto, cuenta) => cuenta ? fMoneda(monto, cuenta.moneda) : fmtARS.format(monto || 0);
+/* Signo real de un movimiento sobre su cuenta origen (ajuste puede ser + o −) */
+const finDir = m => m.tipo === "ajuste" ? Math.sign(Number(m.monto) || 0) : (FIN_TIPOS[m.tipo]?.dir ?? 0);
+
+async function cargarFinanzas(){
+  if (state.perfil?.rol !== "admin") return;
+  $("fin-cuerpo").innerHTML = '<div class="cargando">Cargando finanzas…</div>';
+  const [ctas, movs, cc] = await Promise.all([
+    sb.from("fin_cuentas").select("*").order("created_at"),
+    sb.from("fin_movimientos").select("*").order("fecha", { ascending:false }).limit(2000),
+    sb.from("fin_cc").select("*").order("created_at", { ascending:false }).limit(500)
+  ]);
+  const err = ctas.error || movs.error || cc.error;
+  if (err){
+    const falta = /fin_cuentas|fin_movimientos|fin_cc|does not exist|schema cache/i.test(err.message);
+    $("fin-cuerpo").innerHTML = `<div class="vacio"><b>${falta ? "Falta correr la migración" : "No se pudo cargar Finanzas"}</b>${
+      falta ? "Ejecutá <b>migracion-finanzas.sql</b> en el SQL Editor de Supabase y recargá." : esc(err.message)}</div>`;
+    return;
+  }
+  state.fin.cuentas = ctas.data || [];
+  state.fin.movs = movs.data || [];
+  state.fin.cc = cc.data || [];
+  state.fin.cargado = true;
+  finTab(state.fin.tab || "resumen");
+}
+
+function finTab(t){
+  state.fin.tab = t;
+  ["resumen","movs","cc","cuentas"].forEach(x => {
+    const b = $("fin-tab-" + x);
+    if (b) b.className = "btn " + (x === t ? "btn-suave" : "btn-borde");
+  });
+  ({ resumen: renderFinResumen, movs: renderFinMovs, cc: renderFinCC, cuentas: renderFinCuentas }[t] || renderFinResumen)();
+}
+
+/* ---------- helpers de período ---------- */
+function finRangoPeriodo(p){
+  const hoy = new Date(); hoy.setHours(23,59,59,999);
+  if (p === "mes"){ const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return [d, hoy]; }
+  if (p === "mes_ant"){
+    const d = new Date(); d.setDate(1); d.setHours(0,0,0,0);
+    const fin = new Date(d - 1);
+    const ini = new Date(fin); ini.setDate(1); ini.setHours(0,0,0,0);
+    return [ini, fin];
+  }
+  if (p === "30d"){ const d = new Date(Date.now() - 29 * 864e5); d.setHours(0,0,0,0); return [d, hoy]; }
+  return [new Date(0), hoy];
+}
+const finMovsValidos = () => state.fin.movs.filter(m => !m.anulado);
+
+/* ================= RESUMEN ================= */
+function renderFinResumen(){
+  const per = state.fin.periodo || "mes";
+  const [ini, fin] = finRangoPeriodo(per);
+  const movs = finMovsValidos().filter(m => { const f = new Date(m.fecha); return f >= ini && f <= fin; });
+  const tcHoy = finTC();
+
+  const activas = state.fin.cuentas.filter(c => c.activa !== false);
+  const totalUSD = activas.reduce((s,c) => s + finUSD(c.saldo, c.moneda, tcHoy), 0);
+  let ing = 0, egr = 0;
+  movs.forEach(m => {
+    if (m.tipo === "transferencia") return;
+    const u = Math.abs(Number(m.usd_equiv) || 0);
+    if (finDir(m) > 0) ing += u; else if (finDir(m) < 0) egr += u;
+  });
+  const ccAb = state.fin.cc.filter(c => c.estado !== "saldada" && c.estado !== "anulada" && Number(c.saldo) > 0);
+  const porCobrar = ccAb.filter(c => c.tipo === "cobrar").reduce((s,c) => s + finUSD(c.saldo, c.moneda, tcHoy), 0);
+  const porPagar  = ccAb.filter(c => c.tipo === "pagar").reduce((s,c) => s + finUSD(c.saldo, c.moneda, tcHoy), 0);
+
+  const nomPer = { mes:"del período", mes_ant:"del período", "30d":"del período", todo:"histórico" }[per];
+  $("fin-cuerpo").innerHTML = `
+    <div class="filtros" style="margin-bottom:12px">
+      <select onchange="state.fin.periodo=this.value;renderFinResumen()" style="min-width:160px">
+        <option value="mes" ${per==="mes"?"selected":""}>Mes actual</option>
+        <option value="mes_ant" ${per==="mes_ant"?"selected":""}>Mes anterior</option>
+        <option value="30d" ${per==="30d"?"selected":""}>Últimos 30 días</option>
+        <option value="todo" ${per==="todo"?"selected":""}>Todo</option>
+      </select>
+      <div class="fin-nota" style="flex:1">TC de valuación de saldos: ${fmtARS.format(tcHoy)} (${nombreFuente(state.tcFuente)}) · cada movimiento conserva su TC</div>
+    </div>
+    <div class="fin-cuentas-row">${activas.map(c => `
+      <div class="fin-cta">
+        <div class="fc-nom">${esc(c.nombre)} <span class="chip gris">${c.moneda}</span></div>
+        <div class="fc-saldo num">${fMoneda(c.saldo, c.moneda)}</div>
+        <div class="fc-tipo">${finNombreTipoCta(c.tipo)}</div>
+      </div>`).join("") || '<div class="vacio"><b>Sin cuentas</b>Creá la primera en la pestaña “Cajas y cuentas”.</div>'}
+    </div>
+    <div class="fin-kpis">
+      <div class="fin-kpi"><div class="fk-valor num fin-oro">${fmtUSD2.format(totalUSD)}</div><div class="fk-label">Plata disponible total</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-pos">+${fmtUSD2.format(ing)}</div><div class="fk-label">Ingresos ${nomPer}</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-neg">−${fmtUSD2.format(egr)}</div><div class="fk-label">Egresos ${nomPer}</div></div>
+      <div class="fin-kpi"><div class="fk-valor num ${ing-egr>=0?"fin-pos":"fin-neg"}">${ing-egr>=0?"+":""}${fmtUSD2.format(ing-egr)}</div><div class="fk-label">Flujo neto de caja</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-azul">${fmtUSD2.format(porCobrar)}</div><div class="fk-label">Por cobrar (${ccAb.filter(c=>c.tipo==="cobrar").length})</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-neg">${fmtUSD2.format(porPagar)}</div><div class="fk-label">Por pagar (${ccAb.filter(c=>c.tipo==="pagar").length})</div></div>
+    </div>
+    <div class="fin-panel"><h4>Flujo de caja por mes (US$ equiv.)</h4><div id="fin-graf-mes"></div></div>
+    <div class="fin-panel"><h4>Evolución del saldo total · últimos 30 días (US$ equiv. aprox.)</h4><div id="fin-graf-saldo"></div></div>`;
+  renderFinGrafMes();
+  renderFinGrafSaldo(totalUSD);
+}
+
+function renderFinGrafMes(){
+  const cont = $("fin-graf-mes"); if (!cont) return;
+  const meses = [];
+  for (let i = 5; i >= 0; i--){
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+    meses.push({ k: d.toISOString().slice(0,7), lbl: d.toLocaleDateString("es-AR",{month:"short"}), ing:0, egr:0 });
+  }
+  finMovsValidos().forEach(m => {
+    if (m.tipo === "transferencia") return;
+    const mm = meses.find(x => x.k === String(m.fecha).slice(0,7));
+    if (!mm) return;
+    const u = Math.abs(Number(m.usd_equiv) || 0);
+    if (finDir(m) > 0) mm.ing += u; else if (finDir(m) < 0) mm.egr += u;
+  });
+  const max = Math.max(1, ...meses.map(x => Math.max(x.ing, x.egr)));
+  const W = 640, H = 190, base = 160, bw = 26;
+  const barras = meses.map((x,i) => {
+    const cx = 55 + i * 98;
+    const hi = Math.round(x.ing / max * 130), he = Math.round(x.egr / max * 130);
+    return `<rect x="${cx}" y="${base-hi}" width="${bw}" height="${hi}" rx="4" fill="var(--ok)"/>
+      <rect x="${cx+bw+6}" y="${base-he}" width="${bw}" height="${he}" rx="4" fill="var(--rojo)"/>
+      <text x="${cx+bw+3}" y="${base+16}" text-anchor="middle" font-size="11" fill="var(--gris)">${x.lbl}</text>`;
+  }).join("");
+  cont.innerHTML = `<div style="display:flex;gap:14px;font-size:12px;color:var(--gris);margin-bottom:6px">
+      <span><span class="pto" style="background:var(--ok);display:inline-block;margin-right:4px"></span>Ingresos</span>
+      <span><span class="pto" style="background:var(--rojo);display:inline-block;margin-right:4px"></span>Egresos</span></div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px" role="img" aria-label="Flujo mensual">
+      <line x1="40" y1="${base}" x2="${W-10}" y2="${base}" stroke="var(--linea)"/>${barras}</svg>`;
+}
+
+function renderFinGrafSaldo(totalHoyUSD){
+  const cont = $("fin-graf-saldo"); if (!cont) return;
+  /* Reconstrucción hacia atrás: saldo(d-1) = saldo(d) − neto(d). Transferencias ≈ neutras. */
+  const dias = [];
+  for (let i = 29; i >= 0; i--){
+    const d = new Date(Date.now() - i * 864e5);
+    dias.push({ k: d.toISOString().slice(0,10), lbl: d.getDate(), neto: 0 });
+  }
+  finMovsValidos().forEach(m => {
+    const dd = dias.find(x => x.k === String(m.fecha).slice(0,10));
+    if (!dd || m.tipo === "transferencia") return;
+    dd.neto += finDir(m) * Math.abs(Number(m.usd_equiv) || 0);
+  });
+  let s = totalHoyUSD;
+  const serie = new Array(30);
+  for (let i = 29; i >= 0; i--){ serie[i] = s; s -= dias[i].neto; }
+  const min = Math.min(...serie), max = Math.max(...serie), rango = (max - min) || 1;
+  const W = 640, H = 150;
+  const pts = serie.map((v,i) => `${(30 + i * (W-50)/29).toFixed(1)},${(H - 25 - (v - min)/rango * (H-50)).toFixed(1)}`).join(" ");
+  cont.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px" role="img" aria-label="Evolución de saldo">
+      <polyline points="${pts}" fill="none" stroke="var(--alerta)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <text x="4" y="${H-22}" font-size="11" fill="var(--gris)" class="num">${fmtUSD2.format(min)}</text>
+      <text x="4" y="16" font-size="11" fill="var(--gris)" class="num">${fmtUSD2.format(max)}</text></svg>`;
+}
+
+/* ================= MOVIMIENTOS ================= */
+function renderFinMovs(){
+  const opCtas = state.fin.cuentas.map(c => `<option value="${c.id}">${esc(c.nombre)} (${c.moneda})</option>`).join("");
+  $("fin-cuerpo").innerHTML = `
+    <div class="filtros">
+      <div class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="fm-busca" placeholder="Buscar por concepto, contraparte, referencia…"></div>
+      <select id="fm-f-tipo"><option value="">Todos los tipos</option>${Object.entries(FIN_TIPOS).map(([k,v]) => `<option value="${k}">${v.nombre}</option>`).join("")}</select>
+      <select id="fm-f-cuenta"><option value="">Todas las cuentas</option>${opCtas}</select>
+      <input type="date" id="fm-f-desde"><input type="date" id="fm-f-hasta">
+      <button class="btn btn-borde" onclick="exportarFinMovs('xlsx')">Excel</button>
+      <button class="btn btn-borde" onclick="exportarFinMovs('csv')">CSV</button>
+      <button class="btn btn-borde" onclick="exportarFinMovs('pdf')">PDF</button>
+    </div>
+    <div class="fin-kpis" id="fm-kpis"></div>
+    <div class="tabla-wrap" id="fm-tabla"></div>`;
+  ["fm-busca","fm-f-tipo","fm-f-cuenta","fm-f-desde","fm-f-hasta"].forEach(id => $(id).addEventListener("input", pintarFinMovs));
+  pintarFinMovs();
+}
+function finMovsFiltrados(){
+  const q = ($("fm-busca")?.value || "").toLowerCase();
+  const t = $("fm-f-tipo")?.value, c = $("fm-f-cuenta")?.value;
+  const d = $("fm-f-desde")?.value, h = $("fm-f-hasta")?.value;
+  return state.fin.movs.filter(m =>
+    (!q || [m.concepto, m.contraparte, m.referencia, m.categoria].some(x => (x||"").toLowerCase().includes(q))) &&
+    (!t || m.tipo === t) &&
+    (!c || m.cuenta_id === c || m.cuenta_destino_id === c) &&
+    (!d || String(m.fecha).slice(0,10) >= d) &&
+    (!h || String(m.fecha).slice(0,10) <= h));
+}
+function pintarFinMovs(){
+  const lista = finMovsFiltrados();
+  const vivos = lista.filter(m => !m.anulado);
+  let ing = 0, egr = 0;
+  vivos.forEach(m => {
+    if (m.tipo === "transferencia") return;
+    const u = Math.abs(Number(m.usd_equiv) || 0);
+    if (finDir(m) > 0) ing += u; else if (finDir(m) < 0) egr += u;
+  });
+  $("fm-kpis").innerHTML = `
+    <div class="fin-kpi"><div class="fk-valor num">${lista.length}</div><div class="fk-label">Movimientos</div></div>
+    <div class="fin-kpi"><div class="fk-valor num fin-pos">+${fmtUSD2.format(ing)}</div><div class="fk-label">Ingresos (filtro)</div></div>
+    <div class="fin-kpi"><div class="fk-valor num fin-neg">−${fmtUSD2.format(egr)}</div><div class="fk-label">Egresos (filtro)</div></div>
+    <div class="fin-kpi"><div class="fk-valor num ${ing-egr>=0?"fin-oro":"fin-neg"}">${ing-egr>=0?"+":""}${fmtUSD2.format(ing-egr)}</div><div class="fk-label">Neto (filtro)</div></div>`;
+  if (!lista.length){
+    $("fm-tabla").innerHTML = '<div class="vacio"><b>Sin movimientos</b>Registrá el primero con “+ Movimiento de dinero”.</div>';
+    return;
+  }
+  $("fm-tabla").innerHTML = `<table><thead><tr>
+      <th>Fecha</th><th>Tipo</th><th>Detalle</th><th>Contraparte</th><th>Cuenta</th>
+      <th class="der">Monto</th><th class="der">US$ equiv.</th><th>Ref.</th><th></th></tr></thead><tbody>` +
+    lista.map(m => {
+      const T = FIN_TIPOS[m.tipo] || { nombre:m.tipo, chip:"gris" };
+      const cta = finCta(m.cuenta_id), dest = finCta(m.cuenta_destino_id);
+      const dir = finDir(m);
+      const montoTxt = m.tipo === "transferencia"
+        ? `⇄ ${fMonCta(m.monto, cta)}${dest && dest.moneda !== cta?.moneda ? ` → ${fMonCta(m.monto_destino, dest)}` : ""}`
+        : `${dir > 0 ? "+" : dir < 0 ? "−" : ""}${fMonCta(Math.abs(m.monto), cta)}`;
+      const color = m.tipo === "transferencia" ? "fin-azul" : dir > 0 ? "fin-pos" : dir < 0 ? "fin-neg" : "";
+      return `<tr style="${m.anulado ? "opacity:.45;text-decoration:line-through" : ""}">
+        <td class="num" style="white-space:nowrap">${fFechaHora(m.fecha)}</td>
+        <td><span class="chip ${T.chip}"><span class="punto"></span>${T.nombre.toUpperCase()}</span></td>
+        <td><b>${esc(m.concepto)}</b>${m.categoria ? `<span class="chip cat" style="margin-left:6px">${esc(nombreCat(m.categoria))}</span>` : ""}${m.notas ? `<span class="fin-mini">${esc(m.notas)}</span>` : ""}</td>
+        <td>${esc(m.contraparte || "—")}</td>
+        <td style="font-size:13px">${esc(cta?.nombre || "?")}${m.tipo === "transferencia" ? ` → ${esc(dest?.nombre || "?")}` : ""}</td>
+        <td class="der num ${color}" style="white-space:nowrap">${montoTxt}</td>
+        <td class="der num" style="color:var(--gris)">${m.tipo === "transferencia" ? "—" : fmtUSD2.format(Math.abs(m.usd_equiv || 0))}</td>
+        <td class="num" style="font-size:12.5px">${esc(m.referencia || "—")}</td>
+        <td class="der">${m.anulado ? '<span class="chip gris">ANULADO</span>' : `<button class="btn-icono btn-peligro" title="Anular" onclick="anularFinMov('${m.id}')">✕</button>`}</td>
+      </tr>`;
+    }).join("") + "</tbody></table>";
+}
+function exportarFinMovs(formato){
+  const filas = finMovsFiltrados().map(m => {
+    const cta = finCta(m.cuenta_id), dest = finCta(m.cuenta_destino_id);
+    return { "Fecha": fFechaHora(m.fecha), "Tipo": FIN_TIPOS[m.tipo]?.nombre || m.tipo,
+      "Concepto": m.concepto, "Categoría": m.categoria ? nombreCat(m.categoria) : "",
+      "Contraparte": m.contraparte || "", "Cuenta": cta?.nombre || "",
+      "Cuenta destino": dest?.nombre || "", "Monto": Number(m.monto),
+      "Moneda": cta?.moneda || "", "TC": Number(m.tc || 1),
+      "US$ equiv.": Number(m.usd_equiv || 0), "Ref.": m.referencia || "",
+      "Estado": m.anulado ? "ANULADO" : "OK", "Cargado por": m.creado_por_nombre || "" };
+  });
+  if (!filas.length) return toast("No hay movimientos para exportar.", "error");
+  const base = "biotopium-finanzas-" + hoyISO();
+  if (formato === "xlsx") return descargarXLSX([{ nombre:"Movimientos", filas }], base);
+  if (formato === "csv"){
+    const cols = Object.keys(filas[0]);
+    const csv = [cols.join(";")].concat(filas.map(f => cols.map(c => `"${String(f[c] ?? "").replace(/"/g,'""')}"`).join(";"))).join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type:"text/csv;charset=utf-8" }));
+    a.download = base + ".csv"; a.click(); URL.revokeObjectURL(a.href);
+    return;
+  }
+  if (typeof jspdf === "undefined") return toast("La librería de PDF todavía está cargando.", "error");
+  const doc = new jspdf.jsPDF({ orientation:"landscape" });
+  doc.setFontSize(13); doc.text("Biotopium · Movimientos de dinero · " + hoyISO(), 14, 14);
+  doc.autoTable({ startY: 20, styles:{ fontSize: 7.5 },
+    head: [Object.keys(filas[0])], body: filas.map(f => Object.values(f)) });
+  doc.save(base + ".pdf");
+}
+
+/* ----- Alta de movimiento ----- */
+function abrirFinMov(){
+  const activas = state.fin.cuentas.filter(c => c.activa !== false);
+  if (!activas.length) return toast("Primero creá una cuenta en “Cajas y cuentas”.", "error");
+  const ops = sel => activas.map(c => `<option value="${c.id}" ${sel === c.id ? "selected" : ""}>${esc(c.nombre)} (${c.moneda})</option>`).join("");
+  abrirModal("Movimiento de dinero", `
+    <form onsubmit="guardarFinMov(event)">
+      <div class="fila-2">
+        <div class="field"><label>Tipo *</label>
+          <select id="fv-tipo" onchange="finMovTipoCambio()">
+            ${Object.entries(FIN_TIPOS).filter(([k]) => k !== "ajuste").map(([k,v]) => `<option value="${k}">${v.nombre}</option>`).join("")}
+          </select></div>
+        <div class="field"><label>Fecha *</label><input type="date" id="fv-fecha" required value="${hoyISO()}"></div>
+      </div>
+      <div class="field"><label>Concepto *</label><input id="fv-concepto" required placeholder="Ej: Seña acuario 200L, IIBB agosto…"></div>
+      <div class="field" id="fv-cat-wrap" style="display:none"><label>Categoría</label>
+        <select id="fv-categoria">${GASTO_CATS.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("")}</select></div>
+      <div class="field"><label>Contraparte</label><input id="fv-contraparte" placeholder="Cliente / proveedor (opcional)"></div>
+      <div class="fila-2">
+        <div class="field"><label id="fv-cta-label">Cuenta *</label><select id="fv-cuenta" onchange="finMovMonedaCambio()">${ops()}</select></div>
+        <div class="field" id="fv-dest-wrap" style="display:none"><label>Cuenta destino *</label>
+          <select id="fv-destino" onchange="finMovMonedaCambio()">${ops(activas[1]?.id)}</select></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label id="fv-monto-label">Monto *</label><input id="fv-monto" inputmode="decimal" required placeholder="0,00" oninput="finMovCalcular()"></div>
+        <div class="field" id="fv-mdest-wrap" style="display:none"><label>Entra en destino *</label>
+          <input id="fv-mdest" inputmode="decimal" placeholder="0,00"></div>
+      </div>
+      <div class="fila-2">
+        <div class="field" id="fv-tc-wrap"><label>1 US$ = ARS (TC del movimiento)</label>
+          <input id="fv-tc" inputmode="decimal" value="${finTC() || ""}" oninput="finMovCalcular()"></div>
+        <div class="field"><label>Equiv. congelado</label>
+          <input id="fv-usd" disabled style="background:var(--superficie)"></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>Referencia</label><input id="fv-ref" placeholder="Nº de venta, factura… (opcional)"></div>
+        <div class="field"><label>Notas</label><input id="fv-notas" placeholder="Opcional"></div>
+      </div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar movimiento</button>
+      </div>
+    </form>`);
+  finMovTipoCambio();
+}
+function finMovTipoCambio(){
+  const t = $("fv-tipo").value;
+  const esT = t === "transferencia";
+  $("fv-dest-wrap").style.display = esT ? "block" : "none";
+  $("fv-cat-wrap").style.display = t === "gasto" ? "block" : "none";
+  $("fv-cta-label").textContent = esT ? "Cuenta origen *" : "Cuenta *";
+  $("fv-monto-label").textContent = esT ? "Sale de origen *" : "Monto *";
+  finMovMonedaCambio();
+}
+function finMovMonedaCambio(){
+  const cta = finCta($("fv-cuenta").value);
+  const esT = $("fv-tipo").value === "transferencia";
+  const dest = esT ? finCta($("fv-destino").value) : null;
+  const cruzada = esT && dest && cta && dest.moneda !== cta.moneda;
+  $("fv-mdest-wrap").style.display = cruzada ? "block" : "none";
+  $("fv-tc-wrap").style.display = (cta?.moneda === "ARS" || cruzada) ? "block" : "none";
+  finMovCalcular();
+}
+function finMovCalcular(){
+  const cta = finCta($("fv-cuenta").value); if (!cta) return;
+  const monto = numDec($("fv-monto").value);
+  const tc = numDec($("fv-tc").value) || finTC();
+  const usd = finUSD(monto, cta.moneda, tc);
+  $("fv-usd").value = fmtUSD2.format(usd);
+  /* Autocompletar destino en transferencias cruzadas si está vacío */
+  const esT = $("fv-tipo").value === "transferencia";
+  if (esT){
+    const dest = finCta($("fv-destino").value);
+    if (dest && dest.moneda !== cta.moneda && !$("fv-mdest").value && monto && tc)
+      $("fv-mdest").value = (dest.moneda === "USD" ? monto / tc : monto * tc).toFixed(2);
+  }
+}
+async function guardarFinMov(e){
+  e.preventDefault();
+  const tipo = $("fv-tipo").value;
+  const cta = finCta($("fv-cuenta").value);
+  const monto = numDec($("fv-monto").value);
+  if (!cta) return toast("Elegí una cuenta.", "error");
+  if (!(monto > 0)) return toast("Ingresá un monto válido.", "error");
+  const concepto = $("fv-concepto").value.trim();
+  if (!concepto) return toast("El concepto no puede quedar vacío.", "error");
+  let destino = null, montoDest = null;
+  if (tipo === "transferencia"){
+    destino = finCta($("fv-destino").value);
+    if (!destino) return toast("Elegí la cuenta destino.", "error");
+    if (destino.id === cta.id) return toast("Origen y destino no pueden ser la misma cuenta.", "error");
+    montoDest = destino.moneda === cta.moneda ? monto : numDec($("fv-mdest").value);
+    if (!(montoDest > 0)) return toast("Ingresá cuánto entra en la cuenta destino.", "error");
+  }
+  const f = $("fv-fecha").value;
+  const fecha = f === hoyISO() ? new Date().toISOString() : f + "T12:00:00";
+  const btn = e.submitter; if (btn){ btn.disabled = true; btn.textContent = "Registrando…"; }
+  const { error } = await sb.rpc("fin_registrar_movimiento", {
+    p_tipo: tipo, p_concepto: concepto,
+    p_categoria: tipo === "gasto" ? $("fv-categoria").value : null,
+    p_contraparte: $("fv-contraparte").value.trim() || null,
+    p_cuenta: cta.id, p_cuenta_destino: destino?.id || null,
+    p_monto: monto, p_monto_destino: montoDest,
+    p_tc: numDec($("fv-tc").value) || finTC(), p_fecha: fecha,
+    p_referencia: $("fv-ref").value.trim() || null,
+    p_notas: $("fv-notas").value.trim() || null
+  });
+  if (error){
+    if (btn){ btn.disabled = false; btn.textContent = "Registrar movimiento"; }
+    return toast("No se pudo registrar: " + error.message, "error");
+  }
+  toast("Movimiento registrado", "ok");
+  cerrarModal();
+  await cargarFinanzas();
+}
+async function anularFinMov(id){
+  const m = state.fin.movs.find(x => x.id === id); if (!m) return;
+  if (!confirm(`¿Anular "${m.concepto}"? Se revierte el saldo de la(s) cuenta(s) y queda marcado como anulado.`)) return;
+  const { error } = await sb.rpc("fin_anular_movimiento", { p_id: id });
+  if (error) return toast("No se pudo anular: " + error.message, "error");
+  toast("Movimiento anulado", "ok");
+  await cargarFinanzas();
+}
+
+/* ================= CUENTAS CORRIENTES ================= */
+function renderFinCC(){
+  const tcHoy = finTC();
+  const ab = state.fin.cc.filter(c => c.estado !== "saldada" && c.estado !== "anulada" && Number(c.saldo) > 0);
+  const cob = ab.filter(c => c.tipo === "cobrar"), pag = ab.filter(c => c.tipo === "pagar");
+  const uCob = cob.reduce((s,c) => s + finUSD(c.saldo, c.moneda, tcHoy), 0);
+  const uPag = pag.reduce((s,c) => s + finUSD(c.saldo, c.moneda, tcHoy), 0);
+  const vencidas = ab.filter(c => c.vencimiento && c.vencimiento < hoyISO()).length;
+  $("fin-cuerpo").innerHTML = `
+    <div class="fin-kpis">
+      <div class="fin-kpi"><div class="fk-valor num fin-oro">${fmtUSD2.format(uCob)}</div><div class="fk-label">Por cobrar (${cob.length})</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-neg">${fmtUSD2.format(uPag)}</div><div class="fk-label">Por pagar (${pag.length})</div></div>
+      <div class="fin-kpi"><div class="fk-valor num ${uCob-uPag>=0?"fin-pos":"fin-neg"}">${uCob-uPag>=0?"+":"−"}${fmtUSD2.format(Math.abs(uCob-uPag))}</div><div class="fk-label">Posición neta CC</div></div>
+      <div class="fin-kpi"><div class="fk-valor num ${vencidas?"fin-neg":""}">${vencidas}</div><div class="fk-label">Vencidas</div></div>
+    </div>
+    <div class="filtros">
+      <div class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="fcc-busca" placeholder="Buscar por contraparte, concepto o referencia…"></div>
+      <select id="fcc-f-tipo"><option value="">Cobrar y pagar</option><option value="cobrar">Me deben</option><option value="pagar">Debo</option></select>
+      <select id="fcc-f-estado"><option value="abiertas">Abiertas</option><option value="todas">Todas</option><option value="saldadas">Saldadas</option></select>
+    </div>
+    <div class="tabla-wrap" id="fcc-tabla"></div>`;
+  ["fcc-busca","fcc-f-tipo","fcc-f-estado"].forEach(id => $(id).addEventListener("input", pintarFinCC));
+  pintarFinCC();
+}
+function pintarFinCC(){
+  const q = ($("fcc-busca")?.value || "").toLowerCase();
+  const t = $("fcc-f-tipo")?.value, e = $("fcc-f-estado")?.value || "abiertas";
+  const lista = state.fin.cc.filter(c =>
+    (!q || [c.contraparte, c.concepto, c.referencia].some(x => (x||"").toLowerCase().includes(q))) &&
+    (!t || c.tipo === t) &&
+    (e === "todas" || (e === "abiertas" ? (c.estado === "pendiente" || c.estado === "parcial") : c.estado === "saldada")));
+  if (!lista.length){
+    $("fcc-tabla").innerHTML = '<div class="vacio"><b>Sin cuentas corrientes</b>Registrá una deuda (a cobrar o a pagar) con “+ Deuda”.</div>';
+    return;
+  }
+  $("fcc-tabla").innerHTML = `<table><thead><tr>
+      <th>Fecha</th><th>Tipo</th><th>Contraparte</th><th>Concepto</th>
+      <th class="der">Monto</th><th class="der">Saldo pend.</th><th>Vencimiento</th><th>Estado</th><th>Ref.</th><th></th></tr></thead><tbody>` +
+    lista.map(c => {
+      const vencida = c.vencimiento && c.vencimiento < hoyISO() && (c.estado === "pendiente" || c.estado === "parcial");
+      const abierta = c.estado === "pendiente" || c.estado === "parcial";
+      const estChip = { pendiente:"alerta", parcial:"agua", saldada:"ok", anulada:"gris" }[c.estado] || "gris";
+      return `<tr>
+        <td class="num" style="white-space:nowrap">${fFechaHora(c.created_at)}</td>
+        <td><span class="chip ${c.tipo === "cobrar" ? "ok" : "rojo"}"><span class="punto"></span>${c.tipo === "cobrar" ? "ME DEBEN" : "DEBO"}</span></td>
+        <td><b>${esc(c.contraparte)}</b></td>
+        <td>${esc(c.concepto || "—")}</td>
+        <td class="der num">${fMoneda(c.monto, c.moneda)}</td>
+        <td class="der num" style="font-weight:700">${fMoneda(c.saldo, c.moneda)}</td>
+        <td class="num" style="${vencida ? "color:var(--rojo);font-weight:700" : ""}">${c.vencimiento ? fFecha(c.vencimiento) : "—"}</td>
+        <td><span class="chip ${estChip}"><span class="punto"></span>${c.estado.toUpperCase()}</span></td>
+        <td class="num" style="font-size:12.5px">${esc(c.referencia || "—")}</td>
+        <td class="der" style="white-space:nowrap">
+          ${abierta ? `<button class="btn btn-primario" style="padding:6px 14px" onclick="abrirFinCCPago('${c.id}')">${c.tipo === "cobrar" ? "Cobrar" : "Pagar"}</button>` : ""}
+          ${c.estado !== "anulada" ? `<button class="btn-icono btn-peligro" title="Anular" onclick="anularFinCC('${c.id}')">✕</button>` : ""}
+        </td>
+      </tr>`;
+    }).join("") + "</tbody></table>";
+}
+function abrirFinCC(){
+  abrirModal("Nueva deuda (cuenta corriente)", `
+    <form onsubmit="guardarFinCC(event)">
+      <div class="fila-2">
+        <div class="field"><label>Tipo *</label>
+          <select id="fc-tipo"><option value="pagar">Debo (por pagar)</option><option value="cobrar">Me deben (por cobrar)</option></select></div>
+        <div class="field"><label>Vencimiento</label><input type="date" id="fc-venc"></div>
+      </div>
+      <div class="field"><label>Contraparte *</label><input id="fc-contraparte" required placeholder="Ej: Tarjeta Galicia, IVA 08, cliente…"></div>
+      <div class="field"><label>Concepto</label><input id="fc-concepto" placeholder="Ej: IVA agosto, cafetera… (opcional)"></div>
+      <div class="fila-2">
+        <div class="field"><label>Monto *</label><input id="fc-monto" inputmode="decimal" required placeholder="0,00"></div>
+        <div class="field"><label>Moneda</label><select id="fc-moneda"><option value="ARS">ARS</option><option value="USD">USD</option></select></div>
+      </div>
+      <div class="field"><label>Referencia</label><input id="fc-ref" placeholder="Opcional"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar deuda</button>
+      </div>
+    </form>`);
+}
+async function guardarFinCC(e){
+  e.preventDefault();
+  const monto = numDec($("fc-monto").value);
+  if (!(monto > 0)) return toast("Ingresá un monto válido.", "error");
+  const { error } = await sb.from("fin_cc").insert({
+    tipo: $("fc-tipo").value, contraparte: $("fc-contraparte").value.trim(),
+    concepto: $("fc-concepto").value.trim() || null, moneda: $("fc-moneda").value,
+    monto, saldo: monto, tc: finTC(),
+    vencimiento: $("fc-venc").value || null, referencia: $("fc-ref").value.trim() || null,
+    creado_por_nombre: state.perfil?.nombre || null
+  });
+  if (error) return toast("No se pudo registrar: " + error.message, "error");
+  toast("Deuda registrada", "ok");
+  cerrarModal();
+  await cargarFinanzas();
+}
+function abrirFinCCPago(id){
+  const c = state.fin.cc.find(x => x.id === id); if (!c) return;
+  const activas = state.fin.cuentas.filter(x => x.activa !== false);
+  if (!activas.length) return toast("Primero creá una cuenta en “Cajas y cuentas”.", "error");
+  const mismas = activas.filter(x => x.moneda === c.moneda);
+  const ops = (activas.length ? (mismas.length ? mismas : activas) : []).map(x =>
+    `<option value="${x.id}">${esc(x.nombre)} (${x.moneda})</option>`).join("");
+  abrirModal((c.tipo === "cobrar" ? "Cobrar de " : "Pagar a ") + c.contraparte, `
+    <form onsubmit="guardarFinCCPago(event,'${c.id}')">
+      <p style="color:var(--gris);font-size:13.5px;margin-bottom:12px">
+        Saldo pendiente: <b class="num">${fMoneda(c.saldo, c.moneda)}</b>${c.concepto ? " · " + esc(c.concepto) : ""}</p>
+      <div class="fila-2">
+        <div class="field"><label>Monto a aplicar (${c.moneda}) *</label>
+          <input id="fp-monto" inputmode="decimal" required value="${Number(c.saldo)}"></div>
+        <div class="field"><label>${c.tipo === "cobrar" ? "Entra en" : "Sale de"} *</label>
+          <select id="fp-cuenta" onchange="finCCPagoMoneda('${c.id}')">${ops}</select></div>
+      </div>
+      <div class="fila-2" id="fp-cruz-wrap" style="display:none">
+        <div class="field"><label>1 US$ = ARS</label><input id="fp-tc" inputmode="decimal" value="${finTC()}" oninput="finCCPagoCalc('${c.id}')"></div>
+        <div class="field"><label id="fp-mcta-label">Monto en la cuenta *</label><input id="fp-mcta" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label>Referencia</label><input id="fp-ref" placeholder="Opcional"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">${c.tipo === "cobrar" ? "Registrar cobro" : "Registrar pago"}</button>
+      </div>
+    </form>`);
+  finCCPagoMoneda(id);
+}
+function finCCPagoMoneda(id){
+  const c = state.fin.cc.find(x => x.id === id);
+  const cta = finCta($("fp-cuenta").value);
+  const cruz = c && cta && cta.moneda !== c.moneda;
+  $("fp-cruz-wrap").style.display = cruz ? "grid" : "none";
+  if (cruz){ $("fp-mcta-label").textContent = `Monto en la cuenta (${cta.moneda}) *`; finCCPagoCalc(id); }
+}
+function finCCPagoCalc(id){
+  const c = state.fin.cc.find(x => x.id === id);
+  const cta = finCta($("fp-cuenta").value);
+  if (!c || !cta || cta.moneda === c.moneda) return;
+  const m = numDec($("fp-monto").value), tc = numDec($("fp-tc").value) || finTC();
+  if (m && tc) $("fp-mcta").value = (cta.moneda === "USD" ? m / tc : m * tc).toFixed(2);
+}
+async function guardarFinCCPago(e, id){
+  e.preventDefault();
+  const c = state.fin.cc.find(x => x.id === id); if (!c) return;
+  const cta = finCta($("fp-cuenta").value);
+  if (!cta) return toast("Elegí una cuenta.", "error");
+  const montoCC = numDec($("fp-monto").value);
+  if (!(montoCC > 0)) return toast("Ingresá un monto válido.", "error");
+  if (montoCC > Number(c.saldo) + 0.005) return toast("El monto supera el saldo pendiente.", "error");
+  const cruz = cta.moneda !== c.moneda;
+  const montoCta = cruz ? numDec($("fp-mcta").value) : montoCC;
+  if (cruz && !(montoCta > 0)) return toast("Ingresá el monto en la moneda de la cuenta.", "error");
+  const { error } = await sb.rpc("fin_cc_pagar", {
+    p_cc: id, p_cuenta: cta.id, p_monto_cc: montoCC, p_monto_cuenta: montoCta,
+    p_tc: numDec($("fp-tc")?.value) || finTC(), p_fecha: new Date().toISOString(),
+    p_referencia: $("fp-ref").value.trim() || null
+  });
+  if (error) return toast("No se pudo registrar: " + error.message, "error");
+  toast(c.tipo === "cobrar" ? "Cobro registrado" : "Pago registrado", "ok");
+  cerrarModal();
+  await cargarFinanzas();
+}
+async function anularFinCC(id){
+  const c = state.fin.cc.find(x => x.id === id); if (!c) return;
+  if (!confirm(`¿Anular la deuda de "${c.contraparte}" por ${fMoneda(c.monto, c.moneda)}? Los pagos ya aplicados no se tocan.`)) return;
+  const { error } = await sb.from("fin_cc").update({ estado: "anulada" }).eq("id", id);
+  if (error) return toast("No se pudo anular: " + error.message, "error");
+  toast("Deuda anulada", "ok");
+  await cargarFinanzas();
+}
+
+/* ================= CAJAS Y CUENTAS ================= */
+function renderFinCuentas(){
+  const tcHoy = finTC();
+  $("fin-cuerpo").innerHTML = `
+    <div class="fin-cuentas-row">${state.fin.cuentas.map(c => `
+      <div class="fin-cta ${c.activa === false ? "inactiva" : ""}">
+        <div class="fc-nom">${esc(c.nombre)} <span class="chip gris">${c.moneda}</span></div>
+        <div class="fc-saldo num">${fMoneda(c.saldo, c.moneda)}</div>
+        <div class="fc-tipo">${finNombreTipoCta(c.tipo)} · inicial ${fMoneda(c.saldo_inicial, c.moneda)}${c.moneda === "ARS" ? ` · ≈ ${fmtUSD2.format(finUSD(c.saldo, "ARS", tcHoy))}` : ""}</div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-borde" style="padding:5px 12px" onclick="abrirFinArqueo('${c.id}')">Arqueo</button>
+          <button class="btn-icono" title="Renombrar" onclick="renombrarFinCta('${c.id}')">✎</button>
+          <button class="btn-icono" title="${c.activa === false ? "Activar" : "Desactivar"}" onclick="alternarFinCta('${c.id}', ${c.activa === false})">${c.activa === false ? "Activar" : "Desactivar"}</button>
+        </div>
+      </div>`).join("") || '<div class="vacio"><b>Sin cuentas todavía</b>Creá la primera acá abajo.</div>'}
+    </div>
+    <div class="fin-panel">
+      <h4>Nueva cuenta</h4>
+      <form onsubmit="crearFinCta(event)" class="filtros" style="margin:0">
+        <input id="fn-nombre" required placeholder="Nombre (ej: Caja USD, Mercado Pago…)" style="flex:1;min-width:190px">
+        <select id="fn-moneda"><option value="ARS">ARS</option><option value="USD">USD</option></select>
+        <select id="fn-tipo">${FIN_CTA_TIPOS.map(([v,n]) => `<option value="${v}">${n}</option>`).join("")}</select>
+        <input id="fn-inicial" inputmode="decimal" placeholder="Saldo inicial" style="max-width:140px">
+        <button class="btn btn-primario">Agregar</button>
+      </form>
+    </div>
+    <div class="fin-nota" style="text-align:left">El arqueo compara el saldo del sistema con lo contado y registra la diferencia como movimiento de ajuste (queda trazado, no se pisa el historial).</div>`;
+}
+async function crearFinCta(e){
+  e.preventDefault();
+  const nombre = $("fn-nombre").value.trim();
+  if (!nombre) return;
+  const inicial = numDec($("fn-inicial").value);
+  const { error } = await sb.from("fin_cuentas").insert({
+    nombre, moneda: $("fn-moneda").value, tipo: $("fn-tipo").value,
+    saldo_inicial: inicial, saldo: inicial
+  });
+  if (error) return toast("No se pudo crear: " + error.message, "error");
+  toast("Cuenta creada", "ok");
+  await cargarFinanzas();
+}
+async function renombrarFinCta(id){
+  const c = finCta(id); if (!c) return;
+  const nombre = prompt("Nuevo nombre de la cuenta:", c.nombre);
+  if (!nombre || !nombre.trim() || nombre.trim() === c.nombre) return;
+  const { error } = await sb.from("fin_cuentas").update({ nombre: nombre.trim() }).eq("id", id);
+  if (error) return toast("No se pudo renombrar: " + error.message, "error");
+  await cargarFinanzas();
+}
+async function alternarFinCta(id, activar){
+  const c = finCta(id); if (!c) return;
+  if (!activar && Number(c.saldo) !== 0 &&
+      !confirm(`"${c.nombre}" tiene saldo ${fMoneda(c.saldo, c.moneda)}. ¿Desactivar igual? (deja de aparecer para nuevos movimientos)`)) return;
+  const { error } = await sb.from("fin_cuentas").update({ activa: activar }).eq("id", id);
+  if (error) return toast("No se pudo actualizar: " + error.message, "error");
+  await cargarFinanzas();
+}
+function abrirFinArqueo(id){
+  const c = finCta(id); if (!c) return;
+  abrirModal("Arqueo · " + c.nombre, `
+    <form onsubmit="guardarFinArqueo(event,'${c.id}')">
+      <p style="color:var(--gris);font-size:13.5px;margin-bottom:12px">
+        Saldo según sistema: <b class="num">${fMoneda(c.saldo, c.moneda)}</b>. Contá la plata real y cargala acá:
+        la diferencia queda registrada como ajuste.</p>
+      <div class="field"><label>Saldo real contado (${c.moneda}) *</label>
+        <input id="fa-real" inputmode="decimal" required value="${Number(c.saldo)}"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar arqueo</button>
+      </div>
+    </form>`);
+}
+async function guardarFinArqueo(e, id){
+  e.preventDefault();
+  const real = numDec($("fa-real").value);
+  const c = finCta(id); if (!c) return;
+  if (Math.abs(real - Number(c.saldo)) < 0.005){
+    toast("El saldo coincide, no hay nada que ajustar.", "ok");
+    cerrarModal(); return;
+  }
+  const { error } = await sb.rpc("fin_arqueo", { p_cuenta: id, p_saldo_real: real, p_tc: finTC() });
+  if (error) return toast("No se pudo registrar: " + error.message, "error");
+  toast("Arqueo registrado", "ok");
+  cerrarModal();
+  await cargarFinanzas();
 }
 
 /* ---------------- ARRANQUE ---------------- */
