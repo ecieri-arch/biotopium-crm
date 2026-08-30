@@ -585,13 +585,20 @@ th.stk-th:hover{color:var(--agua-fuerte)}
     <!-- ===== STOCK ===== -->
     <section class="vista" id="view-stock">
       <div class="vista-head">
-        <div><h2>Stock</h2><p>Control de inventario: valuación a costo, mínimos y ubicaciones</p></div>
-        <div class="acciones">
-          <button class="btn btn-borde" onclick="abrirMovimientos()">Movimientos</button>
+        <div><h2>Stock</h2><p>Control de inventario: valuación, pedidos a proveedores, reservas y kardex</p></div>
+        <div class="acciones" id="stk-acciones">
           <button class="btn btn-borde" onclick="exportarStock()">Exportar</button>
           <button class="btn btn-primario" onclick="abrirProducto()">+ Nuevo producto</button>
         </div>
       </div>
+      <div class="fin-tabs">
+        <button class="btn btn-suave" id="stk-tab-stock" onclick="stkTab('stock')">Stock</button>
+        <button class="btn btn-borde" id="stk-tab-pedidos" onclick="stkTab('pedidos')">Pedidos <span class="chip agua num" id="stk-badge-ped" style="display:none;padding:1px 8px;margin-left:2px"></span></button>
+        <button class="btn btn-borde" id="stk-tab-reservas" onclick="stkTab('reservas')">Reservas</button>
+        <button class="btn btn-borde" id="stk-tab-movs" onclick="stkTab('movs')">Movimientos</button>
+        <button class="btn btn-borde" id="stk-tab-reportes" onclick="stkTab('reportes')">Reportes</button>
+      </div>
+      <div id="stk-pane-stock">
       <div class="fin-kpis" id="stk-kpis" style="grid-template-columns:repeat(auto-fill,minmax(175px,1fr))"></div>
       <div class="filtros">
         <div class="buscador">
@@ -611,6 +618,8 @@ th.stk-th:hover{color:var(--agua-fuerte)}
         <span class="stk-tc" id="stk-tc" title="Cotización que valúa el stock (se elige la fuente en Configuración)"></span>
       </div>
       <div class="tabla-wrap" id="stk-tabla"></div>
+      </div>
+      <div id="stk-pane-otro" style="display:none"></div>
     </section>
 
     <!-- ===== REPORTES ===== -->
@@ -5215,12 +5224,12 @@ function renderAnalisisClientes(){
 
 /* ---------------- COMPRA/GASTO LEGACY (reemplazado por la solapa Gastos) ---------------- */
 /* ==================================================================
-   STOCK — control de inventario estilo Rough 4x4 (solapa Stock):
-   KPIs clickeables, valuación a costo en ARS y US$ al TC elegido,
-   tabla ordenable, ubicaciones, mínimos y ajuste rápido.
-   Usa la misma tabla `productos` del catálogo.
+   STOCK — control de inventario estilo Rough 4x4, con sub-pestañas:
+   Stock · Pedidos (a proveedores) · Reservas · Movimientos · Reportes.
+   Pedidos y Reservas usan tablas nuevas (migracion-stock.sql);
+   Movimientos reusa la tabla movimientos_stock existente (kardex).
    ================================================================== */
-state.stk = { orden: "nombre", asc: true, kpi: "" };
+state.stk = { orden: "nombre", asc: true, kpi: "", tab: "stock", pedidos: [], reservas: [], movs: [], tablasOk: true };
 const stkTC = () => Number(tcDeFuente(state.tcFuente)) || Number(state.config.tipo_cambio) || 0;
 /* Costo unitario en ARS: cada producto en su moneda, llevado a pesos con el TC (patrón Rough) */
 function stkCostoARS(p, tc){
@@ -5236,11 +5245,21 @@ const STK_ESTADOS = {
   sin:      { nombre: "Sin stock",   chip: "rojo" },
   inactivo: { nombre: "Inactivo",    chip: "gris" }
 };
+const stkReservado = pid => state.stk.reservas.filter(r => r.producto_id === pid && r.estado === "activa")
+  .reduce((s,r) => s + Number(r.cantidad), 0);
+const stkEnCamino = p => state.stk.pedidos.some(x => x.producto_id === p.id && x.estado === "en_camino");
 
 async function cargarStockVista(){
   $("stk-tabla").innerHTML = '<div class="cargando">Cargando stock…</div>';
-  await cargarProductosData();
-  // Poblar filtros (manteniendo la selección actual)
+  const [, ped, res] = await Promise.all([
+    cargarProductosData(),
+    sb.from("stock_pedidos").select("*").order("created_at", { ascending: false }).limit(500),
+    sb.from("stock_reservas").select("*").order("created_at", { ascending: false }).limit(500)
+  ]);
+  state.stk.tablasOk = !ped.error && !res.error;
+  state.stk.pedidos = ped.data || [];
+  state.stk.reservas = res.data || [];
+  // Poblar filtros del pane Stock (manteniendo la selección actual)
   const keep = (sel, opciones, primera) => {
     const el = $(sel), v = el.value;
     el.innerHTML = `<option value="">${primera}</option>` + opciones;
@@ -5251,9 +5270,37 @@ async function cargarStockVista(){
     .map(m => `<option>${esc(m)}</option>`).join(""), "Todas las marcas");
   keep("stk-f-ubi", [...new Set(state.productos.map(p => (p.ubicacion || "").trim()).filter(Boolean))].sort()
     .map(u => `<option>${esc(u)}</option>`).join(""), "Todas las ubicaciones");
-  renderStock();
+  stkTab(state.stk.tab || "stock");
 }
 
+function stkTab(t){
+  state.stk.tab = t;
+  ["stock","pedidos","reservas","movs","reportes"].forEach(x => {
+    const b = $("stk-tab-" + x);
+    if (b) b.className = "btn " + (x === t ? "btn-suave" : "btn-borde");
+  });
+  const act = state.stk.pedidos.filter(x => x.estado === "pedido" || x.estado === "en_camino").length;
+  const badge = $("stk-badge-ped");
+  if (badge){ badge.textContent = act; badge.style.display = act ? "" : "none"; }
+  $("stk-pane-stock").style.display = t === "stock" ? "" : "none";
+  $("stk-pane-otro").style.display = t === "stock" ? "none" : "";
+  $("stk-acciones").innerHTML = t === "pedidos"
+    ? '<button class="btn btn-primario" onclick="abrirStkPedido()">+ Nuevo pedido</button>'
+    : t === "reservas"
+    ? '<button class="btn btn-primario" onclick="abrirStkReserva()">+ Nueva reserva</button>'
+    : t === "movs"
+    ? '<button class="btn btn-borde" onclick="exportarStkMovs()">Exportar</button>'
+    : `<button class="btn btn-borde" onclick="exportarStock()">Exportar</button>
+       <button class="btn btn-primario" onclick="abrirProducto()">+ Nuevo producto</button>`;
+  if (t === "stock") return renderStock();
+  if (!state.stk.tablasOk && (t === "pedidos" || t === "reservas")){
+    $("stk-pane-otro").innerHTML = '<div class="vacio"><b>Falta correr la migración</b>Ejecutá <b>migracion-stock.sql</b> en el SQL Editor de Supabase (crea las tablas de pedidos y reservas) y recargá.</div>';
+    return;
+  }
+  ({ pedidos: renderStkPedidos, reservas: renderStkReservas, movs: cargarStkMovs, reportes: cargarStkReportes }[t])();
+}
+
+/* ================= PANE STOCK ================= */
 function stkFiltrados(){
   const q = ($("stk-busca").value || "").toLowerCase();
   const cat = $("stk-f-cat").value, marca = $("stk-f-marca").value;
@@ -5271,8 +5318,10 @@ function stkFiltrados(){
     if (cat && String(p.categoria_id) !== cat) return false;
     if (marca && (p.marca || "") !== marca) return false;
     if (ubi && (p.ubicacion || "").trim() !== ubi) return false;
-    if (k === "bajo" && stkEstado(p) !== "bajo") return false;
-    if (k === "sin" && stkEstado(p) !== "sin") return false;
+    if (k === "bajo" && est !== "bajo") return false;
+    if (k === "sin" && est !== "sin") return false;
+    if (k === "camino" && !stkEnCamino(p)) return false;
+    if (k === "res" && stkReservado(p.id) <= 0) return false;
     return true;
   });
   const key = state.stk.orden, dir = state.stk.asc ? 1 : -1;
@@ -5309,6 +5358,8 @@ function renderStock(){
   const valorUSD = tc > 0 ? valorARS / tc : 0;
   const bajo = activos.filter(p => stkEstado(p) === "bajo").length;
   const sin = activos.filter(p => stkEstado(p) === "sin").length;
+  const camino = activos.filter(p => stkEnCamino(p)).length;
+  const resTot = state.stk.reservas.filter(r => r.estado === "activa").reduce((s,r) => s + Number(r.cantidad), 0);
   const k = state.stk.kpi;
   $("stk-kpis").innerHTML = `
     <div class="fin-kpi stk-kpi ${!k ? "activo" : ""}" onclick="stkKpi('')" title="Todos los productos activos">
@@ -5320,7 +5371,11 @@ function renderStock(){
     <div class="fin-kpi stk-kpi ${k === "bajo" ? "activo" : ""}" onclick="stkKpi('bajo')">
       <div class="fk-valor num ${bajo ? "fin-neg" : ""}">${bajo}</div><div class="fk-label">Bajo mínimo</div></div>
     <div class="fin-kpi stk-kpi ${k === "sin" ? "activo" : ""}" onclick="stkKpi('sin')">
-      <div class="fk-valor num ${sin ? "fin-neg" : ""}">${sin}</div><div class="fk-label">Sin stock</div></div>`;
+      <div class="fk-valor num ${sin ? "fin-neg" : ""}">${sin}</div><div class="fk-label">Sin stock</div></div>
+    <div class="fin-kpi stk-kpi ${k === "camino" ? "activo" : ""}" onclick="stkKpi('camino')" title="Productos con pedidos en camino">
+      <div class="fk-valor num ${camino ? "fin-azul" : ""}">${camino}</div><div class="fk-label">En camino</div></div>
+    <div class="fin-kpi stk-kpi ${k === "res" ? "activo" : ""}" onclick="stkKpi('res')" title="Unidades apartadas para clientes">
+      <div class="fk-valor num ${resTot ? "fin-oro" : ""}">${resTot}</div><div class="fk-label">Unidades reservadas</div></div>`;
   $("stk-tc").innerHTML = `<span class="fuente">TC</span> <b class="num">${tc > 0 ? fmtARS.format(tc) : "—"}</b>
     <span class="fuente">${esc(nombreFuente(state.tcFuente))}</span>
     <button class="btn-icono" title="Actualizar cotizaciones" onclick="traerCotizaciones(true).then(renderStock)">⟳</button>`;
@@ -5347,8 +5402,9 @@ function renderStock(){
       const est = STK_ESTADOS[stkEstado(p)];
       const costo = Number(p.costo != null ? p.costo : p.costo_usd) || 0;
       const monCosto = p.costo_moneda === "ARS" ? "ARS" : "USD";
+      const r = stkReservado(p.id);
       return `<tr class="fila-click" onclick="abrirProducto(${p.id})">
-        <td><b>${esc(p.nombre)}</b>${p.unidad === "kg" ? ' <span class="chip gris" style="font-size:11px">kg</span>' : ""}</td>
+        <td><b>${esc(p.nombre)}</b>${p.unidad === "kg" ? ' <span class="chip gris" style="font-size:11px">kg</span>' : ""}${r > 0 ? `<br><small style="color:var(--alerta);font-weight:600">◆ ${r} reservada${r === 1 ? "" : "s"}</small>` : ""}</td>
         <td class="num" style="color:var(--gris);font-size:13px">${esc(p.sku || "—")}</td>
         <td style="font-weight:600">${esc(p.marca || "—")}</td>
         <td><span class="chip cat">${esc(catNom(p.categoria_id))}</span></td>
@@ -5358,9 +5414,10 @@ function renderStock(){
         <td class="der num">${admin ? fMoneda(costo, monCosto) : "—"}</td>
         <td class="der num" style="color:var(--alerta);font-weight:600">${fmtARS.format(p.precio_ars)}</td>
         <td class="der"><span class="chip num ${est.chip === "gris" ? "gris" : Number(p.stock) <= 0 ? "rojo" : stkEstado(p) === "bajo" ? "alerta" : "ok"}">${p.stock}</span></td>
-        <td><span class="chip ${est.chip}"><span class="punto"></span>${est.nombre.toUpperCase()}</span></td>
+        <td><span class="chip ${est.chip}"><span class="punto"></span>${est.nombre.toUpperCase()}</span>${stkEnCamino(p) ? ' <span class="chip agua" title="Tiene pedidos en camino">◈</span>' : ""}</td>
         <td class="der acciones-fila" onclick="event.stopPropagation()">
           <button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">±</button>
+          <button class="btn-icono" title="Reservar para un cliente" onclick="abrirStkReserva(${p.id})">◆</button>
           <button class="btn-icono" title="Editar producto" onclick="abrirProducto(${p.id})">✎</button>
           ${admin ? `<button class="btn-icono btn-peligro" title="Eliminar" onclick="borrarProducto(${p.id})">✕</button>` : ""}
         </td>
@@ -5368,7 +5425,7 @@ function renderStock(){
     }).join("") + "</tbody></table>";
 }
 ["stk-busca","stk-f-cat","stk-f-marca","stk-f-ubi","stk-f-estado"].forEach(id =>
-  { const el = $(id); if (el) el.addEventListener("input", renderStock); });
+  { const el = $(id); if (el) el.addEventListener("input", () => { if (state.stk.tab === "stock") renderStock(); }); });
 
 /* ----- Cambio rápido de ubicación desde la tabla ----- */
 function stkEditarUbicacion(id){
@@ -5400,7 +5457,7 @@ async function stkGuardarUbicacion(e, id){
   renderStock();
 }
 
-/* ----- Export con valuación (costos solo admin) ----- */
+/* ----- Export del pane Stock (costos solo admin) ----- */
 function exportarStock(){
   const admin = state.perfil?.rol === "admin";
   const tc = stkTC();
@@ -5409,7 +5466,7 @@ function exportarStock(){
     const f = {
       "Producto": p.nombre, "SKU": p.sku || "", "Marca": p.marca || "",
       "Categoría": catNom(p.categoria_id), "Ubicación": p.ubicacion || "",
-      "Stock": Number(p.stock), "Stock mínimo": Number(p.stock_minimo || 0),
+      "Stock": Number(p.stock), "Reservadas": stkReservado(p.id), "Stock mínimo": Number(p.stock_minimo || 0),
       "Estado": STK_ESTADOS[stkEstado(p)].nombre, "Precio venta ARS": Number(p.precio_ars) || 0
     };
     if (admin){
@@ -5423,6 +5480,471 @@ function exportarStock(){
   });
   if (!filas.length) return toast("No hay productos para exportar.", "error");
   descargarXLSX([{ nombre: "Stock", filas }], "biotopium-stock-" + hoyISO());
+}
+
+/* ================= PEDIDOS A PROVEEDORES ================= */
+const STK_PED_EST = {
+  pedido:    { nombre: "Pedido realizado", chip: "alerta" },
+  en_camino: { nombre: "En camino",        chip: "agua" },
+  recibido:  { nombre: "Recibido",         chip: "ok" },
+  cancelado: { nombre: "Cancelado",        chip: "gris" }
+};
+function renderStkPedidos(){
+  const act = state.stk.pedidos.filter(x => x.estado === "pedido" || x.estado === "en_camino");
+  const uds = act.reduce((s,x) => s + Number(x.cantidad), 0);
+  const valUSD = act.filter(x => (x.moneda || "USD") === "USD" && x.costo_unitario).reduce((s,x) => s + Number(x.costo_unitario) * Number(x.cantidad), 0);
+  const valARS = act.filter(x => x.moneda === "ARS" && x.costo_unitario).reduce((s,x) => s + Number(x.costo_unitario) * Number(x.cantidad), 0);
+  const admin = state.perfil?.rol === "admin";
+  $("stk-pane-otro").innerHTML = `
+    <div class="fin-kpis">
+      <div class="fin-kpi"><div class="fk-valor num fin-oro">${state.stk.pedidos.filter(x => x.estado === "pedido").length}</div><div class="fk-label">Pedidos realizados</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-azul">${state.stk.pedidos.filter(x => x.estado === "en_camino").length}</div><div class="fk-label">En camino</div></div>
+      <div class="fin-kpi"><div class="fk-valor num">${uds}</div><div class="fk-label">Unidades por llegar</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-oro">${admin ? fmtUSD.format(valUSD) : "—"}</div><div class="fk-label">Valor pedidos USD</div></div>
+      ${valARS > 0 ? `<div class="fin-kpi"><div class="fk-valor num fin-oro">${admin ? fmtARS.format(valARS) : "—"}</div><div class="fk-label">Valor pedidos ARS</div></div>` : ""}
+    </div>
+    <div class="filtros">
+      <div class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="stkp-busca" placeholder="Buscar por producto, SKU o proveedor…"></div>
+      <select id="stkp-estado">
+        <option value="activos" selected>Activos</option>
+        <option value="pedido">Pedido realizado</option>
+        <option value="en_camino">En camino</option>
+        <option value="recibido">Recibidos</option>
+        <option value="cancelado">Cancelados</option>
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="tabla-wrap" id="stkp-tabla"></div>`;
+  ["stkp-busca","stkp-estado"].forEach(id => $(id).addEventListener("input", pintarStkPedidos));
+  pintarStkPedidos();
+}
+function pintarStkPedidos(){
+  const q = ($("stkp-busca")?.value || "").toLowerCase();
+  const fe = $("stkp-estado")?.value ?? "activos";
+  const lista = state.stk.pedidos.filter(x => {
+    if (fe === "activos"){ if (x.estado !== "pedido" && x.estado !== "en_camino") return false; }
+    else if (fe && x.estado !== fe) return false;
+    if (q && ![x.producto_nombre, x.producto_sku, x.proveedor, x.nota].join(" ").toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if (!lista.length){
+    $("stkp-tabla").innerHTML = '<div class="vacio"><b>Sin pedidos</b>Creá el primero con “+ Nuevo pedido”. Cuando llegue, el stock entra solo al kardex.</div>';
+    return;
+  }
+  $("stkp-tabla").innerHTML = `<table><thead><tr>
+      <th>Fecha</th><th>Producto</th><th class="der">Cant.</th><th class="der">Costo unit.</th>
+      <th>Proveedor</th><th>Destino</th><th>Nota</th><th>Estado</th><th>Creado por</th><th></th></tr></thead><tbody>` +
+    lista.map(x => {
+      const E = STK_PED_EST[x.estado] || { nombre: x.estado, chip: "gris" };
+      const acciones = x.estado === "pedido"
+        ? `<button class="btn btn-chico btn-suave" title="El proveedor lo despachó" onclick="stkPedidoEstado('${x.id}','en_camino')">◈ En camino</button>
+           <button class="btn-icono btn-peligro" title="Cancelar pedido" onclick="stkPedidoCancelar('${x.id}')">✕</button>`
+        : x.estado === "en_camino"
+        ? `<button class="btn btn-chico btn-primario" title="Suma el stock y lo registra en el kardex" onclick="stkPedidoRecibir('${x.id}')">✓ Recibir</button>
+           <button class="btn-icono" title="Volver a Pedido realizado" onclick="stkPedidoEstado('${x.id}','pedido')">↩</button>
+           <button class="btn-icono btn-peligro" title="Cancelar" onclick="stkPedidoCancelar('${x.id}')">✕</button>`
+        : "";
+      return `<tr>
+        <td class="num" style="white-space:nowrap">${fFecha(x.created_at)}</td>
+        <td><b>${esc(x.producto_nombre)}</b>${x.producto_sku ? `<br><small style="color:var(--gris)">SKU ${esc(x.producto_sku)}</small>` : ""}</td>
+        <td class="der num" style="font-weight:700">${x.cantidad}</td>
+        <td class="der num">${x.costo_unitario ? fMoneda(x.costo_unitario, x.moneda || "USD") : "—"}</td>
+        <td>${esc(x.proveedor || "—")}</td>
+        <td>${x.ubicacion_destino ? `<span class="tag-ubi">${esc(x.ubicacion_destino)}</span>` : "—"}</td>
+        <td style="font-size:12.5px;color:var(--gris);max-width:200px">${esc(x.nota || "")}</td>
+        <td><span class="chip ${E.chip}"><span class="punto"></span>${E.nombre.toUpperCase()}</span></td>
+        <td style="font-size:12.5px">${esc(x.creado_por_nombre || "—")}</td>
+        <td class="der acciones-fila">${acciones}</td>
+      </tr>`;
+    }).join("") + "</tbody></table>";
+}
+function abrirStkPedido(preId){
+  const activos = state.productos.filter(p => p.activo !== false)
+    .slice().sort((a,b) => a.nombre.localeCompare(b.nombre));
+  if (!activos.length) return toast("No hay productos activos para pedir.", "error");
+  const ubis = [...new Set(state.productos.map(x => (x.ubicacion || "").trim()).filter(Boolean))].sort();
+  abrirModal("Nuevo pedido a proveedor", `
+    <form onsubmit="guardarStkPedido(event)">
+      <div class="field"><label>Producto *</label>
+        <select id="pd-producto">${activos.map(p =>
+          `<option value="${p.id}" ${preId === p.id ? "selected" : ""}>${esc(p.nombre)}${p.sku ? " — " + esc(p.sku) : ""}</option>`).join("")}</select></div>
+      <div class="fila-2">
+        <div class="field"><label>Cantidad *</label><input id="pd-cant" inputmode="decimal" required value="1"></div>
+        <div class="field"><label>Costo unitario</label>
+          <div style="display:flex;gap:8px">
+            <input id="pd-costo" inputmode="decimal" placeholder="Opcional" style="flex:1">
+            <select id="pd-moneda" style="width:92px"><option value="USD">USD</option><option value="ARS">ARS</option></select>
+          </div></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>Proveedor</label><input id="pd-prov" placeholder="Opcional"></div>
+        <div class="field"><label>Ubicación destino</label>
+          <input id="pd-ubi" list="pd-ubi-lista" placeholder="Opcional">
+          <datalist id="pd-ubi-lista">${ubis.map(u => `<option value="${esc(u)}">`).join("")}</datalist></div>
+      </div>
+      <div class="field"><label>Nota</label><input id="pd-nota" placeholder="Opcional"></div>
+      <p style="color:var(--gris);font-size:12.5px;margin-bottom:6px">Al recibirlo, el stock entra solo (queda en el kardex). La inversión de la compra se carga aparte: Reportes → “+ Inversión”.</p>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Crear pedido</button>
+      </div>
+    </form>`);
+}
+async function guardarStkPedido(e){
+  e.preventDefault();
+  const p = state.productos.find(x => x.id === +$("pd-producto").value);
+  if (!p) return toast("Elegí un producto.", "error");
+  const esKg = p.unidad === "kg";
+  const bruto = numDec($("pd-cant").value);
+  const cantidad = esKg ? Math.round(bruto * 100) / 100 : Math.floor(bruto);
+  if (!(cantidad > 0)) return toast("Ingresá una cantidad válida.", "error");
+  const { error } = await sb.from("stock_pedidos").insert({
+    producto_id: p.id, producto_nombre: p.nombre, producto_sku: p.sku || null,
+    cantidad, costo_unitario: numDec($("pd-costo").value) || null, moneda: $("pd-moneda").value,
+    proveedor: $("pd-prov").value.trim() || null, ubicacion_destino: $("pd-ubi").value.trim() || null,
+    nota: $("pd-nota").value.trim() || null, estado: "pedido",
+    creado_por_nombre: state.perfil?.nombre || null
+  });
+  if (error) return toast("No se pudo crear: " + error.message, "error");
+  toast("Pedido creado", "ok");
+  cerrarModal();
+  await cargarStockVista();
+}
+async function stkPedidoEstado(id, estado){
+  const { error } = await sb.from("stock_pedidos").update({ estado }).eq("id", id);
+  if (error) return toast("No se pudo actualizar: " + error.message, "error");
+  toast(estado === "en_camino" ? "Pedido marcado en camino" : "Pedido actualizado", "ok");
+  await cargarStockVista();
+}
+async function stkPedidoCancelar(id){
+  const x = state.stk.pedidos.find(p => p.id === id); if (!x) return;
+  if (!confirm(`¿Cancelar el pedido de ${x.cantidad} × ${x.producto_nombre}?`)) return;
+  await stkPedidoEstado(id, "cancelado");
+}
+async function stkPedidoRecibir(id){
+  const x = state.stk.pedidos.find(p => p.id === id); if (!x) return;
+  const p = state.productos.find(pr => pr.id === x.producto_id);
+  if (!p) return toast("El producto del pedido ya no existe.", "error");
+  if (!confirm(`Recibir ${x.cantidad} × ${p.nombre}: suma el stock y queda en el kardex. ¿Confirmar?`)) return;
+  // 1) Entrada de stock con el flujo existente (kardex consistente). Sin costo: la inversión es manual.
+  const { error: e1 } = await sb.rpc("registrar_movimiento", {
+    p_producto_id: p.id, p_tipo: "ingreso", p_cantidad: Number(x.cantidad),
+    p_nota: "Recepción de pedido" + (x.proveedor ? " — " + x.proveedor : "") + (x.nota ? " — " + x.nota : ""),
+    p_fecha: null, p_costo_compra: 0, p_proveedor: ""
+  });
+  if (e1) return toast("No se pudo ingresar el stock: " + e1.message, "error");
+  // 2) Cerrar el pedido
+  const { error: e2 } = await sb.from("stock_pedidos").update({ estado: "recibido", recibido_at: new Date().toISOString() }).eq("id", id);
+  if (e2) toast("Stock ingresado, pero no se pudo cerrar el pedido: " + e2.message, "error");
+  // 3) Si el pedido tenía destino y el producto no tiene ubicación, se la asignamos
+  if (x.ubicacion_destino && !p.ubicacion){
+    await sb.from("productos").update({ ubicacion: x.ubicacion_destino }).eq("id", p.id);
+  }
+  toast(`Recibido: +${x.cantidad} × ${p.nombre}`, "ok");
+  await cargarStockVista();
+}
+
+/* ================= RESERVAS (apartados para clientes) ================= */
+const STK_RES_EST = {
+  activa:    { nombre: "Activa",    chip: "alerta" },
+  consumida: { nombre: "Consumida", chip: "ok" },
+  liberada:  { nombre: "Liberada",  chip: "gris" }
+};
+function renderStkReservas(){
+  const act = state.stk.reservas.filter(r => r.estado === "activa");
+  $("stk-pane-otro").innerHTML = `
+    <div class="fin-kpis">
+      <div class="fin-kpi"><div class="fk-valor num fin-oro">${act.length}</div><div class="fk-label">Reservas activas</div></div>
+      <div class="fin-kpi"><div class="fk-valor num">${act.reduce((s,r) => s + Number(r.cantidad), 0)}</div><div class="fk-label">Unidades reservadas</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-pos">${state.stk.reservas.filter(r => r.estado === "consumida").length}</div><div class="fk-label">Consumidas</div></div>
+      <div class="fin-kpi"><div class="fk-valor num" style="color:var(--gris)">${state.stk.reservas.filter(r => r.estado === "liberada").length}</div><div class="fk-label">Liberadas</div></div>
+    </div>
+    <div class="filtros">
+      <div class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="stkr-busca" placeholder="Buscar por producto, cliente o referencia…"></div>
+      <select id="stkr-estado">
+        <option value="activa" selected>Activas</option>
+        <option value="consumida">Consumidas</option>
+        <option value="liberada">Liberadas</option>
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="tabla-wrap" id="stkr-tabla"></div>
+    <p style="color:var(--gris);font-size:12.5px;margin-top:10px">“Consumir” cierra la reserva cuando la venta se concreta (el stock lo descuenta la venta, no la reserva). “Liberar” la cancela y las unidades vuelven a estar disponibles.</p>`;
+  ["stkr-busca","stkr-estado"].forEach(id => $(id).addEventListener("input", pintarStkReservas));
+  pintarStkReservas();
+}
+function pintarStkReservas(){
+  const q = ($("stkr-busca")?.value || "").toLowerCase();
+  const fe = $("stkr-estado")?.value ?? "activa";
+  const lista = state.stk.reservas.filter(r => {
+    if (fe && r.estado !== fe) return false;
+    if (q){
+      const p = state.productos.find(x => x.id === r.producto_id);
+      if (![p?.nombre, p?.sku, r.cliente, r.referencia, r.nota, r.creado_por_nombre].join(" ").toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+  if (!lista.length){
+    $("stkr-tabla").innerHTML = '<div class="vacio"><b>Sin reservas</b>Apartá unidades para un cliente con “+ Nueva reserva” o con el botón ◆ de cada producto en Stock.</div>';
+    return;
+  }
+  $("stkr-tabla").innerHTML = `<table><thead><tr>
+      <th>Fecha</th><th>Producto</th><th class="der">Cant.</th><th>Cliente</th>
+      <th>Referencia</th><th>Nota</th><th>Creada por</th><th>Estado</th><th></th></tr></thead><tbody>` +
+    lista.map(r => {
+      const p = state.productos.find(x => x.id === r.producto_id);
+      const E = STK_RES_EST[r.estado] || { nombre: r.estado, chip: "gris" };
+      return `<tr>
+        <td class="num" style="white-space:nowrap">${fFecha(r.created_at)}</td>
+        <td><b>${esc(p?.nombre || "(producto eliminado)")}</b>${p?.sku ? `<br><small style="color:var(--gris)">SKU ${esc(p.sku)}</small>` : ""}</td>
+        <td class="der num" style="font-weight:700">${r.cantidad}</td>
+        <td style="font-weight:600">${esc(r.cliente || "—")}</td>
+        <td class="num" style="font-size:12.5px">${esc(r.referencia || "—")}</td>
+        <td style="font-size:12.5px;color:var(--gris);max-width:220px">${esc(r.nota || "")}</td>
+        <td style="font-size:12.5px">${esc(r.creado_por_nombre || "—")}</td>
+        <td><span class="chip ${E.chip}"><span class="punto"></span>${E.nombre.toUpperCase()}</span></td>
+        <td class="der acciones-fila">${r.estado === "activa" ? `
+          <button class="btn btn-chico btn-primario" title="La venta se concretó: cierra la reserva (el stock lo descuenta la venta)" onclick="stkReservaEstado('${r.id}','consumida')">Consumir</button>
+          <button class="btn btn-chico btn-suave" title="Cancelar la reserva y liberar las unidades" onclick="stkReservaEstado('${r.id}','liberada')">Liberar</button>` : ""}
+        </td>
+      </tr>`;
+    }).join("") + "</tbody></table>";
+}
+function abrirStkReserva(preId){
+  const activos = state.productos.filter(p => p.activo !== false && Number(p.stock) > 0)
+    .slice().sort((a,b) => a.nombre.localeCompare(b.nombre));
+  if (!activos.length) return toast("No hay productos con stock para reservar.", "error");
+  const clientes = (state.clientes || []).map(c => c.nombre).filter(Boolean).sort();
+  abrirModal("Nueva reserva", `
+    <form onsubmit="guardarStkReserva(event)">
+      <div class="field"><label>Producto *</label>
+        <select id="rv-producto" onchange="stkReservaInfo()">${activos.map(p =>
+          `<option value="${p.id}" ${preId === p.id ? "selected" : ""}>${esc(p.nombre)}${p.sku ? " — " + esc(p.sku) : ""}</option>`).join("")}</select>
+        <small id="rv-info" style="color:var(--gris);font-size:12.5px;display:block;margin-top:5px"></small></div>
+      <div class="fila-2">
+        <div class="field"><label>Cantidad *</label><input id="rv-cant" inputmode="decimal" required value="1"></div>
+        <div class="field"><label>Cliente</label>
+          <input id="rv-cliente" list="rv-clientes" placeholder="Nombre del cliente">
+          <datalist id="rv-clientes">${clientes.map(c => `<option value="${esc(c)}">`).join("")}</datalist></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>Referencia</label><input id="rv-ref" placeholder="N° de venta o presupuesto (opcional)"></div>
+        <div class="field"><label>Nota</label><input id="rv-nota" placeholder="Opcional"></div>
+      </div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Reservar</button>
+      </div>
+    </form>`);
+  stkReservaInfo();
+}
+function stkReservaInfo(){
+  const p = state.productos.find(x => x.id === +$("rv-producto").value);
+  if (!p) return;
+  const r = stkReservado(p.id);
+  $("rv-info").textContent = `Stock: ${p.stock}${r ? ` · ya reservadas: ${r} · disponibles: ${Math.max(0, p.stock - r)}` : ""}`;
+}
+async function guardarStkReserva(e){
+  e.preventDefault();
+  const p = state.productos.find(x => x.id === +$("rv-producto").value);
+  if (!p) return toast("Elegí un producto.", "error");
+  const esKg = p.unidad === "kg";
+  const bruto = numDec($("rv-cant").value);
+  const cantidad = esKg ? Math.round(bruto * 100) / 100 : Math.floor(bruto);
+  if (!(cantidad > 0)) return toast("Ingresá una cantidad válida.", "error");
+  const disp = Number(p.stock) - stkReservado(p.id);
+  if (cantidad > disp && !confirm(`Estás reservando ${cantidad} pero hay ${disp} disponible(s) (stock ${p.stock} − ya reservadas). ¿Reservar igual?`)) return;
+  const { error } = await sb.from("stock_reservas").insert({
+    producto_id: p.id, cantidad,
+    cliente: $("rv-cliente").value.trim() || null,
+    referencia: $("rv-ref").value.trim() || null,
+    nota: $("rv-nota").value.trim() || null,
+    estado: "activa", creado_por_nombre: state.perfil?.nombre || null
+  });
+  if (error) return toast("No se pudo reservar: " + error.message, "error");
+  toast("Reserva creada", "ok");
+  cerrarModal();
+  await cargarStockVista();
+}
+async function stkReservaEstado(id, estado){
+  const { error } = await sb.from("stock_reservas").update({ estado }).eq("id", id);
+  if (error) return toast("No se pudo actualizar: " + error.message, "error");
+  toast(estado === "consumida" ? "Reserva consumida" : "Reserva liberada", "ok");
+  await cargarStockVista();
+}
+
+/* ================= MOVIMIENTOS (kardex) ================= */
+async function cargarStkMovs(){
+  $("stk-pane-otro").innerHTML = '<div class="cargando">Cargando movimientos…</div>';
+  const { data, error } = await sb.from("movimientos_stock").select("*")
+    .order("created_at", { ascending: false }).limit(500);
+  if (error){ $("stk-pane-otro").innerHTML = `<div class="vacio"><b>No se pudieron cargar</b>${esc(error.message)}</div>`; return; }
+  state.stk.movs = data || [];
+  $("stk-pane-otro").innerHTML = `
+    <div class="filtros">
+      <div class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="stkm-busca" placeholder="Buscar por producto o nota…"></div>
+      <select id="stkm-tipo">
+        <option value="">Todos los motivos</option>
+        <option value="ingreso">Ingreso / reposición</option>
+        <option value="merma">Muerte / merma</option>
+        <option value="consumo">Consumo interno</option>
+      </select>
+      <input type="month" id="stkm-mes" style="min-width:150px">
+    </div>
+    <div class="tabla-wrap" id="stkm-tabla"></div>`;
+  ["stkm-busca","stkm-tipo","stkm-mes"].forEach(id => $(id).addEventListener("input", pintarStkMovs));
+  pintarStkMovs();
+}
+function stkMovsFiltrados(){
+  const q = ($("stkm-busca")?.value || "").toLowerCase();
+  const t = $("stkm-tipo")?.value, mes = $("stkm-mes")?.value;
+  return state.stk.movs.filter(m =>
+    (!q || [m.producto_nombre, m.nota].join(" ").toLowerCase().includes(q)) &&
+    (!t || m.tipo === t) &&
+    (!mes || String(m.created_at).slice(0,7) === mes));
+}
+function pintarStkMovs(){
+  const lista = stkMovsFiltrados();
+  const esAdmin = state.perfil?.rol === "admin";
+  if (!lista.length){
+    $("stkm-tabla").innerHTML = '<div class="vacio"><b>Sin movimientos</b>Los ingresos, mermas y consumos aparecen acá.</div>';
+    return;
+  }
+  $("stkm-tabla").innerHTML = `<table><thead><tr>
+      <th>Fecha</th><th>Producto</th><th>Motivo</th><th class="der">Cantidad</th><th>Nota</th>${esAdmin ? "<th></th>" : ""}</tr></thead><tbody>` +
+    lista.map(m => `<tr>
+      <td class="num" style="white-space:nowrap">${fFecha(m.created_at)}</td>
+      <td><b>${esc(m.producto_nombre)}</b></td>
+      <td><span class="chip ${m.tipo === "ingreso" ? "ok" : m.tipo === "merma" ? "rojo" : "alerta"}"><span class="punto"></span>${nombreMotivoMov(m.tipo).toUpperCase()}</span></td>
+      <td class="der num" style="font-weight:700;color:${m.tipo === "ingreso" ? "var(--ok)" : "var(--rojo)"}">${m.tipo === "ingreso" ? "+" : "−"}${m.cantidad}</td>
+      <td style="font-size:12.5px;color:var(--gris);max-width:260px">${esc(m.nota || "")}</td>
+      ${esAdmin ? `<td class="der"><button class="btn btn-chico btn-peligro" title="Deshacer: corrige el stock automáticamente" onclick="stkDeshacerMov(${m.id})">Deshacer</button></td>` : ""}
+    </tr>`).join("") + "</tbody></table>";
+}
+async function stkDeshacerMov(id){
+  if (!confirm("¿Deshacer este movimiento? El stock se corrige automáticamente.")) return;
+  const { error } = await sb.rpc("eliminar_movimiento", { p_id: id });
+  if (error) return toast("No se pudo deshacer: " + error.message, "error");
+  toast("Movimiento deshecho. Stock corregido.", "ok");
+  await cargarProductosData();
+  cargarStkMovs();
+}
+function exportarStkMovs(){
+  const filas = stkMovsFiltrados().map(m => ({
+    "Fecha": new Date(m.created_at).toLocaleString("es-AR"),
+    "Producto": m.producto_nombre, "Motivo": nombreMotivoMov(m.tipo),
+    "Cantidad": (m.tipo === "ingreso" ? 1 : -1) * Number(m.cantidad),
+    "Nota": m.nota || ""
+  }));
+  if (!filas.length) return toast("No hay movimientos para exportar.", "error");
+  descargarXLSX([{ nombre: "Movimientos de stock", filas }], "biotopium-kardex-" + hoyISO());
+}
+
+/* ================= REPORTES DE STOCK ================= */
+async function cargarStkReportes(){
+  $("stk-pane-otro").innerHTML = '<div class="cargando">Calculando…</div>';
+  if (!state.stk.movs.length){
+    const { data } = await sb.from("movimientos_stock").select("*").order("created_at", { ascending: false }).limit(1000);
+    state.stk.movs = data || [];
+  }
+  renderStkReportes();
+}
+function renderStkReportes(){
+  const dias = +($("stkrep-rango")?.value ?? 90);
+  const desde = dias ? new Date(Date.now() - dias * 864e5) : new Date(0);
+  const movs = state.stk.movs.filter(m => new Date(m.created_at) >= desde);
+  const admin = state.perfil?.rol === "admin";
+  const tc = stkTC();
+  const ing = movs.filter(m => m.tipo === "ingreso").reduce((s,m) => s + Number(m.cantidad), 0);
+  const sal = movs.filter(m => m.tipo !== "ingreso").reduce((s,m) => s + Number(m.cantidad), 0);
+  const costoMermas = movs.filter(m => m.tipo === "merma")
+    .reduce((s,m) => s + Number(m.cantidad) * Number(m.costo_usd || 0) * Number(m.tipo_cambio || 1), 0);
+
+  // Valor de stock por categoría (foto actual, ARS)
+  const activos = state.productos.filter(p => p.activo !== false);
+  const porCat = {};
+  activos.forEach(p => {
+    const n = state.categorias.find(c => c.id === p.categoria_id)?.nombre || "Sin categoría";
+    porCat[n] = (porCat[n] || 0) + stkCostoARS(p, tc) * Number(p.stock || 0);
+  });
+  const cats = Object.entries(porCat).filter(([,v]) => v > 0).sort((a,b) => b[1] - a[1]).slice(0, 6);
+  // Unidades por ubicación (foto actual)
+  const porUbi = {};
+  activos.forEach(p => {
+    const u = (p.ubicacion || "").trim() || "Sin ubicación";
+    porUbi[u] = (porUbi[u] || 0) + Number(p.stock || 0);
+  });
+  const ubis = Object.entries(porUbi).filter(([,v]) => v > 0).sort((a,b) => b[1] - a[1]).slice(0, 6);
+  // Top salidas del período
+  const porProd = {};
+  movs.filter(m => m.tipo !== "ingreso").forEach(m => {
+    porProd[m.producto_nombre] = (porProd[m.producto_nombre] || 0) + Number(m.cantidad);
+  });
+  const top = Object.entries(porProd).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  // Entradas vs salidas por mes (últimos 6 meses, siempre sobre todo el historial cargado)
+  const meses = [];
+  for (let i = 5; i >= 0; i--){
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+    meses.push({ k: d.toISOString().slice(0,7), lbl: d.toLocaleDateString("es-AR", { month: "short" }), ing: 0, sal: 0 });
+  }
+  state.stk.movs.forEach(m => {
+    const mm = meses.find(x => x.k === String(m.created_at).slice(0,7));
+    if (!mm) return;
+    if (m.tipo === "ingreso") mm.ing += Number(m.cantidad); else mm.sal += Number(m.cantidad);
+  });
+
+  const barras = (pares, color, fmt) => {
+    const max = Math.max(...pares.map(x => x[1]), 1);
+    return pares.map(([n, v]) => `
+      <div style="margin-bottom:9px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+          <span>${esc(n)}</span><b class="num">${fmt(v)}</b></div>
+        <div style="height:8px;background:var(--agua-claro);border-radius:99px">
+          <div style="height:100%;width:${v / max * 100}%;background:${color};border-radius:99px"></div></div>
+      </div>`).join("") || '<div class="vacio" style="padding:14px"><b>Sin datos</b></div>';
+  };
+  const maxM = Math.max(1, ...meses.map(x => Math.max(x.ing, x.sal)));
+  const grafMes = `<svg viewBox="0 0 640 185" style="width:100%;max-width:640px" role="img" aria-label="Entradas vs salidas">
+      <line x1="30" y1="150" x2="630" y2="150" stroke="var(--linea)"/>
+      ${meses.map((x,i) => { const cx = 45 + i * 98;
+        const hi = Math.round(x.ing / maxM * 120), he = Math.round(x.sal / maxM * 120);
+        return `<rect x="${cx}" y="${150-hi}" width="26" height="${hi}" rx="4" fill="var(--ok)"/>
+          <rect x="${cx+32}" y="${150-he}" width="26" height="${he}" rx="4" fill="var(--rojo)"/>
+          <text x="${cx+29}" y="${166}" text-anchor="middle" font-size="11" fill="var(--gris)">${x.lbl}</text>`; }).join("")}
+    </svg>
+    <div style="display:flex;gap:14px;font-size:12px;color:var(--gris);margin-top:4px">
+      <span><span class="pto" style="background:var(--ok);display:inline-block;margin-right:4px"></span>Entradas (unid.)</span>
+      <span><span class="pto" style="background:var(--rojo);display:inline-block;margin-right:4px"></span>Salidas (unid.)</span></div>`;
+
+  $("stk-pane-otro").innerHTML = `
+    <div class="filtros">
+      <select id="stkrep-rango" onchange="renderStkReportes()">
+        <option value="30" ${dias === 30 ? "selected" : ""}>Últimos 30 días</option>
+        <option value="90" ${dias === 90 ? "selected" : ""}>Últimos 90 días</option>
+        <option value="365" ${dias === 365 ? "selected" : ""}>Últimos 12 meses</option>
+        <option value="0" ${!dias ? "selected" : ""}>Todo el historial</option>
+      </select>
+    </div>
+    <div class="fin-kpis">
+      <div class="fin-kpi"><div class="fk-valor num">${movs.length}</div><div class="fk-label">Movimientos</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-pos">+${ing}</div><div class="fk-label">Unidades ingresadas</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-neg">−${sal}</div><div class="fk-label">Unidades salidas</div></div>
+      <div class="fin-kpi" title="Mermas del período valuadas al costo y TC de cada movimiento"><div class="fk-valor num ${costoMermas ? "fin-neg" : ""}">${admin ? fmtARS.format(costoMermas) : "—"}</div><div class="fk-label">Costo de mermas</div></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="fin-panel" style="margin:0"><h4>Valor de stock por categoría (ARS, foto actual)</h4>
+        ${admin ? barras(cats, "var(--alerta)", v => fmtARS.format(v)) : '<div class="vacio" style="padding:14px"><b>Visible para admin</b></div>'}</div>
+      <div class="fin-panel" style="margin:0"><h4>Unidades en stock por ubicación</h4>
+        ${barras(ubis, "var(--agua)", v => v + " u.")}</div>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="fin-panel" style="margin:0"><h4>Entradas vs salidas por mes</h4>${grafMes}</div>
+      <div class="fin-panel" style="margin:0"><h4>Top 5 con más salidas (período)</h4>
+        ${barras(top, "var(--rojo)", v => v + " u.")}</div>
+    </div>`;
 }
 
 /* ==================================================================
