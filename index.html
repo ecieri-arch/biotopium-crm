@@ -334,6 +334,17 @@ td.der,th.der{text-align:right}
   .content{margin:0;padding:0}
   body{background:var(--card)}
 }
+/* ---------- STOCK ---------- */
+.stk-kpi{cursor:pointer;transition:box-shadow .12s,outline-color .12s;outline:2px solid transparent}
+.stk-kpi:hover{box-shadow:var(--sombra-hover)}
+.stk-kpi.activo{outline-color:var(--agua)}
+.stk-kpi.quieto{cursor:default}
+th.stk-th{cursor:pointer;user-select:none}
+th.stk-th:hover{color:var(--agua-fuerte)}
+.stk-tc{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--linea);border-radius:11px;padding:8px 12px;font-size:13px;background:var(--card);white-space:nowrap}
+.stk-tc b{font-family:inherit}
+.stk-tc .fuente{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gris)}
+.tag-ubi{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:8px;background:var(--alerta-bg);color:var(--alerta);cursor:pointer}
 /* ---------- FINANZAS ---------- */
 .fin-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
 .fin-cuentas-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px;margin-bottom:14px}
@@ -571,11 +582,45 @@ td.der,th.der{text-align:right}
       <div class="tabla-wrap" id="prod-tabla"></div>
     </section>
 
+    <!-- ===== STOCK ===== -->
+    <section class="vista" id="view-stock">
+      <div class="vista-head">
+        <div><h2>Stock</h2><p>Control de inventario: valuación a costo, mínimos y ubicaciones</p></div>
+        <div class="acciones">
+          <button class="btn btn-borde" onclick="abrirMovimientos()">Movimientos</button>
+          <button class="btn btn-borde" onclick="exportarStock()">Exportar</button>
+          <button class="btn btn-primario" onclick="abrirProducto()">+ Nuevo producto</button>
+        </div>
+      </div>
+      <div class="fin-kpis" id="stk-kpis" style="grid-template-columns:repeat(auto-fill,minmax(175px,1fr))"></div>
+      <div class="filtros">
+        <div class="buscador">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="stk-busca" placeholder="Buscar por nombre, SKU, código o marca…">
+        </div>
+        <select id="stk-f-cat"><option value="">Todas las categorías</option></select>
+        <select id="stk-f-marca"><option value="">Todas las marcas</option></select>
+        <select id="stk-f-ubi"><option value="">Todas las ubicaciones</option></select>
+        <select id="stk-f-estado">
+          <option value="">Todos los estados</option>
+          <option value="ok">En stock</option>
+          <option value="bajo">Bajo mínimo</option>
+          <option value="sin">Sin stock</option>
+          <option value="inactivos">Inactivos</option>
+        </select>
+        <span class="stk-tc" id="stk-tc" title="Cotización que valúa el stock (se elige la fuente en Configuración)"></span>
+      </div>
+      <div class="tabla-wrap" id="stk-tabla"></div>
+    </section>
+
     <!-- ===== REPORTES ===== -->
     <section class="vista" id="view-reportes">
       <div class="vista-head">
         <div><h2>Reportes</h2><p>Métricas del período, tendencias y exportación</p></div>
-        <div class="acciones"><button class="btn btn-primario" onclick="nav('gastos')">+ Registrar gasto</button></div>
+        <div class="acciones">
+          <button class="btn btn-borde" onclick="nav('gastos')">+ Registrar gasto</button>
+          <button class="btn btn-primario" onclick="abrirInversion()">+ Inversión</button>
+        </div>
       </div>
       <div class="card" style="margin-bottom:16px">
         <div class="filtros" style="margin-bottom:0">
@@ -600,7 +645,7 @@ td.der,th.der{text-align:right}
         <div class="card"><h3>Mermas y consumo interno</h3><div id="rep-movimientos"></div></div>
       </div>
       <div class="grid-2" style="margin-bottom:16px">
-        <div class="card"><h3>Inversión en compras</h3><div id="rep-compras"></div></div>
+        <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 style="margin:0">Inversión en compras</h3><button class="btn btn-borde" style="padding:5px 12px" onclick="abrirInvMesAMes()">Mes a mes</button></div><div id="rep-compras" style="margin-top:8px"></div></div>
         <div class="card"><h3>Gastos operativos</h3><div id="rep-gastos"></div></div>
       </div>
       <div class="grid-2" style="margin-bottom:16px">
@@ -805,6 +850,7 @@ const ICONOS = {
   gastos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h5"/></svg>',
   envios:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8h13v9H1z"/><path d="M14 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.8"/><circle cx="17.5" cy="19" r="1.8"/></svg>',
   estuario:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M3 20c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path d="M12 12a4 4 0 0 0 4-4c0-2.2-1.8-4-4-4S8 5.8 8 8a4 4 0 0 0 4 4z"/></svg>',
+  stock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11H3z"/><path d="M5 9V5.5A1.5 1.5 0 0 1 6.5 4h11A1.5 1.5 0 0 1 19 5.5V9"/><path d="M9 13h6"/></svg>',
   finanzas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M2 10h20"/><circle cx="12" cy="14.5" r="2.3"/><path d="M5.5 14.5h.01M18.5 14.5h.01"/></svg>'
 };
 const VISTAS = [
@@ -815,6 +861,7 @@ const VISTAS = [
   { id:"leads",     nombre:"Leads" },
   { id:"clientes",  nombre:"Clientes" },
   { id:"productos", nombre:"Productos" },
+  { id:"stock",     nombre:"Stock" },
   { id:"reportes",  nombre:"Reportes" },
   { id:"gastos",    nombre:"Gastos" },
   { id:"smd",       nombre:"SM Discus", aparte:true },
@@ -855,6 +902,7 @@ function nav(id){
     clientes: cargarClientes, productos: cargarProductos, presupuestos: cargarPresupuestos,
     envios: cargarEnvios,
     smd: cargarSMD, reportes: cargarReporte, config: cargarConfigVista,
+    stock: cargarStockVista,
     estuario: cargarEstuario,
     gastos: cargarGastos,
     finanzas: cargarFinanzas
@@ -1704,7 +1752,7 @@ async function renderDashboard(){
   const ticket = mesActual.length ? totMes / mesActual.length : 0;
   // Compras/gastos del mes = tabla legacy `compras` + solapa `gastos`.
   // Las categorías de inventario (mercadería) suman a lo invertido pero NO se restan del neto.
-  // Inversión en compras = adquisición de productos/stock (tabla `compras`, alimentada por "Ajustar → Ingreso").
+  // Inversión en compras = tabla `compras`, cargada a mano desde Reportes → "+ Inversión".
   // Gastos = operativos (comida, viajes, servicios) de la solapa Gastos. Son cosas distintas.
   const gTabMes = (gastosMesData || []).filter(g => (g.fecha || "").slice(0,7) === inicioMes.toISOString().slice(0,7));
   const gastosTab = gTabMes.reduce((s,g) => s + gastoARS(g), 0);
@@ -1928,6 +1976,9 @@ function abrirProducto(id){
         <div class="field"><label>Stock mínimo (alerta)</label>
           <input type="number" id="p-min" min="0" step="0.01" value="${p?.stock_minimo ?? 0}"></div>
       </div>
+      <div class="field"><label>Ubicación</label>
+        <input id="p-ubicacion" list="lista-ubicaciones" value="${esc(p?.ubicacion || "")}" placeholder="Ej: Local, Depósito, Vitrina 2… (opcional)">
+        <datalist id="lista-ubicaciones">${[...new Set(state.productos.map(x => (x.ubicacion || "").trim()).filter(Boolean))].sort().map(u => `<option value="${esc(u)}">`).join("")}</datalist></div>
       <div class="field"><label>Margen propio (%)</label>
         <input type="number" id="p-margen" min="0" max="100" step="1" placeholder="Se calcula solo con costo y precio" value="${p?.margen_pct ?? ""}" oninput="state.margenProdTocado = true">
         <small style="color:var(--gris);font-size:12px;display:block;margin-top:4px">
@@ -1986,29 +2037,26 @@ async function guardarProducto(e, id){
     precio_usd: +$("p-pusd").value || 0,
     stock: numDec($("p-stock").value),
     stock_minimo: numDec($("p-min").value),
+    ubicacion: $("p-ubicacion").value.trim() || null,
     margen_pct: $("p-margen").value === "" ? null : Math.max(0, Math.min(100, +$("p-margen").value)),
     activo: $("p-activo").value === "true",
     notas: $("p-notas").value.trim(),
     updated_at: new Date().toISOString()
   };
-  const { error } = id
+  let { error } = id
     ? await sb.from("productos").update(datos).eq("id", id)
     : await sb.from("productos").insert(datos);
-  if (error) return toast("No se pudo guardar: " + error.message, "error");
-  // Alta con stock inicial → registrar la inversión en compras (para el dashboard).
-  if (!id && Number(datos.stock) > 0 && Number(datos.costo) > 0){
-    const tc = Number(state.config.tipo_cambio) || 1;
-    const costoUnitARS = datos.costo_moneda === "ARS" ? Number(datos.costo) : Number(datos.costo) * tc;
-    const montoInv = Math.round(costoUnitARS * Number(datos.stock) * 100) / 100;
-    if (montoInv > 0){
-      sb.rpc("registrar_compra", {
-        p_concepto: "Stock inicial: " + datos.nombre, p_tipo: "producto", p_monto: montoInv,
-        p_proveedor: "", p_nota: "Alta de producto con stock inicial", p_fecha: null
-      }).then(({ error: e }) => { if (e) console.warn("No se registró la inversión inicial:", e.message); });
-    }
+  if (error && /ubicacion/i.test(error.message)){
+    // Columna nueva sin migrar todavía: guardamos sin ubicación para no bloquear la operación.
+    delete datos.ubicacion;
+    ({ error } = id ? await sb.from("productos").update(datos).eq("id", id) : await sb.from("productos").insert(datos));
+    if (!error) toast("Guardado sin ubicación: falta correr migracion-stock.sql en Supabase.", "error");
   }
+  if (error) return toast("No se pudo guardar: " + error.message, "error");
+  // La inversión NO se registra automáticamente: se carga a mano desde Reportes → "+ Inversión".
   toast(id ? "Producto actualizado" : "Producto creado", "ok");
-  cerrarModal(); cargarProductos();
+  cerrarModal();
+  vistaActual === "stock" ? cargarStockVista() : cargarProductos();
 }
 
 /* ---------------- AUMENTO MASIVO DE PRECIOS ---------------- */
@@ -2224,15 +2272,8 @@ function abrirAjusteStock(id){
       </div>
       <div class="field"><label>Nota (opcional)</label>
         <input id="a-nota" placeholder="Ej: mortandad por transporte, uso en pecera de exhibición…"></div>
-      <div id="a-compra-wrap" style="display:none;background:var(--agua-claro);border-radius:11px;padding:12px;display:none">
-        <div class="fila-2">
-          <div class="field"><label>Costo total de la compra (ARS)</label>
-            <input type="number" id="a-costo" min="0" step="0.01" value="0" placeholder="Opcional"></div>
-          <div class="field"><label>Proveedor</label>
-            <input id="a-prov" placeholder="Opcional"></div>
-        </div>
-        <small style="color:var(--marino);font-size:12px">Si cargás el costo, se registra como inversión del mes.</small>
-      </div>
+      <div id="a-compra-wrap" style="display:none;background:var(--agua-claro);border-radius:11px;padding:10px 13px;font-size:12.5px;color:var(--marino)">
+        Este ingreso solo suma stock. La inversión de la compra se carga aparte, a mano, desde <b>Reportes → “+ Inversión”</b>.</div>
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
         <button type="submit" class="btn btn-primario">Registrar movimiento</button>
@@ -2261,14 +2302,15 @@ async function guardarAjuste(e, prodId){
   const { error } = await sb.rpc("registrar_movimiento", {
     p_producto_id: prodId, p_tipo: tipo, p_cantidad: cant,
     p_nota: $("a-nota").value.trim(), p_fecha: $("a-fecha").value || null,
-    p_costo_compra: tipo === "ingreso" ? numDec($("a-costo").value) : 0,
-    p_proveedor: tipo === "ingreso" ? $("a-prov").value.trim() : ""
+    p_costo_compra: 0,   // la inversión se carga a mano (Reportes → "+ Inversión")
+    p_proveedor: ""
   });
   if (error) return toast("No se pudo registrar: " + error.message, "error");
   toast(`Movimiento registrado. Stock ${mov.signo < 0 ? "descontado" : "sumado"}.`, "ok");
   cerrarModal();
   await cargarProductosData();
   renderProductos();
+  if (vistaActual === "stock") renderStock();
   if (vistaActual === "dashboard") renderDashboard();
 }
 
@@ -4995,7 +5037,7 @@ function renderReporte(){
   if (!esAdmin){
     $("rep-compras").innerHTML = '<div class="vacio" style="padding:18px"><b>Visible para admin</b></div>';
   } else if (!compras.length){
-    $("rep-compras").innerHTML = '<div class="vacio" style="padding:18px"><b>Sin compras en el período</b><span style="font-size:13px">La inversión se registra al ingresar stock: “Ajustar → Ingreso” con su costo, o al crear un producto con stock inicial.</span></div>';
+    $("rep-compras").innerHTML = '<div class="vacio" style="padding:18px"><b>Sin inversiones en el período</b><span style="font-size:13px">Se cargan a mano con el botón “+ Inversión” de arriba.</span></div>';
   } else {
     const maxC = Math.max(...Object.values(porTipoC), 1);
     $("rep-compras").innerHTML = Object.entries(porTipoC).filter(([,t]) => t > 0).map(([k, t]) => `
@@ -5018,9 +5060,10 @@ function renderReporte(){
       })() +
       `<div style="margin-top:12px;max-height:150px;overflow:auto">
         ${compras.slice().reverse().slice(0,10).map(c => `
-          <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--linea);font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--linea);font-size:13px">
             <span>${fFecha(c.created_at)} · ${esc(c.concepto || nombreTipoC[c.tipo])}${c.proveedor ? " · " + esc(c.proveedor) : ""}</span>
-            <b class="num">${fmtARS.format(c.monto)}</b></div>`).join("")}
+            <span style="display:flex;align-items:center;gap:4px;white-space:nowrap"><b class="num">${fmtARS.format(c.monto)}</b>
+              <button class="btn-icono btn-peligro" title="Eliminar" onclick="borrarCompra('${c.id}')">✕</button></span></div>`).join("")}
       </div>`;
   }
 
@@ -5171,50 +5214,381 @@ function renderAnalisisClientes(){
 }
 
 /* ---------------- COMPRA/GASTO LEGACY (reemplazado por la solapa Gastos) ---------------- */
-function abrirCompraLegacy(){
-  abrirModal("Registrar gasto / compra", `
-    <form onsubmit="guardarCompraLegacy(event)">
-      <p style="color:var(--gris);font-size:13.5px;margin-bottom:4px">
-        Para servicios y gastos sin stock. Las reposiciones de productos se cargan desde el botón “Ajustar” de cada producto.</p>
-      <div class="field"><label>Concepto *</label>
-        <input id="g-concepto" required placeholder="Ej: flete, publicidad, alquiler, insumos…"></div>
-      <div class="fila-2">
-        <div class="field"><label>Tipo</label>
-          <select id="g-tipo">
-            <option value="servicio">Servicio</option>
-            <option value="producto">Producto / insumo</option>
-            <option value="otro">Otro gasto</option></select></div>
-        <div class="field"><label>Monto (ARS) *</label>
-          <input type="number" id="g-monto" min="0" step="0.01" required></div>
-      </div>
-      <div class="fila-2">
-        <div class="field"><label>Proveedor</label><input id="g-prov" placeholder="Opcional"></div>
-        <div class="field"><label>Fecha</label><input type="date" id="g-fecha" value="${hoyISO()}"></div>
-      </div>
-      <div class="field"><label>Nota</label><input id="g-nota" placeholder="Opcional"></div>
+/* ==================================================================
+   STOCK — control de inventario estilo Rough 4x4 (solapa Stock):
+   KPIs clickeables, valuación a costo en ARS y US$ al TC elegido,
+   tabla ordenable, ubicaciones, mínimos y ajuste rápido.
+   Usa la misma tabla `productos` del catálogo.
+   ================================================================== */
+state.stk = { orden: "nombre", asc: true, kpi: "" };
+const stkTC = () => Number(tcDeFuente(state.tcFuente)) || Number(state.config.tipo_cambio) || 0;
+/* Costo unitario en ARS: cada producto en su moneda, llevado a pesos con el TC (patrón Rough) */
+function stkCostoARS(p, tc){
+  const costo = Number(p.costo != null ? p.costo : p.costo_usd) || 0;
+  return (p.costo_moneda === "ARS") ? costo : costo * tc;
+}
+const stkEstado = p => p.activo === false ? "inactivo"
+  : Number(p.stock) <= 0 ? "sin"
+  : (Number(p.stock_minimo) > 0 && Number(p.stock) <= Number(p.stock_minimo)) ? "bajo" : "ok";
+const STK_ESTADOS = {
+  ok:       { nombre: "En stock",    chip: "ok" },
+  bajo:     { nombre: "Bajo mínimo", chip: "alerta" },
+  sin:      { nombre: "Sin stock",   chip: "rojo" },
+  inactivo: { nombre: "Inactivo",    chip: "gris" }
+};
+
+async function cargarStockVista(){
+  $("stk-tabla").innerHTML = '<div class="cargando">Cargando stock…</div>';
+  await cargarProductosData();
+  // Poblar filtros (manteniendo la selección actual)
+  const keep = (sel, opciones, primera) => {
+    const el = $(sel), v = el.value;
+    el.innerHTML = `<option value="">${primera}</option>` + opciones;
+    el.value = v;
+  };
+  keep("stk-f-cat", state.categorias.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join(""), "Todas las categorías");
+  keep("stk-f-marca", [...new Set(state.productos.map(p => (p.marca || "").trim()).filter(Boolean))].sort()
+    .map(m => `<option>${esc(m)}</option>`).join(""), "Todas las marcas");
+  keep("stk-f-ubi", [...new Set(state.productos.map(p => (p.ubicacion || "").trim()).filter(Boolean))].sort()
+    .map(u => `<option>${esc(u)}</option>`).join(""), "Todas las ubicaciones");
+  renderStock();
+}
+
+function stkFiltrados(){
+  const q = ($("stk-busca").value || "").toLowerCase();
+  const cat = $("stk-f-cat").value, marca = $("stk-f-marca").value;
+  const ubi = $("stk-f-ubi").value, fe = $("stk-f-estado").value;
+  const k = state.stk.kpi;
+  let lista = state.productos.filter(p => {
+    const est = stkEstado(p);
+    if (fe === "inactivos"){ if (est !== "inactivo") return false; }
+    else {
+      if (est === "inactivo") return false;
+      if (fe && est !== fe) return false;
+    }
+    if (q && !(p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) ||
+               (p.codigo_barras || "").toLowerCase().includes(q) || (p.marca || "").toLowerCase().includes(q))) return false;
+    if (cat && String(p.categoria_id) !== cat) return false;
+    if (marca && (p.marca || "") !== marca) return false;
+    if (ubi && (p.ubicacion || "").trim() !== ubi) return false;
+    if (k === "bajo" && stkEstado(p) !== "bajo") return false;
+    if (k === "sin" && stkEstado(p) !== "sin") return false;
+    return true;
+  });
+  const key = state.stk.orden, dir = state.stk.asc ? 1 : -1;
+  const tc = stkTC();
+  const val = p =>
+    key === "categoria" ? (state.categorias.find(c => c.id === p.categoria_id)?.nombre || "") :
+    key === "costo" ? stkCostoARS(p, tc) :
+    key === "precio" ? Number(p.precio_ars) || 0 :
+    key === "estado" ? ["ok","bajo","sin","inactivo"].indexOf(stkEstado(p)) :
+    p[key];
+  lista.sort((a, b) => {
+    let x = val(a), y = val(b);
+    if (typeof x === "string" || typeof y === "string"){ x = String(x || "").toLowerCase(); y = String(y || "").toLowerCase(); }
+    else { x = Number(x || 0); y = Number(y || 0); }
+    return (x < y ? -1 : x > y ? 1 : 0) * dir;
+  });
+  return lista;
+}
+function stkOrden(k){
+  if (state.stk.orden === k) state.stk.asc = !state.stk.asc;
+  else { state.stk.orden = k; state.stk.asc = true; }
+  renderStock();
+}
+function stkKpi(k){
+  state.stk.kpi = state.stk.kpi === k ? "" : k;
+  renderStock();
+}
+
+function renderStock(){
+  const activos = state.productos.filter(p => p.activo !== false);
+  const tc = stkTC();
+  const admin = state.perfil?.rol === "admin";
+  const valorARS = activos.reduce((s,p) => s + stkCostoARS(p, tc) * Number(p.stock || 0), 0);
+  const valorUSD = tc > 0 ? valorARS / tc : 0;
+  const bajo = activos.filter(p => stkEstado(p) === "bajo").length;
+  const sin = activos.filter(p => stkEstado(p) === "sin").length;
+  const k = state.stk.kpi;
+  $("stk-kpis").innerHTML = `
+    <div class="fin-kpi stk-kpi ${!k ? "activo" : ""}" onclick="stkKpi('')" title="Todos los productos activos">
+      <div class="fk-valor num">${activos.length}</div><div class="fk-label">Productos</div></div>
+    <div class="fin-kpi stk-kpi quieto" title="Inventario a costo, convertido a US$ con el TC">
+      <div class="fk-valor num fin-oro">${admin ? (tc > 0 ? fmtUSD.format(valorUSD) : "—") : "—"}</div><div class="fk-label">Valor de stock USD</div></div>
+    <div class="fin-kpi stk-kpi quieto" title="Inventario a costo, en pesos">
+      <div class="fk-valor num fin-oro">${admin ? fmtARS.format(valorARS) : "—"}</div><div class="fk-label">Valor de stock ARS</div></div>
+    <div class="fin-kpi stk-kpi ${k === "bajo" ? "activo" : ""}" onclick="stkKpi('bajo')">
+      <div class="fk-valor num ${bajo ? "fin-neg" : ""}">${bajo}</div><div class="fk-label">Bajo mínimo</div></div>
+    <div class="fin-kpi stk-kpi ${k === "sin" ? "activo" : ""}" onclick="stkKpi('sin')">
+      <div class="fk-valor num ${sin ? "fin-neg" : ""}">${sin}</div><div class="fk-label">Sin stock</div></div>`;
+  $("stk-tc").innerHTML = `<span class="fuente">TC</span> <b class="num">${tc > 0 ? fmtARS.format(tc) : "—"}</b>
+    <span class="fuente">${esc(nombreFuente(state.tcFuente))}</span>
+    <button class="btn-icono" title="Actualizar cotizaciones" onclick="traerCotizaciones(true).then(renderStock)">⟳</button>`;
+
+  const lista = stkFiltrados();
+  if (!lista.length){
+    $("stk-tabla").innerHTML = `<div class="vacio"><b>Sin resultados</b>${state.productos.length ? "Ajustá la búsqueda o los filtros." : "Cargá el primero con “+ Nuevo producto”."}</div>`;
+    return;
+  }
+  const flecha = c => state.stk.orden === c ? (state.stk.asc ? " ▲" : " ▼") : "";
+  const catNom = id => state.categorias.find(c => c.id === id)?.nombre || "—";
+  $("stk-tabla").innerHTML = `<table><thead><tr>
+      <th class="stk-th" onclick="stkOrden('nombre')">Producto${flecha("nombre")}</th>
+      <th class="stk-th" onclick="stkOrden('sku')">SKU${flecha("sku")}</th>
+      <th class="stk-th" onclick="stkOrden('marca')">Marca${flecha("marca")}</th>
+      <th class="stk-th" onclick="stkOrden('categoria')">Categoría${flecha("categoria")}</th>
+      <th class="stk-th" onclick="stkOrden('ubicacion')">Ubicación${flecha("ubicacion")}</th>
+      <th class="stk-th der" onclick="stkOrden('costo')">P. costo${flecha("costo")}</th>
+      <th class="stk-th der" onclick="stkOrden('precio')">P. venta${flecha("precio")}</th>
+      <th class="stk-th der" onclick="stkOrden('stock')">Stock${flecha("stock")}</th>
+      <th class="stk-th" onclick="stkOrden('estado')">Estado${flecha("estado")}</th>
+      <th></th></tr></thead><tbody>` +
+    lista.map(p => {
+      const est = STK_ESTADOS[stkEstado(p)];
+      const costo = Number(p.costo != null ? p.costo : p.costo_usd) || 0;
+      const monCosto = p.costo_moneda === "ARS" ? "ARS" : "USD";
+      return `<tr class="fila-click" onclick="abrirProducto(${p.id})">
+        <td><b>${esc(p.nombre)}</b>${p.unidad === "kg" ? ' <span class="chip gris" style="font-size:11px">kg</span>' : ""}</td>
+        <td class="num" style="color:var(--gris);font-size:13px">${esc(p.sku || "—")}</td>
+        <td style="font-weight:600">${esc(p.marca || "—")}</td>
+        <td><span class="chip cat">${esc(catNom(p.categoria_id))}</span></td>
+        <td onclick="event.stopPropagation()">${p.ubicacion
+          ? `<span class="tag-ubi" title="Cambiar ubicación" onclick="stkEditarUbicacion(${p.id})">${esc(p.ubicacion)}</span>`
+          : `<span class="tag-ubi" style="opacity:.55" title="Asignar ubicación" onclick="stkEditarUbicacion(${p.id})">＋ asignar</span>`}</td>
+        <td class="der num">${admin ? fMoneda(costo, monCosto) : "—"}</td>
+        <td class="der num" style="color:var(--alerta);font-weight:600">${fmtARS.format(p.precio_ars)}</td>
+        <td class="der"><span class="chip num ${est.chip === "gris" ? "gris" : Number(p.stock) <= 0 ? "rojo" : stkEstado(p) === "bajo" ? "alerta" : "ok"}">${p.stock}</span></td>
+        <td><span class="chip ${est.chip}"><span class="punto"></span>${est.nombre.toUpperCase()}</span></td>
+        <td class="der acciones-fila" onclick="event.stopPropagation()">
+          <button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">±</button>
+          <button class="btn-icono" title="Editar producto" onclick="abrirProducto(${p.id})">✎</button>
+          ${admin ? `<button class="btn-icono btn-peligro" title="Eliminar" onclick="borrarProducto(${p.id})">✕</button>` : ""}
+        </td>
+      </tr>`;
+    }).join("") + "</tbody></table>";
+}
+["stk-busca","stk-f-cat","stk-f-marca","stk-f-ubi","stk-f-estado"].forEach(id =>
+  { const el = $(id); if (el) el.addEventListener("input", renderStock); });
+
+/* ----- Cambio rápido de ubicación desde la tabla ----- */
+function stkEditarUbicacion(id){
+  const p = state.productos.find(x => x.id === id); if (!p) return;
+  const ubis = [...new Set(state.productos.map(x => (x.ubicacion || "").trim()).filter(Boolean))].sort();
+  abrirModal("Ubicación · " + p.nombre, `
+    <form onsubmit="stkGuardarUbicacion(event, ${p.id})">
+      <div class="field"><label>Ubicación</label>
+        <input id="stk-ubi-input" list="stk-ubi-lista" value="${esc(p.ubicacion || "")}" placeholder="Ej: Local, Depósito, Vitrina 2… (vacío = sin ubicación)">
+        <datalist id="stk-ubi-lista">${ubis.map(u => `<option value="${esc(u)}">`).join("")}</datalist></div>
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primario">Registrar</button>
+        <button type="submit" class="btn btn-primario">Guardar</button>
       </div>
     </form>`);
+  setTimeout(() => $("stk-ubi-input")?.focus(), 60);
 }
-async function guardarCompraLegacy(e){
+async function stkGuardarUbicacion(e, id){
   e.preventDefault();
-  const monto = +$("g-monto").value || 0;
-  if (monto <= 0) return toast("Ingresá un monto válido", "error");
-  const { error } = await sb.rpc("registrar_compra", {
-    p_concepto: $("g-concepto").value.trim(),
-    p_tipo: $("g-tipo").value,
-    p_monto: monto,
-    p_proveedor: $("g-prov").value.trim(),
-    p_nota: $("g-nota").value.trim(),
-    p_fecha: $("g-fecha").value || null
+  const ubicacion = $("stk-ubi-input").value.trim() || null;
+  const { error } = await sb.from("productos").update({ ubicacion, updated_at: new Date().toISOString() }).eq("id", id);
+  if (error){
+    const falta = /ubicacion/i.test(error.message);
+    return toast(falta ? "Falta correr migracion-stock.sql en Supabase (columna ubicacion)." : "No se pudo guardar: " + error.message, "error");
+  }
+  const p = state.productos.find(x => x.id === id); if (p) p.ubicacion = ubicacion;
+  toast("Ubicación actualizada", "ok");
+  cerrarModal();
+  renderStock();
+}
+
+/* ----- Export con valuación (costos solo admin) ----- */
+function exportarStock(){
+  const admin = state.perfil?.rol === "admin";
+  const tc = stkTC();
+  const catNom = id => state.categorias.find(c => c.id === id)?.nombre || "";
+  const filas = stkFiltrados().map(p => {
+    const f = {
+      "Producto": p.nombre, "SKU": p.sku || "", "Marca": p.marca || "",
+      "Categoría": catNom(p.categoria_id), "Ubicación": p.ubicacion || "",
+      "Stock": Number(p.stock), "Stock mínimo": Number(p.stock_minimo || 0),
+      "Estado": STK_ESTADOS[stkEstado(p)].nombre, "Precio venta ARS": Number(p.precio_ars) || 0
+    };
+    if (admin){
+      const costo = Number(p.costo != null ? p.costo : p.costo_usd) || 0;
+      f["Costo"] = costo;
+      f["Moneda costo"] = p.costo_moneda === "ARS" ? "ARS" : "USD";
+      f["Costo unit. ARS (al TC)"] = Math.round(stkCostoARS(p, tc) * 100) / 100;
+      f["Valor stock ARS"] = Math.round(stkCostoARS(p, tc) * Number(p.stock || 0) * 100) / 100;
+    }
+    return f;
   });
-  if (error) return toast("No se pudo registrar: " + error.message, "error");
-  toast("Gasto registrado", "ok");
+  if (!filas.length) return toast("No hay productos para exportar.", "error");
+  descargarXLSX([{ nombre: "Stock", filas }], "biotopium-stock-" + hoyISO());
+}
+
+/* ==================================================================
+   INVERSIONES — carga global de compras de mercadería sin itemizar
+   producto por producto, con moneda y TC congelado (tabla `compras`).
+   Requiere migracion-inversiones.sql (columnas moneda/monto_origen/tc
+   + RPCs registrar_inversion y borrar_compra).
+   ================================================================== */
+const invTC = () => (typeof tcDeFuente === "function" && tcDeFuente(state.tcFuente)) || Number(state.config.tipo_cambio) || "";
+
+function abrirInversion(){
+  abrirModal("Nueva inversión", `
+    <form onsubmit="guardarInversion(event)">
+      <p style="color:var(--gris);font-size:13.5px;margin-bottom:10px">
+        Registrá la compra completa de una vez (ej: una importación entera) sin cargar producto por producto.
+        Suma a “Inversión en compras” del mes de la fecha que elijas.</p>
+      <div class="fila-2">
+        <div class="field"><label>Fecha *</label><input type="date" id="inv-fecha" required value="${hoyISO()}"></div>
+        <div class="field"><label>Tipo</label>
+          <select id="inv-tipo">
+            <option value="producto" selected>Productos / mercadería</option>
+            <option value="servicio">Servicio</option>
+            <option value="otro">Otro</option></select></div>
+      </div>
+      <div class="field"><label>Concepto *</label>
+        <input id="inv-concepto" required placeholder="Ej: Importación Twinstar agosto, lote plecos Brasil…"></div>
+      <div class="field"><label>Proveedor</label><input id="inv-prov" placeholder="Opcional"></div>
+      <div class="fila-2">
+        <div class="field"><label>Monto *</label>
+          <input id="inv-monto" inputmode="decimal" required placeholder="0,00" oninput="invCalcular()"></div>
+        <div class="field"><label>Moneda</label>
+          <select id="inv-moneda" onchange="invCalcular()">
+            <option value="USD">USD</option><option value="ARS">ARS</option></select></div>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>1 US$ = ARS (TC congelado)</label>
+          <input id="inv-tc" inputmode="decimal" value="${invTC()}" oninput="invCalcular()"></div>
+        <div class="field"><label>Equivalente</label>
+          <input id="inv-equiv" disabled style="background:var(--superficie)"></div>
+      </div>
+      <div class="field"><label>Nota</label><input id="inv-nota" placeholder="Opcional"></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar inversión</button>
+      </div>
+    </form>`);
+  invCalcular();
+}
+function invCalcular(){
+  const m = numDec($("inv-monto").value), tc = numDec($("inv-tc").value);
+  const usd = $("inv-moneda").value === "USD";
+  $("inv-equiv").value = !m ? "" : !tc ? "cargá el TC"
+    : usd ? "= " + fmtARS.format(m * tc) : "= " + fmtUSD.format(m / tc);
+}
+async function guardarInversion(e){
+  e.preventDefault();
+  const moneda = $("inv-moneda").value;
+  const monto = numDec($("inv-monto").value);
+  const tc = numDec($("inv-tc").value);
+  if (!(monto > 0)) return toast("Ingresá un monto válido.", "error");
+  if (!(tc > 0)) return toast("Falta el tipo de cambio (para el equivalente exacto en US$).", "error");
+  const concepto = $("inv-concepto").value.trim();
+  if (!concepto) return toast("El concepto no puede quedar vacío.", "error");
+  const btn = e.submitter; if (btn){ btn.disabled = true; btn.textContent = "Registrando…"; }
+  const { error } = await sb.rpc("registrar_inversion", {
+    p_concepto: concepto, p_tipo: $("inv-tipo").value,
+    p_monto_origen: monto, p_moneda: moneda, p_tc: tc,
+    p_proveedor: $("inv-prov").value.trim(), p_nota: $("inv-nota").value.trim(),
+    p_fecha: $("inv-fecha").value || null
+  });
+  if (error){
+    if (btn){ btn.disabled = false; btn.textContent = "Registrar inversión"; }
+    const falta = /registrar_inversion|does not exist|schema cache/i.test(error.message);
+    return toast(falta ? "Falta correr migracion-inversiones.sql en Supabase." : "No se pudo registrar: " + error.message, "error");
+  }
+  toast("Inversión registrada", "ok");
   cerrarModal();
   if (vistaActual === "reportes") cargarReporte();
   if (vistaActual === "dashboard") renderDashboard();
+}
+async function borrarCompra(id){
+  const c = (state.repCompras || []).find(x => String(x.id) === String(id));
+  if (!confirm(`¿Eliminar ${c ? `"${c.concepto || "esta compra"}" por ${fmtARS.format(c.monto)}` : "esta compra"}? No se puede deshacer.`)) return;
+  const { error } = await sb.rpc("borrar_compra", { p_id: id });
+  if (error){
+    const falta = /borrar_compra|does not exist|schema cache/i.test(error.message);
+    return toast(falta ? "Falta correr migracion-inversiones.sql en Supabase." : "No se pudo eliminar: " + error.message, "error");
+  }
+  toast("Compra eliminada", "ok");
+  cargarReporte();
+}
+
+/* ----- Inversión mes a mes (últimos 12 meses) ----- */
+async function abrirInvMesAMes(){
+  abrirModal("Inversión en compras · mes a mes", '<div class="cargando">Calculando…</div>');
+  const desde = new Date(); desde.setMonth(desde.getMonth() - 11); desde.setDate(1); desde.setHours(0,0,0,0);
+  let res = await sb.from("compras").select("monto,tipo,moneda,monto_origen,tipo_cambio,created_at")
+    .gte("created_at", desde.toISOString()).order("created_at");
+  let sinUSD = false;
+  if (res.error){
+    // Migración no corrida: columnas nuevas inexistentes → caemos a solo ARS
+    sinUSD = true;
+    res = await sb.from("compras").select("monto,tipo,created_at").gte("created_at", desde.toISOString()).order("created_at");
+    if (res.error){ $("modal-cuerpo").innerHTML = `<div class="vacio"><b>No se pudo cargar</b>${esc(res.error.message)}</div>`; return; }
+  }
+  const meses = {};
+  for (let i = 11; i >= 0; i--){
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+    meses[d.toISOString().slice(0,7)] = {
+      lbl: d.toLocaleDateString("es-AR", { month:"short", year:"2-digit" }),
+      prod: 0, otros: 0, usd: 0, legacy: false, n: 0
+    };
+  }
+  (res.data || []).forEach(c => {
+    const m = meses[String(c.created_at).slice(0,7)]; if (!m) return;
+    const ars = Number(c.monto) || 0;
+    m.n++;
+    if (c.tipo === "producto") m.prod += ars; else m.otros += ars;
+    if (!sinUSD && c.moneda === "USD" && Number(c.monto_origen) > 0) m.usd += Number(c.monto_origen);
+    else if (!sinUSD && Number(c.tipo_cambio) > 0) m.usd += ars / Number(c.tipo_cambio);
+    else m.legacy = true;  // sin TC congelado: no entra al total US$
+  });
+  const filas = Object.values(meses);
+  const totP = filas.reduce((s,m) => s + m.prod, 0), totO = filas.reduce((s,m) => s + m.otros, 0);
+  const totU = filas.reduce((s,m) => s + m.usd, 0);
+  const hayLegacy = filas.some(m => m.legacy);
+  const conDatos = filas.filter(m => m.n > 0).length || 1;
+  state.invMesAMes = filas;
+  $("modal-cuerpo").innerHTML = `
+    <div class="tabla-wrap" style="max-height:380px;overflow:auto;box-shadow:none;border:1.5px solid var(--linea)">
+      <table><thead><tr>
+        <th>Mes</th><th class="der">Productos</th><th class="der">Serv. / otros</th>
+        <th class="der">Total ARS</th><th class="der">US$ (TC congelado)</th></tr></thead><tbody>
+      ${filas.map(m => `<tr>
+        <td style="text-transform:capitalize">${m.lbl}</td>
+        <td class="der num">${m.prod ? fmtARS.format(m.prod) : "—"}</td>
+        <td class="der num">${m.otros ? fmtARS.format(m.otros) : "—"}</td>
+        <td class="der num"><b>${m.n ? fmtARS.format(m.prod + m.otros) : "—"}</b></td>
+        <td class="der num">${m.usd ? fmtUSD.format(m.usd) : "—"}${m.legacy ? " *" : ""}</td>
+      </tr>`).join("")}
+      <tr style="background:var(--superficie-2)">
+        <td><b>Total 12 meses</b></td>
+        <td class="der num"><b>${fmtARS.format(totP)}</b></td>
+        <td class="der num"><b>${fmtARS.format(totO)}</b></td>
+        <td class="der num"><b>${fmtARS.format(totP + totO)}</b></td>
+        <td class="der num"><b>${totU ? fmtUSD.format(totU) : "—"}</b></td></tr>
+      <tr><td><b>Promedio mensual</b></td>
+        <td class="der num" colspan="2"></td>
+        <td class="der num"><b>${fmtARS.format((totP + totO) / conDatos)}</b></td>
+        <td class="der num"><b>${totU ? fmtUSD.format(totU / conDatos) : "—"}</b></td></tr>
+      </tbody></table>
+    </div>
+    ${sinUSD ? '<p style="color:var(--alerta);font-size:12.5px;margin-top:8px">Corré <b>migracion-inversiones.sql</b> para tener la columna en US$ con TC congelado.</p>'
+      : hayLegacy ? '<p style="color:var(--gris);font-size:12.5px;margin-top:8px">* Ese mes incluye compras viejas sin TC congelado: quedan afuera del total US$ (el ARS sí las incluye). Las inversiones nuevas siempre guardan el TC.</p>' : ""}
+    <div class="modal-pie">
+      <button type="button" class="btn btn-borde" onclick="exportarInvMesAMes()">Exportar</button>
+      <button type="button" class="btn btn-primario" onclick="cerrarModal()">Cerrar</button>
+    </div>`;
+}
+function exportarInvMesAMes(){
+  const filas = (state.invMesAMes || []).map(m => ({
+    "Mes": m.lbl, "Productos ARS": Math.round(m.prod), "Servicios/otros ARS": Math.round(m.otros),
+    "Total ARS": Math.round(m.prod + m.otros), "US$ (TC congelado)": Math.round(m.usd * 100) / 100,
+    "Incluye sin TC": m.legacy ? "Sí" : ""
+  }));
+  descargarXLSX([{ nombre: "Inversión mes a mes", filas }], "biotopium-inversion-mensual-" + hoyISO());
 }
 
 /* ---------------- EXPORTACIÓN ---------------- */
