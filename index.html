@@ -951,6 +951,7 @@ $("form-login").addEventListener("submit", async e => {
 });
 
 async function cerrarSesion(){
+  state.cerrandoSesion = true;
   await sb.auth.signOut();
   location.reload();
 }
@@ -961,7 +962,19 @@ if (sb) sb.auth.onAuthStateChange((evento, sesion) => {
   // función de auth dentro del callback produce un deadlock ("Entrando…" infinito).
   // Docs oficiales: derivar el trabajo a otro tick con setTimeout.
   if (sesion?.user) setTimeout(() => manejarSesion(sesion), 0);
+  // Sesión perdida estando adentro (refresh token inválido/vencido, sesión revocada,
+  // cierre desde otra pestaña): sin esto la UI queda "zombie" — sigue mostrando datos
+  // viejos, las consultas vuelven vacías por RLS y admin-users responde "No autenticado".
+  else if (evento === "SIGNED_OUT" && state.user && !state.cerrandoSesion) setTimeout(sesionPerdida, 0);
 });
+
+/* Vuelve al login con aviso cuando la sesión murió sin que el usuario la cerrara */
+function sesionPerdida(){
+  if (state.sesionPerdida) return;
+  state.sesionPerdida = true;
+  try { sessionStorage.setItem("bt_sesion_vencida", "1"); } catch(_){}
+  location.reload();
+}
 
 async function manejarSesion(sesion){
   if (state.user || state.esperando2FA || state.procesandoSesion) return;
@@ -1107,7 +1120,10 @@ async function iniciarApp(){
   state.perfil = perfil || { nombre: state.user.email, rol: "vendedor" };
   if (perfil && perfil.activo === false){
     toast("Tu usuario está desactivado. Hablá con el administrador.", "error");
-    await sb.auth.signOut(); return;
+    state.cerrandoSesion = true;
+    await sb.auth.signOut();
+    state.cerrandoSesion = false; state.user = null; state.perfil = null;  // deja el login usable sin recargar
+    return;
   }
   $("user-nombre").textContent = state.perfil.nombre || state.user.email;
   $("user-rol").textContent = state.perfil.rol;
@@ -6588,7 +6604,20 @@ async function borrarCategoria(id){
 /* ----- ABM de usuarios vía Edge Function admin-users ----- */
 async function invocarAdminUsers(body){
   try {
-    const { data, error } = await sb.functions.invoke("admin-users", { body });
+    // 1) Sesión viva antes de invocar. Si venció o se cerró en silencio, supabase-js manda
+    //    la clave anon en lugar del token del usuario y la función responde "No autenticado".
+    let { data: { session } } = await sb.auth.getSession();
+    if (session?.expires_at && session.expires_at * 1000 - Date.now() < 60000){
+      const { data: ref } = await sb.auth.refreshSession();
+      session = ref?.session || null;
+    }
+    if (!session?.access_token){
+      sesionPerdida();
+      return { ok: false, error: "Tu sesión venció o se cerró. Ingresá de nuevo." };
+    }
+    // 2) Token del usuario explícito en el header (no depende del fallback interno del cliente)
+    const { data, error } = await sb.functions.invoke("admin-users", {
+      body, headers: { Authorization: "Bearer " + session.access_token } });
     if (error){
       // La función respondió con error HTTP: leer estado y cuerpo para diagnosticar
       if (error.context && typeof error.context.text === "function"){
@@ -7332,6 +7361,14 @@ async function guardarFinArqueo(e, id){
 }
 
 /* ---------------- ARRANQUE ---------------- */
+/* Aviso post-recarga cuando la sesión murió estando adentro (ver sesionPerdida) */
+try {
+  if (sessionStorage.getItem("bt_sesion_vencida")){
+    sessionStorage.removeItem("bt_sesion_vencida");
+    $("login-err").textContent = "Tu sesión venció o se cerró. Ingresá de nuevo.";
+    $("login-err").style.display = "block";
+  }
+} catch(_){}
 if (SUPABASE_URL.startsWith("PEGAR")){
   document.addEventListener("DOMContentLoaded", () => {
     $("login-err").textContent = "Falta configurar SUPABASE_URL y SUPABASE_ANON_KEY al inicio del archivo.";
