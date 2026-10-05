@@ -363,6 +363,47 @@ th.stk-th:hover{color:var(--agua-fuerte)}
 .fin-nota{color:var(--gris);font-size:12.5px;text-align:right;margin-bottom:10px}
 .fin-mini{font-size:12px;color:var(--gris);display:block}
 @media(max-width:760px){.fin-kpis{grid-template-columns:repeat(2,1fr)}}
+
+/* ============ TEMA BLANCO (fondo blanco puro, todo claro) ============ */
+body.blanco{--fondo:#FFFFFF;--superficie:#F6F9FA;--superficie-2:#FAFCFD;
+  --sombra:0 1px 2px rgba(11,57,72,.04);--sombra-hover:0 2px 10px rgba(11,57,72,.09)}
+body.blanco .card,body.blanco .metrica,body.blanco .tabla-wrap,body.blanco .fin-kpi,
+body.blanco .fin-cta,body.blanco .fin-panel{border:1px solid var(--linea)}
+body.blanco .sidebar{background:#FFFFFF;color:var(--tinta);border-right:1px solid var(--linea)}
+body.blanco .sb-brand div b{color:var(--profundo)}
+body.blanco .sb-brand div span,body.blanco .sb-user .info span{color:var(--gris)}
+body.blanco .sb-item{color:var(--gris)}
+body.blanco .sb-item:hover{background:var(--agua-claro);color:var(--marino)}
+body.blanco .sb-item.activo{color:#fff}
+body.blanco .sb-user{border-top-color:var(--linea)}
+body.blanco .sb-user .info b{color:var(--tinta)}
+body.blanco .sb-salir{color:var(--gris)}
+body.blanco .sb-salir:hover{color:var(--marino);background:var(--agua-claro)}
+body.blanco .topbar{background:#FFFFFF;color:var(--tinta);border-bottom:1px solid var(--linea)}
+body.blanco .topbar .btn-icono{color:var(--marino)}
+.sb-sep{height:1px;background:currentColor;opacity:.14;margin:10px 8px}
+/* Panel de apariencia */
+.apar-grupo{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px}
+.apar-op{border:1.5px solid var(--linea);border-radius:12px;padding:12px;text-align:left;background:var(--card);color:var(--tinta);display:grid;gap:8px}
+.apar-op:hover{border-color:var(--agua)}
+.apar-op.activo{border-color:var(--agua);box-shadow:0 0 0 3px var(--agua-claro)}
+.apar-op b{font-size:14px}
+.apar-op small{font-size:12px;color:var(--gris);line-height:1.35}
+.apar-muestra{height:46px;border-radius:8px;display:flex;overflow:hidden;border:1px solid var(--linea)}
+.apar-muestra i{display:block}
+/* Toggle de descuento por efectivo */
+.efec-toggle{display:flex;align-items:center;gap:9px;border:1.5px dashed var(--linea);border-radius:11px;padding:9px 12px;
+  font-size:14px;font-weight:600;color:var(--tinta);cursor:pointer;margin-bottom:8px}
+.efec-toggle input{width:18px;height:18px;accent-color:var(--ok)}
+.efec-toggle.on{border-style:solid;border-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+.efec-toggle small{font-weight:400;color:var(--gris);margin-left:auto}
+/* Ventas: acumulado */
+.col-acum{color:var(--gris);font-size:13px;white-space:nowrap}
+/* Rango de liquidación */
+.rango-liq{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.rango-liq .field{margin:0}
+.chip-auto{background:var(--agua-claro);color:var(--marino);font-size:10.5px;padding:1px 7px;margin-left:6px;letter-spacing:.03em}
+.destinos-tabla select{min-width:150px}
 </style>
 </head>
 <body>
@@ -396,7 +437,7 @@ th.stk-th:hover{color:var(--agua-fuerte)}
     <div class="sb-user">
       <div class="avatar" id="user-avatar">·</div>
       <div class="info"><b id="user-nombre">—</b><span id="user-rol">—</span></div>
-      <button class="sb-salir" onclick="alternarTema()" title="Tema claro / oscuro" aria-label="Cambiar tema" id="btn-tema-sb">◐</button>
+      <button class="sb-salir" onclick="abrirApariencia()" title="Apariencia: fondo blanco, claro u oscuro" aria-label="Apariencia" id="btn-tema-sb">◐</button>
       <button class="sb-salir" onclick="abrirSeguridad()" title="Seguridad (2FA)" aria-label="Seguridad">🛡</button>
       <button class="sb-salir" onclick="cerrarSesion()" title="Cerrar sesión" aria-label="Cerrar sesión">⏻</button>
     </div>
@@ -405,7 +446,7 @@ th.stk-th:hover{color:var(--agua-fuerte)}
   <header class="topbar">
     <img src="data:image/webp;base64,UklGRjQaAABXRUJQVlA4ICgaAABwZwCdASoYARgBPm00lkgkIyKhJXR50IANiU3cLcAM1j+Z/2PCPrp1u/B83Lkfv53f8l/yvL+6V86/+c9Rn6m9gbxxf2x9xv9t/7nqA/a71mP9h+xvuh/yfqAf17/VdYZ6B37l+nR+8/wi/23/u/vH7Xf//9gD//+oB/+OsP6wf5nt9/33iX5n/gEpDwkwe/5f989q/8L+wXiv8atQL1t4J+xt1j/eegL7H/S/Qz+n8wv5L1Au/S8LygF/Mv816Fv1x5+vqn9q/gO/nn+G9Mj2Pfu17N37sPBASMjbiWQbhgJGN2bpR3Ssq9k2lRyMA38TB6iUzYvdBcmCgmkCU+P9q0Yeg3C8iPdaX5pEsg21o/iDcHQes6mW0SN2dueSGsCO9uEASyq8wQIpk2aKJNgLQX/K5nkwLo4TyRaz3cfwzavAJdJH6MQGKbKwCbgdXGKqdQqns7ff3Awf//pkfVakm4u8rWUfT3cQ/Yh/GmjbVKa5YYI4L88VfRbJl9QDnL06w8S34HcrFuufjhGMVDqk4p92jken5cCGZK/WLTRtyKNCQFF+3n/vF5xNDQEi00eaVIZU0gzvpOYUc9XZ/5LcL/yE66cG0fBjtJ3TPtsyPgKZiCC9+Nquqewv3QjlhP4v7HblM53gcf9nVVTLSCYQyyeut3EC96KoUcMbcSxLdH7+eeE1FMNG6k6PMYSVXtc03lYcoiSsdyQvp5SfotxPsS5GuqYSNeacRUvm3kLWT1ecqPrlQC0j4CMl/3PPmbKSyz4jc5P8ThsxE0CjeWunGRtw1EXMpsQYIJ9ZH3k6GPavkWPILFWkkEcZFcsCzoGAcYvpIQLmZ1hWoBIyJ4VIcw1/g2WT9PQ/lUrOkDJzEezXPPBil7Mbwin0XbFnCYYcMY6V/kTGmiK6eG1NoyEPXyH6pLp/4Fz6ObBuF8cm1FVKgFBzR7Oj667ZLKO4m4Hszm2rV283VCy9dbTiqOkAeN8ZlTRh2Ka0rkwtoatXppBIXV55VhNFo29+4MZIufSTi8nVM+mSl5QhfR2TFkoFhp+iPN95jxzpD4cQ9SFbPPBI6ADqsRioiNpPx1nDcSyD2tsLLS7fqCRkbcSyDcMBIyNeAAD+3zf/8rp+437jerD//tUD/1UD/1UD98QAAA6ACHq1kSxWDFfkGvkOnQwmtXotjnkUpVs8B8ZfNOUdakYXPmymfXY5RERhwpBaiQsr7tVb9C2aq0N7eTv7sJqBZNkb3m5vJ8nIwEkUjJ00BzMKyNZZdk/7JMKU9Zn4Rj4yJPOLg1hktnAyjhK83BhIj57e3opoe8wzkAS/VOHqZ3nniwn0usH0FQdswVTK/7dwSmHfC167AEyZREpMeHC2BWS2IDyiwqzdWQETZA466w/UsBKYfWGIgsdw6/NOTnmHMwyF3wh6WUTT2nkcr0t0QVj2nWIA0B8heFnwO9pSMStxa3hwvngautFuL7DIwjXNHyqrPRBWdQr5l8+GfdrrTwqOygxPe2bK5KwmcIjgpSWf08v4yeDeBx2NGAYOYxjfpGMsolTgJYzo/gzGJ6yN+CDWJEtdtwvSbuWbV9d+6qJgAGN9wfzBHI1RO5UqYqIae9Kqwv1pITNo0OuuhfBxbrXvBOKIij2MITDjbdEAFYibN49lqXT1VtZLvAKcp1vT0vXF7gsQFoFq0E1oHHcw62talcXN6lqz2CbfwxtdjWLPEetOYm9XfNRFZXFp2SsKDHUEqG3LKQyNcA/WbIRrEvThRM7X26w8Dp8fcqMIqZx3qakrJ+z2lg/tc7bn0U1f8str+chuA+SKfOr40YbrzMDqWrI5KQCow4ye0LZSbj9L9GB+GqqefHL8t4f+LLKWHoT1APhYA18sjzzF6tnwb5bv1Z0kMGs4jbR50DTMrcjXXUoahbbb908Z1Rh74L9vozM/vZqzEmoXexqtU3QJM0QcpgIEcuMt6Hc7cSy9ODzwFpccRPNmFl3fsu6Ht9RhG57vE9TZ5NPetusanYqOYVvSG+xfdQRa+NyurG8SNXsaUMLvDIXq/GdC85BIaj/4Ie0XA2qjtwiRIKH1JQ/719JtXyKEOWUk8CPitfrNZioqPOHTtuYL7ShAXQH7dwA3BD4wEi4Q/Dn6RF77wb6Hg4oMc7ZHUMGf2FCB8iJO9KdQpJ8bvu/9/zyYfWsvLF9mP7kCkJUvC+0MJvYGW6gguJsMyaHr78MJ/M7B9DzQNxQKNzmJHSdkCPk1z/jeRKQTwIdsf13T4NCkEEihXtUw4t3JV9ukNPQGzekxpcA/74EOsySAFIJ56sU6u/40GN3mF0yHwD2nVu3NykEyC42OgpCFKOXWr6Y7+dKcBb5cO8mET00ODmf3EwsNlCDjvWNMRKTeUniC/VPMTMN9Z8JzRPrS/32UCgNxW6b7I5wshPfY6kRjR0yF57J1ajKuHLHSJ85ICgcz8ltbD/O0fssc8zn7YtC/a/Vp+oJtiww+El5grd3dd7X0nTR7BtR13SD+3F+CFJ0WANxQnHiH8V1/40FUl600caFcNlt/gRfDpSI4U4sw9mujrHVhl4mPsvpNS5GtsyziiI9pSRFMyW3yM9O0gGIoZ7/CGi1hb+R95mhcdSr9no8WUihJVrk3pWP6x4Biq7nV8AyMHflj5ZXq2Eqjd4pL14GJiXJMyZZULtDj0tcnkL7RRIh8tFuqM3TDoq+FMYaWJo+qX8Qxia4EOYu1uOd3CUdKQiybV6wQZdoPojzaxHz5qus3bPDfmxFb7bFZRsYV9xgNX9xZdo5KNjV9vitDgLpurRSIJPsE21w4FUmV0ZB86tLHw+CvpV5jjfBW8ZBtMq5sUoppKxzY4s/TZgxt0PE2QXvrYXpZ8/t/kpHKbK4Hrsu/pa7hkBVVBxoBGx6UZN/NTZPlWbBGecQEuWVLFnE9x6hOoTlBuFbW59qLL8dff3mfsICTyBQFhnYQU6VERarpg7ekARuIION5spGEb2w5H5ThZ7FJxTdsDpZdDJYIcaORYWqLCOWyjC7uHVUYicenaTv1Ayu+pxzC/a/7fLCLgzKdWtszFrhwKlCdjbnEHSflcXtTfiph4f4lzadLRwFEc2mt8WZh5Xr709KvwWyVoLHG9j3BBZCeObbkuSGPIQpN1xONI5QQa5qh5glwfnnkgeM7dM8wDL/2BMOJMjj6Rz3YYYPWrZqjfNU81lFYiElQ5xn8dC/3ctk691XzSentBnLtJk3JCKfDeC7KHmh7sAUAsLVNBlRAA6mVzeKT43KvwQWIz82MuH+Nno+U9F1PB+yQBRvpVQodOujZBe0xA7vRbrGcSkVDQ/3ZtLUsdL7mlCa53vJejBTamCMV+y1SchIn1iHqdKbcKvYtzq6M0+YoaFxEWAMyGTrLt+YPe7lwg3i4+uefIuZHItmIowd4cFQAlZ27rgN49K6gc7H5VKLYCAvfRyaXVh/ctE5jQZ1YE4reFpXe8DD10z7cqhbx1xqCEtnYy9yCWQ0zK2Y/SsIuJUM7/I0OjO46h+ibITSK0N8Js8p+VO0RLGrJYdBRPZI0PuD1cLjO3Jq8Ha8Ta3Fr7AzbegRzYvOskcPVa90us0WE5YR8Hx8hdiEiDMZ7ukS15gEsxTy1FtDapEflaYrmGAuXq0hEqh+bwSKODLdMA/+SaZN0hi79N46pAjxib4IxL7+EBpOFFvfej9oiP0it+IzGrMy71uyXuU6V9heYp1x/XBMITjuFr+LQ1uEnL3ExKOoVq6wXmfdTt1aLEgnatyIRLvXKzmubpOQEBXyW5xvnOMpyGVNSVgUaMvwu94I4+OJpIuLgev0/TXSy0DzPo7Xou3FrWbUah6rPzWeWr1mUKTvcH4a1upSMwLgGCZRi0NCwozrBHVN94nR4xUqiHEuopnY7TPPqxFAXao/vZBdXaUucpKFqhfQfJk0Sza4x0gOTziitoaCzuC51NRtL5OuErGBSM2lZw6rNMbH8FJl31qNdotZb3ESkEaTOu3v81nMw8Z5LxJYWBbEt0s1Acj885wj/n9zs97zum+HlbEqZtSqlbXnvi9oiJjnzTILiM8RqgF8aibq1dI5YYF+oSTYNZ9JECGl8YjPc8EG+Z9RxDFbvXLd2Vuj6ZvPfN5yUx2+EY0l5+wUcuaknq02dlj2PtBQHmpydPyC7/Qh20QRVKJ9SWcyylDAn8FF8ogmwAMx/nA4yX0fcxOA/d4EMK2zUMyCLzBZLuElAh30iWpGmk4NHELAQEB7UMnsR0A8OlfCRyIL/qsl5t6xEHzUipTt0AaA952PYozlYq9lzmUuKSQAWsINFgntKzKlEHm9fRNRnSd1dhYF7NtmnMrVK43DxU4YtHM5NzVd61cvyNwnLeSP204P6QRTrdDNM/+pA5Bf1RG+nmrMH28E3BKv6E6GJbzZAbw4sHoQ2+WQcue2X92D0NVLGeAZBPgCAz7k6l8rnwL8pXfneUWSXBpp+Mfp0u+uztopvLV/oZ3bOXlvmGNWonZWj6MonaZ00YkGV+GDEyXYK+WLAMw5HsYwXIZ7VauhmfKbC71R3ylWLxh4BUmpmMPFZHcDTFI6wtbGgR9WAzq0P3IbW5ciObYCTw2uWpbrudPQeKUGHVhiGSI0wDZKu1TI8Y4kZiwLQPR4TSNwg/F3HzH3xDbl4wSqk+5chU/+nYOMjkTecnZ2XpRj4Zhyu1ma1o88zyJIjPlMN+/c0ca5bmHR/nNdnyDIJiqzQ0MU/wcm2OTCVTl6vl8lAgiB4sQxi5nNGOO8VOuG78xkGB/ESGUEz3mgO67FV/PEsjGMZk8ooGKLgwsXuZvqF59i+426ugCAMPo0tWia9zTcX2grQps3OGDyDWg9XDx+H72/zgVAXXanqGpsZKKcIMUqLfDB3dWEaSXnPrsOAoFVQQLwLCukOFg4LDk4nsuLDktfodivXFzcFqSBbarZraC5G4ldI2VI5E0kthyYmL48rt8CE537YDeZNr6ajOzW3NdIcF3U4EXHW9HZi3DpdTyP5pIGMQatoj/pEfPnPpY/81qwTRvvv3GrD+9eZnN6gVl1YiIqPG0ozupjtpJnnNC/lx2weg2To/IfvXnxEVM6caXSk4mmmGFk4gs9dJ3c+qHXJtElSRYL7iy5b8lmB09qUZgfp1m0ZFj+kmg5sGE1MMrUcAou3z4+6xFYHkaj70InSwxwzc6+ueJvAjn0EBIAOd8kOTtFvI46KSMRFTDNkJpTydROWFNLVljDwSY1rGM/Y4yO7/MiGc2UfnOUMlPWPym69QSyj4tl8KN0wO4EHJig5uP31PSMhdq/xKrS1Ur54tZwc8taPuH75a0It1wP2y4R3WvqQIYAvGdCncEpiaQbCCg3NUbApJwrObEMWTxC7zl5l1zJR5x1LtCeW67nNBkir5uM3PUAdhB5fKmjVvLBzwHlPQbswU3VgTM4rEj8u/6t8mFHHf6w7Fws03NNuynj7y4MI+GXoyjo7dbJHN05bGsWHLbq6iZB/I3fFtSRttru9a2Gc4mhouomvxN9BuvsFBZQ+3KR2fBGLduXAlAIad/dcpA9kL+3gAcEn0t8eJGhLDKgnkwidpE42uptk/x9xEKs8P5/fxyOW9jd5Cd2q1o1l+pgKwEyBum1lNIFaG5pd7R9oj4Htazmxnj5oosL2ga8rg5nQZcHVEjJoAAmAlCQitDRuNUep0eEO4a14X+AOO2t7AxHszHb5FzZlhB+HmucdU9dJueSIpYgDddUxPmbdtyUisrxAT39jlTp6q/gyMLEaPP4ZstnPAUg6wUXYYkQAvo7uf4YL8XWaJ2JevhQcm3ZOUs1K1+7S1Ul3Abp2sOOAHX+x+tqDhdAcRiKBfGn1Hy/950baY2cIBqbcn01H3ghYeILnUoSCxsyb7c61wMpDBCbKZMGDY1FHXXF5tFF0OpmCYS9kKJRAGZLyQyNVOCmduwZwNwDYVTdbx1eLwyAB7yw30nw4PaN+yYUVvc3GVp8j9rffvdMfQ/zY4MSmXiyhx4qadtrwbHj2rOp+Jm0mZ9n4WqWQ8UqASGDyES9SllC6TpxpgJTKY3PXQk1o7JxK+I5FhOKNAbMsoPnQyWZ+tO/nTCXYz7c/1E9Xc6aWokLiUKardWhlcnj/xxuVBb6/Uc6wZ4/68XLcHzqQtDpOi0+Z6o5aMpBSR9QgBFjL7VdWiR7xUmlJ5PF2KjssmrI8JAf0LKWPzNoJrFyDUH/LtJIv+Q/+1lN+3KvxR7ny0apkfdeFXUZTljhZcaEj8nuSDPOMrzb1I/qlWBGMB9lki+qdpsy8j82wYjg8AvvvQuvx38ZjKCnAyNuzffCQWzpl/kfSMSEtxVlvRyfnGvadiEydcGAbGGFbBbnfQqVH2LPjV64d0Na+UO40h8uIgNXELFmenGjsSrvj5toH/2dhUwIeLzAVbZgbuLowWVo/YsWE8Z2LzbV6XZwkQWZ7GvjBnZurlgQQcxFHXzWpdK+rjvcgPdgl6Mus3XXOrFull1VX8Sgp4i5XnQsHf3s0DkAl0XbS22zFDsh3UniSN+9ccno/cRy5xgNqhDKFfZUTwjvZSCcoPZZdkOgRLtOoEe5/Wf+pLbHPIlB+d2M/CX6slh/JsolS+Z6wodm8RVEZt9nK3o+q5Qs6CtPv2zTOo8jNnvkVm+W/rOcUpGhUolmDtZWlWdzWQcH2U+LL/0C6VeJ42NHMQ+D2/t/x3eOyZORE8WZv/pirnSnwNaXZdUQk0nE/zm3E9KmMp6P5upeuJuagSpEEQsxZF/VouSxYIHvpK9oaEl8OO1xcFol+/kQRndAfmefScPHtJC2+zTRM1E0p+GzqZxHTLxGnEDySLh7p2k25uBsMA3JqhR4E+fk7QIRFGlr/mtT5SPTBlzLXSZ7IGDTMveI47z3FR3LQQoTwBfeacO6uJQUNRR8xuo9m0i1mazVPSfxKzEWRL64ydqCXSyvRFq78SFIKaj9YkeLpcv8Kdz41CE4vUR/XdTk4Sf72bjS2nb5c4zix71W5cwYU9eyjdeEoiOlcCYYcCyQWUvn818El6jX0BbQPs0rnO6kr1S6/SRXbQZZj1i73M+BokPRf1LQNTasdImoteVskpwivs81fVIENgcJ/I36KY70+Z4g3FGjbQTMSe6yaXeO1kZIXThdQgkdAtpvnq7Zej4NQS0VJP7yQL6lY2uavka4GKfBArMI8PYn5Z4CKPstI9H3i6L1i7zgD4tHOKzXezF6mS1je1baNMtqxU1qWvVrKTqJdGwYKu1JT7AFeiLBbuqZe8LSVVrCPPZjFuPM/+Fp4UpsniHIHMEX4wWun0D34BCeOK964lXqnsHx7lOZAVAEYTx3/KxroM0dP7XFxP3Zo1BRiYS6TvI5fIlgxdjf0RBiRkPRX77MoPhn0rDUHqH5k4d3fc8rGxHl8Big7NsGlLA9Ha4b2ehAF+z7cbyWQvEYJ2iFOt9zgeoQQA57X8ytVTXeAS1jVyIkQo5fpKTFZIm/6rMXTCh3dlKwAvOB8eCQI6xhwa6q6OuJKBnn9ToTO1O/6c+kTtACdxGud+tM2UUk2I98pnCVhzQiRZhPoR0z1VwGTJQU8vcXCCqZVE9dbqwGOMwqS0lqw1BSfOl28+VTyb1y6LdDxKiHFBm/cANuBbZSeQqJbOvzlWp+8xtK5D6ViPmX8+ZkiGmUgrljNVNGEq4zBytK29IVUcE2bY3x9dg9VczZFvCNmMh+aD3Fm8mnXPlrLmEm5n5oytI9IUlv71K750vsNHDOeZDzPb/Kv/7ZSqva8syvNpi+m+FsoTvLysDwM0bLAnhhVTC/4aElXYVU7kFR+M4IGG8uvg3woV1xRpv1JNicMp5SM79NO8pwn7cwj3Nfmj87tNtvtip/LpVPvCKhI06KTjfP4vgIRinOggQT+x09isxyrrSrUNiAXFM+KtgljG1RPlEsCbe4GDDSD7ZEiRg0KeBgkruc9qz7KdX+KhralpHA3L/ouOsQEuaIg+z13Jfu48IfXzWSMw8pFQDvG+bVhhJIeaCaRlveWyc8sbRC3Y7j9KtIYlRO0SVjjCdb3G55hKCw9NkrkpvNnurN1sVl1iVMn9CH2wjHh3QlG2b2mLDIzmIfK8ONIvvaw/Y8mnOuHJqTHmiARjefmF0FAg3DpU+8LGBQK2iXKEW9c4GoHfQfEAqyfJYDsVriGHSHs1EF6Ig1pbvqmfUAjbJ8bNVBpePnVTQG93a4DAyTerDcJF9ZATJxkBkuOXMj8q1KFzG63XpNZsBZHkBIWCFcvmTWaoXEmIx9w3T1FGdqY7CdiQgc54beOOddVWv5/Za4lpsTnbLvrtMFVHU4X7lLrUjT6pk7WiBUjzt//x7OHv94bclg1OIh8Mcayvo+vF+bt2nC5Cx79qJJdPkDHBnPipeh46FgfhIyvefzi3YsskAKNeMoS2PW/Wt+qKQ82o11jJxrOayLSLEhA4e7DWDDJmPBRbWj3k2R89D/hRaitLN4muLE/ms1ioAvAAoL6sbYKn+lf+AL383oLaG2YyqAuLfPQQIUoOGPsIFxzIRwT4nxv3m/t+Iu0g3bOd60Rl/NoB4DkdsdzmwWYbldOFcJ3hImrQ5hZsXgpKp7TfNqwZoVa/LyxB++c8yj7kJkT+97DuGfHT0299stjWlJjDr4UhY+2NZqd3YIqsWUTKavAQZZ7RAx7QTt1MiKsSDNLVkpPHdc7pnMiVC2R/O+AdruVZTN6qzHzxI9V1utSKjv9ehOWdphWoOIHQ1Y1R+mDxo8LKjPGeZhZ/vBi0iiATcLwQLDaBTJ5aPAil03C2r5gUUEVWl3yXrdCGvebIbGttPkJdTwGOqt+hhCMUePZ8bbbY6FZNZoIsHuhebtKbcOxLVfGrYhU/XkD8kWxYa/ARi2P4SA5SD/LveP4YJs6yp5TOzDegQ7JK/9fEVxhqIGy6768ZIiiMS8AAAAAAAAAAAAAAAA=" alt="">
     <b id="topbar-titulo">Biotopium</b>
-    <button class="btn-icono" onclick="alternarTema()" title="Tema claro / oscuro" aria-label="Cambiar tema">◐</button>
+    <button class="btn-icono" onclick="abrirApariencia()" title="Apariencia: fondo blanco, claro u oscuro" aria-label="Apariencia">◐</button>
     <button class="btn-icono" onclick="abrirSeguridad()" title="Seguridad (2FA)" aria-label="Seguridad">🛡</button>
     <button class="btn-icono" onclick="cerrarSesion()" title="Cerrar sesión" aria-label="Cerrar sesión">⏻</button>
   </header>
@@ -459,7 +500,10 @@ th.stk-th:hover{color:var(--agua-fuerte)}
           <option value="minorista">Minorista</option><option value="mayorista">Mayorista</option></select>
         <select id="ventas-filtro-saldo"><option value="">Pagas y con saldo</option>
           <option value="saldo">Solo con saldo pendiente</option></select>
+        <input type="date" id="ventas-filtro-dia" title="Ventas de un día puntual" aria-label="Día">
+        <button type="button" class="btn btn-borde btn-chico" onclick="ventasHoy()">Hoy</button>
       </div>
+      <div class="gastos-resumen" id="ventas-resumen"></div>
       <div class="tabla-wrap" id="ventas-tabla"></div>
     </section>
 
@@ -577,6 +621,7 @@ th.stk-th:hover{color:var(--agua-fuerte)}
         <select id="prod-filtro-marca"><option value="">Todas las marcas</option></select>
         <select id="prod-filtro-cat"><option value="">Todas las categorías</option></select>
         <select id="prod-filtro-stock"><option value="">Todo el stock</option>
+          <option value="serv">Servicios / variables</option>
           <option value="bajo">Stock bajo</option><option value="sin">Sin stock</option></select>
       </div>
       <div class="tabla-wrap" id="prod-tabla"></div>
@@ -614,6 +659,7 @@ th.stk-th:hover{color:var(--agua-fuerte)}
           <option value="bajo">Bajo mínimo</option>
           <option value="sin">Sin stock</option>
           <option value="inactivos">Inactivos</option>
+          <option value="servicios">Servicios / variables</option>
         </select>
         <span class="stk-tc" id="stk-tc" title="Cotización que valúa el stock (se elige la fuente en Configuración)"></span>
       </div>
@@ -717,6 +763,7 @@ th.stk-th:hover{color:var(--agua-fuerte)}
         <button class="btn btn-suave" id="fin-tab-resumen" onclick="finTab('resumen')">Resumen</button>
         <button class="btn btn-borde" id="fin-tab-movs" onclick="finTab('movs')">Movimientos</button>
         <button class="btn btn-borde" id="fin-tab-cc" onclick="finTab('cc')">Ctas. corrientes</button>
+        <button class="btn btn-borde" id="fin-tab-com" onclick="finTab('com')">Comisiones</button>
         <button class="btn btn-borde" id="fin-tab-cuentas" onclick="finTab('cuentas')">Cajas y cuentas</button>
       </div>
       <div id="fin-cuerpo"><div class="cargando">Cargando finanzas…</div></div>
@@ -738,6 +785,9 @@ th.stk-th:hover{color:var(--agua-fuerte)}
             <div class="field"><label>1 USD = ARS (activo)</label><input type="number" id="cfg-tc" min="0" step="0.01"></div>
             <div class="field"><label>Margen por defecto (%)</label><input type="number" id="cfg-margen" min="0" max="100" step="1"></div>
           </div>
+          <div class="field" style="margin-top:10px"><label>Descuento por pago en efectivo (%)</label>
+            <input type="number" id="cfg-desc-efec" min="0" max="50" step="0.5" placeholder="15">
+            <small style="color:var(--gris);font-size:12px;display:block;margin-top:4px">Los precios de lista incluyen IVA. Este % se aplica con el botón “Paga en efectivo” al vender.</small></div>
           <button class="btn btn-primario" style="margin-top:12px" onclick="guardarTC()">Guardar</button>
         </div>
         <div class="card">
@@ -812,12 +862,55 @@ const numDec = v => { const n = parseFloat(String(v ?? "").trim().replace(",", "
 
 /* ----- Tema claro / oscuro (oscuro por defecto) ----- */
 function aplicarTema(t){
+  if (!["oscuro","claro","blanco"].includes(t)) t = "oscuro";
   document.body.classList.toggle("oscuro", t === "oscuro");
+  document.body.classList.toggle("blanco", t === "blanco");
   try { localStorage.setItem("biotopium-tema", t); } catch (e) {}
 }
-function alternarTema(){
-  aplicarTema(document.body.classList.contains("oscuro") ? "claro" : "oscuro");
+const temaActual = () => document.body.classList.contains("oscuro") ? "oscuro"
+  : document.body.classList.contains("blanco") ? "blanco" : "claro";
+function alternarTema(){ abrirApariencia(); }
+/* PDFs: encabezado con banda de color o todo blanco (ahorra tinta al imprimir) */
+const pdfBlanco = () => { try { return localStorage.getItem("biotopium-pdf") === "blanco"; } catch (e) { return false; } };
+function pdfBanda(doc, alto){
+  if (pdfBlanco()){
+    doc.setDrawColor(47, 167, 202); doc.setLineWidth(0.8); doc.line(14, alto - 3, 196, alto - 3);
+    doc.setTextColor(11, 57, 72);
+  } else {
+    doc.setFillColor(11, 57, 72); doc.rect(0, 0, 210, alto, "F");
+    doc.setTextColor(255);
+  }
+  return doc;
 }
+function abrirApariencia(){
+  const t = temaActual(), pb = pdfBlanco();
+  const op = (fn, val, actual, titulo, desc, muestra) =>
+    `<button type="button" class="apar-op ${actual ? "activo" : ""}" onclick="${fn}('${val}')">
+       <span class="apar-muestra">${muestra}</span><b>${titulo}</b><small>${desc}</small></button>`;
+  abrirModal("Apariencia", `
+    <div class="modal-cuerpo">
+      <h3 style="font-size:15px;margin-bottom:8px">Pantalla</h3>
+      <div class="apar-grupo">
+        ${op("elegirTema","blanco", t === "blanco", "Fondo blanco", "Todo blanco, menú incluido. El más limpio para trabajar de día.",
+          '<i style="width:28%;background:#fff;border-right:1px solid #DBE9EE"></i><i style="flex:1;background:#fff"></i>')}
+        ${op("elegirTema","claro", t === "claro", "Claro", "Fondo celeste muy suave con el menú azul petróleo.",
+          '<i style="width:28%;background:#0B3948"></i><i style="flex:1;background:#F3F8FA"></i>')}
+        ${op("elegirTema","oscuro", t === "oscuro", "Oscuro", "Panel nocturno. Cansa menos la vista con poca luz.",
+          '<i style="width:28%;background:#10162B"></i><i style="flex:1;background:#0B1020"></i>')}
+      </div>
+      <h3 style="font-size:15px;margin-bottom:8px">PDFs (recibos, presupuestos, liquidaciones, reportes)</h3>
+      <div class="apar-grupo">
+        ${op("elegirPdf","color", !pb, "Encabezado de color", "Banda azul petróleo con el nombre de Biotopium.",
+          '<i style="width:100%;background:linear-gradient(180deg,#0B3948 0 34%,#fff 34%)"></i>')}
+        ${op("elegirPdf","blanco", pb, "Fondo blanco", "Sin banda de color: ahorra tinta al imprimir.",
+          '<i style="width:100%;background:linear-gradient(180deg,#fff 0 30%,#2FA7CA 30% 34%,#fff 34%)"></i>')}
+      </div>
+      <p style="font-size:12.5px;color:var(--gris)">Se guarda en este dispositivo.</p>
+      <div class="modal-pie"><button class="btn btn-primario" onclick="cerrarModal()">Listo</button></div>
+    </div>`);
+}
+function elegirTema(t){ aplicarTema(t); abrirApariencia(); }
+function elegirPdf(v){ try { localStorage.setItem("biotopium-pdf", v); } catch (e) {} abrirApariencia(); }
 (function(){
   let t = "oscuro";
   try { t = localStorage.getItem("biotopium-tema") || "oscuro"; } catch (e) {}
@@ -831,7 +924,13 @@ const fmtUSD = new Intl.NumberFormat("es-AR",{style:"currency",currency:"USD",ma
 const fMoneda = (v,m) => m==="USD" ? fmtUSD.format(v||0) : fmtARS.format(v||0);
 const fFecha = d => new Date(d).toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"2-digit"});
 const fFechaHora = d => new Date(d).toLocaleString("es-AR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
-const hoyISO = () => new Date().toISOString().slice(0,10);
+const hoyISO = () => diaLocal(new Date());
+/* Fecha local YYYY-MM-DD (evita que una venta de las 22 hs caiga al día siguiente por UTC) */
+function diaLocal(d){ const x = new Date(d); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); }
+/* Ítems variables / servicios (km, embalaje, agua de ósmosis, mantenimiento): sin stock,
+   fuera de rankings, valuación y reportes de stock. La facturación sí los suma. */
+const esServ = p => !!(p && p.es_servicio);
+const esServId = id => esServ((state.productos || []).find(x => x.id === id));
 const ventaARS = v => v.moneda === "USD" ? Number(v.total) * (v.tipo_cambio || 1) : Number(v.total);
 const gananciaARS = v => ventaARS(v) * (Number(v.margen_pct) || 0) / 100;
 const pagadoARS = v => v.moneda === "USD" ? Number(v.pagado || 0) * (v.tipo_cambio || 1) : Number(v.pagado || 0);
@@ -887,7 +986,7 @@ function construirNav(){
   const visibles = partner ? VISTAS.filter(v => v.id === "estuario")
                            : VISTAS.filter(v => !v.admin || admin);
   $("sb-nav").innerHTML = visibles.map(v =>
-    (v.aparte ? '<div style="height:1px;background:rgba(255,255,255,.12);margin:10px 8px"></div>' : "") +
+    (v.aparte ? '<div class="sb-sep"></div>' : "") +
     `<button class="sb-item" data-v="${v.id}" onclick="nav('${v.id}')">${ICONOS[v.id]}<span>${v.nombre}</span></button>`
   ).join("");
   $("bottom-nav").innerHTML = (partner ? ["estuario"] : admin ? [...NAV_MOBILE, "finanzas"] : NAV_MOBILE).map(id => {
@@ -1660,6 +1759,7 @@ async function renderTortaCategorias(idsVentas){
   const porCat = {};
   (items || []).forEach(it => {
     const p = state.productos.find(x => x.id === it.producto_id);
+    if (esServ(p)) return;
     const cat = p ? (state.categorias.find(c => c.id === p.categoria_id)?.nombre || "Sin categoría") : "Sin categoría";
     porCat[cat] = (porCat[cat] || 0) + Number(it.subtotal);
   });
@@ -1794,7 +1894,7 @@ async function renderDashboard(){
   const saldoTotal = okCC.reduce((s,v) => s + saldoARS(v), 0);
   const abonoTotal = (abonosAll || []).reduce((s,a) => s + Number(a.monto), 0);
   const porCobrar = Math.max(0, saldoTotal - abonoTotal);
-  const stockBajo = state.productos.filter(p => p.activo && p.stock <= p.stock_minimo);
+  const stockBajo = state.productos.filter(p => p.activo && !esServ(p) && p.stock <= p.stock_minimo);
   const esAdmin = state.perfil.rol === "admin";
 
   // Sparkline de facturación (últimos 30 días)
@@ -1880,9 +1980,10 @@ async function renderDashboard(){
   let topHtml = '<div class="vacio" style="padding:24px"><b>Todavía sin ventas este mes</b>Cargá la primera con “+ Nueva venta”.</div>';
   if (idsMes.length){
     const { data: items } = await sb.from("venta_items")
-      .select("producto_nombre,cantidad,subtotal").in("venta_id", idsMes);
+      .select("producto_id,producto_nombre,cantidad,subtotal").in("venta_id", idsMes);
     const agg = {};
     (items || []).forEach(i => {
+      if (esServId(i.producto_id)) return;   // km, embalaje, etc. no son "productos más vendidos"
       agg[i.producto_nombre] = agg[i.producto_nombre] || { c: 0, t: 0 };
       agg[i.producto_nombre].c += Number(i.cantidad);
       agg[i.producto_nombre].t += Number(i.subtotal);
@@ -1914,8 +2015,9 @@ function renderProductos(){
     (!q || p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) || (p.codigo_barras || "").toLowerCase().includes(q) || (p.marca || "").toLowerCase().includes(q)) &&
     (!cat || String(p.categoria_id) === cat) &&
     (!fm || (p.marca || "") === fm) &&
-    (fs !== "bajo" || (p.stock <= p.stock_minimo && p.stock > 0)) &&
-    (fs !== "sin" || p.stock <= 0));
+    (fs !== "bajo" || (!esServ(p) && p.stock <= p.stock_minimo && p.stock > 0)) &&
+    (fs !== "sin" || (!esServ(p) && p.stock <= 0)) &&
+    (fs !== "serv" || esServ(p)));
   if (!lista.length){
     $("prod-tabla").innerHTML = '<div class="vacio"><b>Sin productos</b>Cargá el primero con “+ Nuevo producto”.</div>';
     return;
@@ -1932,9 +2034,10 @@ function renderProductos(){
       <td class="der num">${fmtARS.format(p.precio_ars)}</td>
       <td class="der num">${p.precio_mayorista_ars ? fmtARS.format(p.precio_mayorista_ars) : "—"}</td>
       <td class="der num">${p.precio_usd ? fmtUSD.format(p.precio_usd) : "—"}</td>
-      <td class="der"><span class="chip num ${p.stock <= 0 ? "rojo" : p.stock <= p.stock_minimo ? "alerta" : "ok"}">${p.stock}</span></td>
+      <td class="der">${esServ(p) ? '<span class="chip agua" title="Ítem variable: no lleva stock">Servicio</span>'
+        : `<span class="chip num ${p.stock <= 0 ? "rojo" : p.stock <= p.stock_minimo ? "alerta" : "ok"}">${p.stock}</span>`}</td>
       <td class="der acciones-fila" onclick="event.stopPropagation()">
-        <button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">Ajustar</button>
+        ${esServ(p) ? "" : `<button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">Ajustar</button>`}
         <button class="btn-icono" title="Editar producto" onclick="abrirProducto(${p.id})">✎</button>
         ${state.perfil?.rol === "admin" ? `<button class="btn-icono btn-peligro" title="Eliminar producto" onclick="borrarProducto(${p.id})">✕</button>` : ""}
       </td>
@@ -1995,7 +2098,11 @@ function abrirProducto(id){
         <div class="field"><label>Precio (USD)</label>
           <input type="number" id="p-pusd" min="0" step="0.01" value="${p?.precio_usd || 0}"></div>
       </div>
-      <div class="fila-2">
+      <div class="field"><label style="display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--tinta);cursor:pointer">
+          <input type="checkbox" id="p-servicio" ${esServ(p) ? "checked" : ""} onchange="prodServicioCambio()" style="width:18px;height:18px;accent-color:var(--agua)">
+          Ítem variable / servicio <span style="font-weight:400;color:var(--gris)">(km, embalaje, agua de ósmosis, mantenimiento…)</span></label>
+        <small style="color:var(--gris);font-size:12px;display:block;margin-top:2px">No lleva stock (nunca se agota) y no entra en productos más vendidos, valuación de stock ni reportes de stock. Lo cobrado sí suma a la facturación.</small></div>
+      <div class="fila-2" id="p-stock-fila" style="${esServ(p) ? "display:none" : ""}">
         <div class="field"><label>Stock ${p ? "actual" : "inicial"}</label>
           <input type="number" id="p-stock" min="0" step="0.01" value="${p?.stock ?? 0}"></div>
         <div class="field"><label>Stock mínimo (alerta)</label>
@@ -2019,6 +2126,10 @@ function abrirProducto(id){
     </form>`);
 }
 
+function prodServicioCambio(){
+  const on = $("p-servicio").checked;
+  $("p-stock-fila").style.display = on ? "none" : "";
+}
 async function borrarProducto(id){
   const p = state.productos.find(x => x.id === id);
   if (!p) return;
@@ -2068,9 +2179,22 @@ async function guardarProducto(e, id){
     notas: $("p-notas").value.trim(),
     updated_at: new Date().toISOString()
   };
+  // Ítem variable / servicio: stock "infinito" (la base lo congela) y sin alerta de mínimo
+  const p0 = id ? state.productos.find(x => x.id === id) : null;
+  const servicio = !!$("p-servicio")?.checked;
+  if (servicio || esServ(p0)) datos.es_servicio = servicio;
+  if (servicio){
+    datos.stock_minimo = 0;
+    if (esServ(p0)) delete datos.stock; else datos.stock = Math.max(numDec($("p-stock").value), 999999);
+  }
   let { error } = id
     ? await sb.from("productos").update(datos).eq("id", id)
     : await sb.from("productos").insert(datos);
+  if (error && /es_servicio/i.test(error.message)){
+    delete datos.es_servicio;
+    ({ error } = id ? await sb.from("productos").update(datos).eq("id", id) : await sb.from("productos").insert(datos));
+    if (!error) toast("Guardado, pero sin marcar como servicio: falta correr migracion-octubre.sql.", "error");
+  }
   if (error && /ubicacion/i.test(error.message)){
     // Columna nueva sin migrar todavía: guardamos sin ubicación para no bloquear la operación.
     delete datos.ubicacion;
@@ -2656,20 +2780,39 @@ function renderVentas(){
   const fa = $("ventas-filtro-anio").value;
   const fm = $("ventas-filtro-mes").value;
   const fs = $("ventas-filtro-saldo").value;
+  const fd = $("ventas-filtro-dia").value;
   const lista = state.ventas.filter(v => {
     const d = new Date(v.created_at);
     return (!q || String(v.id).includes(q) || (v.clientes?.nombre || "").toLowerCase().includes(q)) &&
       (!fe || v.estado === fe) && (!ft || v.tipo === ft) &&
       (!fa || d.getFullYear() === +fa) && (fm === "" || d.getMonth() === +fm) &&
+      (!fd || diaLocal(v.created_at) === fd) &&
       (fs !== "saldo" || saldoARS(v) > 0);
   });
+  // Resumen de lo filtrado (las anuladas no suman)
+  const okF = lista.filter(v => v.estado === "completada");
+  const totF = okF.reduce((s,v) => s + ventaARS(v), 0);
+  const cobF = okF.reduce((s,v) => s + Math.min(ventaARS(v), pagadoARS(v)), 0);
+  const salF = okF.reduce((s,v) => s + saldoARS(v), 0);
+  const anuF = lista.length - okF.length;
+  const titF = fd ? "Vendido el " + fFecha(fd + "T12:00:00") : (fa || fm !== "" || q || fe || ft || fs) ? "Vendido (filtro)" : "Vendido (todo)";
+  $("ventas-resumen").innerHTML = `
+    <div class="gr-card"><div class="gr-label">${titF}</div><div class="gr-valor num">${fmtARS.format(totF)}</div></div>
+    <div class="gr-card"><div class="gr-label">Ventas</div><div class="gr-valor num">${okF.length}${anuF ? ` <small style="font-size:12px;color:var(--gris);font-weight:500">+ ${anuF} anulada${anuF > 1 ? "s" : ""}</small>` : ""}</div></div>
+    <div class="gr-card"><div class="gr-label">Cobrado</div><div class="gr-valor num">${fmtARS.format(cobF)}</div></div>
+    <div class="gr-card"><div class="gr-label">Saldo pendiente</div><div class="gr-valor num" style="${salF > 0 ? "color:var(--alerta)" : ""}">${fmtARS.format(salF)}</div></div>`;
   if (!lista.length){
     $("ventas-tabla").innerHTML = '<div class="vacio"><b>Sin ventas</b>Probá cambiar los filtros o cargá una nueva.</div>';
     return;
   }
+  // Acumulado cronológico dentro del filtro: la fila más nueva muestra el total de lo filtrado.
+  const acum = {}; let corr = 0;
+  lista.slice().sort((a,b) => new Date(a.created_at) - new Date(b.created_at) || a.id - b.id)
+    .forEach(v => { if (v.estado === "completada"){ corr += ventaARS(v); acum[v.id] = corr; } });
   $("ventas-tabla").innerHTML = `<table><thead><tr>
       <th>N°</th><th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Vendedor</th>
       <th class="der">Total</th><th class="der">Saldo</th><th>Estado</th>
+      <th class="der" title="Suma acumulada de las ventas filtradas, en orden cronológico (ARS)">Acumulado</th>
     </tr></thead><tbody>` +
     lista.map(v => { const saldo = saldoARS(v); return `<tr class="fila-click" onclick="verVenta(${v.id})">
       <td class="num"><b>#${v.id}</b></td>
@@ -2680,10 +2823,17 @@ function renderVentas(){
       <td class="der num"><b>${fMoneda(v.total, v.moneda)}</b></td>
       <td class="der num">${saldo > 0 ? `<span class="chip alerta">${fmtARS.format(saldo)}</span>` : '<span class="chip ok">Pago</span>'}</td>
       <td><span class="chip ${v.estado === "anulada" ? "rojo" : "ok"}">${v.estado}</span></td>
+      <td class="der num col-acum">${acum[v.id] != null ? fmtARS.format(acum[v.id]) : "—"}</td>
     </tr>`; }).join("") + "</tbody></table>";
 }
 ["ventas-busca","ventas-filtro-estado","ventas-filtro-tipo","ventas-filtro-anio","ventas-filtro-mes","ventas-filtro-saldo"].forEach(id =>
   $(id).addEventListener("input", renderVentas));
+/* Elegir un día deja de lado año y mes (si no, se pisan los filtros) */
+$("ventas-filtro-dia").addEventListener("input", () => {
+  if ($("ventas-filtro-dia").value){ $("ventas-filtro-anio").value = ""; $("ventas-filtro-mes").value = ""; }
+  renderVentas();
+});
+function ventasHoy(){ $("ventas-filtro-dia").value = diaLocal(new Date()); $("ventas-filtro-anio").value = ""; $("ventas-filtro-mes").value = ""; renderVentas(); }
 
 /* ----- Nueva venta ----- */
 function abrirNuevaVenta(clienteId, modo){
@@ -2776,6 +2926,7 @@ function abrirNuevaVenta(clienteId, modo){
             <input type="number" id="v-descuento" min="0" step="0.01" value="0"
               style="width:100px;border:1.5px solid var(--linea);border-radius:8px;padding:6px 9px;text-align:right"
               oninput="totalesCarrito()"></span></div>
+        <div class="fila-total" id="v-efec-linea" style="display:none;color:var(--ok)"><span id="v-efec-rotulo">Descuento efectivo</span><span class="num" id="v-efec-monto">—</span></div>
         <div class="fila-total" id="v-envio-linea" style="display:none"><span>Envío</span><span class="num" id="v-envio-monto">—</span></div>
         <div class="fila-total grande"><span>Total</span><span class="num" id="v-total">—</span></div>
         <div id="v-tc-nota" style="font-size:12.5px;color:var(--gris)"></div>
@@ -2784,6 +2935,8 @@ function abrirNuevaVenta(clienteId, modo){
       <div class="field" ${esPresu ? 'style="display:none"' : ""}>
         <label style="display:flex;justify-content:space-between;align-items:center">Pago
           <button type="button" class="btn btn-chico btn-suave" onclick="agregarPago()">+ Dividir pago</button></label>
+        <label class="efec-toggle" id="v-efec-wrap"><input type="checkbox" id="v-efec" onchange="efectivoToggle()">
+          <span>Paga en efectivo · <span id="v-efec-pct">−15%</span></span><small>los precios ya incluyen IVA</small></label>
         <div id="v-pagos" style="display:grid;gap:8px"></div>
         <div id="v-pago-dif" style="font-size:12.5px;margin-top:6px"></div>
       </div>
@@ -2801,6 +2954,7 @@ function abrirNuevaVenta(clienteId, modo){
   state.pagos = [{ metodo: "efectivo", monto: 0 }];
   state.pagoTocado = false;
   state.tcVentaTocado = false;
+  if ($("v-efec-pct")) $("v-efec-pct").textContent = "−" + descEfectivoPct() + "%";
   $("v-tc-fuente").value = state.tcFuente;
   $("v-fecha").value = hoyISO();
   monedaCambio();
@@ -2847,7 +3001,9 @@ function costoMonedaCambio(){
   });
   renderCarrito();
 }
-const METODOS_PAGO = [["efectivo","Efectivo"],["transferencia","Transferencia"],["posnet","Posnet"]];
+const METODOS_PAGO = [["efectivo","Efectivo"],["transferencia","Transferencia"],["posnet","Posnet"],["tarjeta","Tarjeta"]];
+/* Los precios de lista ya incluyen IVA: pagando en efectivo se ofrece un descuento (15% por defecto, se cambia en Configuración). */
+const descEfectivoPct = () => { const v = Number(state.config?.desc_efectivo_pct); return isFinite(v) && v >= 0 ? v : 15; };
 const nombreMetodo = m => (METODOS_PAGO.find(x => x[0] === m) || [,m])[1];
 function entregaCambio(){
   const envio = $("v-entrega").value === "envio";
@@ -2875,6 +3031,7 @@ function renderPagos(){
   actualizarDifPago();
 }
 function agregarPago(){
+  efectivoApagar("Pago dividido: se quitó el descuento por efectivo. Si corresponde, aplicalo a mano en Descuento.");
   state.pagos.push({ metodo: "transferencia", monto: 0 });
   state.pagoTocado = true;
   renderPagos();
@@ -2883,14 +3040,33 @@ function quitarPago(ix){ state.pagos.splice(ix,1); if(!state.pagos.length) state
 function editarPago(ix, campo, val){
   state.pagos[ix][campo] = campo === "monto" ? Math.max(0, +val || 0) : val;
   if (campo === "monto"){ state.pagoTocado = true; actualizarDifPago(); }
+  if (campo === "metodo" && val !== "efectivo" && $("v-efec")?.checked){
+    efectivoApagar("Cambiaste el método: se quitó el descuento por efectivo.");
+    totalesCarrito();
+  }
 }
 function totalVenta(){
   const sub = state.carrito.reduce((s,i) => s + i.cantidad * i.precio_unit, 0);
   const tipo = $("v-desc-tipo")?.value || "pct";
   const dv = +$("v-descuento")?.value || 0;
-  const desc = Math.min(sub, tipo === "pct" ? sub * dv / 100 : dv);
+  const descManual = Math.min(sub, tipo === "pct" ? sub * dv / 100 : dv);
+  const efec = (state.modoVenta !== "presupuesto" && $("v-efec")?.checked)
+    ? Math.round((sub - descManual) * descEfectivoPct()) / 100 : 0;
+  const desc = descManual + efec;
   const envio = $("v-entrega")?.value === "envio" ? (+$("v-costo-envio")?.value || 0) : 0;
-  return { sub, desc, envio, total: sub - desc + envio };
+  return { sub, desc, descManual, efec, envio, total: sub - desc + envio };
+}
+/* Toggle "Paga en efectivo": un solo pago en efectivo por el total con el descuento aplicado. */
+function efectivoToggle(){
+  const on = $("v-efec").checked;
+  $("v-efec-wrap").classList.toggle("on", on);
+  if (on){ state.pagos = [{ metodo: "efectivo", monto: 0 }]; state.pagoTocado = false; renderPagos(); }
+  totalesCarrito();
+}
+function efectivoApagar(motivo){
+  if (!$("v-efec") || !$("v-efec").checked) return;
+  $("v-efec").checked = false; $("v-efec-wrap").classList.remove("on");
+  if (motivo) toast(motivo);
 }
 function actualizarDifPago(){
   const m = $("v-moneda").value;
@@ -3025,7 +3201,7 @@ function renderCarrito(){
     ? state.carrito.map((i, ix) => { const kg = i.unidad === "kg"; const mg = margenLinea(i); return `
       <div class="item-linea">
         <div class="il-main">
-          <div><b>${esc(i.producto_nombre)}</b><small>Stock disponible: ${i.stock}${kg ? " kg" : ""}${kg ? " · precio por kg" : ""}</small></div>
+          <div><b>${esc(i.producto_nombre)}</b><small>${esServId(i.producto_id) ? "Servicio · sin control de stock" : "Stock disponible: " + i.stock + (kg ? " kg" : "")}${kg ? " · precio por kg" : ""}</small></div>
           ${kg
             ? `<input type="text" inputmode="decimal" value="${i.cantidad}" pattern="[0-9]+([.,][0-9]+)?"
                 aria-label="Kilos" title="Kilos (acepta decimales: 2,5 o 2.5)"
@@ -3051,6 +3227,14 @@ function renderCarrito(){
 /* Costo total del carrito en la moneda de la venta. */
 function costoCarrito(){
   return state.carrito.reduce((s,i) => s + (Number(i.cantidad)||0) * costoUnitEnVenta(i), 0);
+}
+/* Margen real de la venta: (subtotal − descuentos − costo) / (subtotal − descuentos).
+   Es el que se guarda: así la ganancia de reportes descuenta el % por efectivo y cualquier descuento. */
+function margenVentaNeta(){
+  const sub = state.carrito.reduce((s,i) => s + (Number(i.cantidad)||0) * (Number(i.precio_unit)||0), 0);
+  const neto = sub - (totalVenta().desc || 0);
+  if (neto <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((neto - costoCarrito()) / neto * 100)));
 }
 /* Margen agregado de la venta = (subtotal − costo) / subtotal. Automático, no editable. */
 function margenVenta(){
@@ -3084,11 +3268,16 @@ function reprecioCarrito(){
 }
 function totalesCarrito(){
   const m = $("v-moneda").value;
-  const { sub, desc, envio, total } = totalVenta();
+  const { sub, desc, efec, envio, total } = totalVenta();
   $("v-subtotal").textContent = fMoneda(sub, m);
+  if ($("v-efec-linea")){
+    $("v-efec-linea").style.display = efec > 0 ? "flex" : "none";
+    $("v-efec-rotulo").textContent = `Descuento efectivo (${descEfectivoPct()}%)`;
+    $("v-efec-monto").textContent = "− " + fMoneda(efec, m);
+  }
   if ($("v-envio-monto")) $("v-envio-monto").textContent = fMoneda(envio, m);
   $("v-total").textContent = fMoneda(total, m);
-  if ($("v-margen")) $("v-margen").value = margenVenta();
+  if ($("v-margen")) $("v-margen").value = margenVentaNeta();
   const ganancia = (sub - desc) - costoCarrito();
   if ($("v-ganancia")) $("v-ganancia").textContent = fMoneda(ganancia, m);
   const tc = tcVenta();
@@ -3117,7 +3306,7 @@ async function confirmarVenta(){
         tipo: $("v-tipo").value, moneda,
         tipo_cambio: moneda === "USD" ? tcVenta() : 1,
         descuento: desc, total: Math.round((sub - desc) * 100) / 100,
-        margen_pct: margenVenta(),
+        margen_pct: margenVentaNeta(),
         notas: $("v-notas").value.trim(),
         items: state.carrito.map(i => ({ producto_id: i.producto_id, producto_nombre: i.producto_nombre, cantidad: i.cantidad, precio_unit: i.precio_unit }))
       }).eq("id", idEd).is("venta_id", null);
@@ -3133,7 +3322,7 @@ async function confirmarVenta(){
       p_cliente_id: $("v-cliente").value ? +$("v-cliente").value : null,
       p_tipo: $("v-tipo").value, p_moneda: moneda,
       p_tipo_cambio: moneda === "USD" ? tcVenta() : 1,
-      p_descuento: desc, p_costo_envio: 0, p_margen_pct: margenVenta(),
+      p_descuento: desc, p_costo_envio: 0, p_margen_pct: margenVentaNeta(),
       p_notas: $("v-notas").value.trim(),
       p_items: state.carrito.map(i => ({ producto_id: i.producto_id, producto_nombre: i.producto_nombre, cantidad: i.cantidad, precio_unit: i.precio_unit }))
     });
@@ -3156,6 +3345,9 @@ async function confirmarVenta(){
   if (entrega === "envio" && !$("v-direccion").value.trim()
       && !confirm("Marcaste envío pero no cargaste dirección. ¿Guardar igual?")) return;
   const btn = $("v-confirmar"); btn.disabled = true; btn.textContent = "Guardando…";
+  const { efec } = totalVenta();
+  const notasVenta = [$("v-notas").value.trim(),
+    efec > 0 ? `Incluye ${descEfectivoPct()}% de descuento por pago en efectivo (${fMoneda(efec, moneda)})` : ""].filter(Boolean).join(" · ");
   const { data, error } = await sb.rpc("crear_venta", {
     p_cliente_id: clienteId,
     p_tipo: $("v-tipo").value,
@@ -3166,8 +3358,8 @@ async function confirmarVenta(){
     p_entrega: entrega,
     p_direccion: entrega === "envio" ? $("v-direccion").value.trim() : "",
     p_pagos: state.pagos.filter(p => +p.monto > 0).map(p => ({ metodo: p.metodo, monto: +p.monto })),
-    p_margen_pct: margenVenta(),
-    p_notas: $("v-notas").value.trim(),
+    p_margen_pct: margenVentaNeta(),
+    p_notas: notasVenta,
     p_items: state.carrito.map(i => ({
       producto_id: i.producto_id, producto_nombre: i.producto_nombre,
       cantidad: i.cantidad, precio_unit: i.precio_unit
@@ -3275,8 +3467,8 @@ async function generarRecibo(id){
   }
   const doc = new window.jspdf.jsPDF();
   const saldoMon = Number(v.total) - Number(v.pagado || 0);
-  doc.setFillColor(11, 57, 72); doc.rect(0, 0, 210, 32, "F");
-  doc.setTextColor(255).setFontSize(18).setFont(undefined, "bold");
+  pdfBanda(doc, 32);
+  doc.setFontSize(18).setFont(undefined, "bold");
   doc.text("Biotopium", 14, 15);
   doc.setFontSize(11).setFont(undefined, "normal");
   doc.text(`Recibo de venta #${v.id}`, 14, 24);
@@ -3313,7 +3505,7 @@ async function generarRecibo(id){
 function editarVenta(id){
   const v = state.ventas.find(x => x.id === id);
   if (!v) return;
-  state.editPagos = (v.pagos || []).map(p => ({ metodo: p.metodo, monto: Number(p.monto) }));
+  state.editPagos = (v.pagos || []).map(p => ({ metodo: p.metodo, monto: Number(p.monto), ...(p.fecha ? { fecha: p.fecha } : {}) }));
   if (!state.editPagos.length) state.editPagos = [{ metodo: "efectivo", monto: 0 }];
   const opciones = state.clientes.map(c =>
     `<option value="${c.id}" ${c.id === v.cliente_id ? "selected" : ""}>${esc(c.nombre)}</option>`).join("");
@@ -3351,7 +3543,7 @@ function editarVenta(id){
       </div>
       <div class="fila-2">
         <div class="field"><label>Fecha de la venta</label>
-          <input type="date" id="ev-fecha" value="${new Date(v.created_at).toISOString().slice(0,10)}"></div>
+          <input type="date" id="ev-fecha" value="${diaLocal(v.created_at)}"></div>
         <div class="field"><label>Notas</label><input id="ev-notas" value="${esc(v.notas || "")}"></div>
       </div>
       <div class="modal-pie">
@@ -3403,7 +3595,7 @@ async function guardarEdicionVenta(e, id){
   const v0 = state.ventas.find(x => x.id === id);
   const entrega = $("ev-entrega").value;
   // Pagos editados: mismas reglas que al crear la venta
-  const pagosNuevos = state.editPagos.filter(p => +p.monto > 0).map(p => ({ metodo: p.metodo, monto: +p.monto }));
+  const pagosNuevos = state.editPagos.filter(p => +p.monto > 0).map(p => ({ metodo: p.metodo, monto: +p.monto, ...(p.fecha ? { fecha: p.fecha } : {}) }));
   const pagado = pagosNuevos.reduce((s,p) => s + p.monto, 0);
   const clienteId = $("ev-cliente").value ? +$("ev-cliente").value : null;
   if (pagado > Number(v0.total) + 0.5)
@@ -3411,7 +3603,7 @@ async function guardarEdicionVenta(e, id){
   if (pagado < Number(v0.total) - 0.5 && !clienteId)
     return toast("Para dejar saldo pendiente tenés que asignar un cliente.", "error");
   const cambioPago = Math.abs(pagado - Number(v0.pagado || 0)) > 0.5
-    || JSON.stringify(pagosNuevos) !== JSON.stringify((v0.pagos || []).map(p => ({ metodo: p.metodo, monto: Number(p.monto) })));
+    || JSON.stringify(pagosNuevos) !== JSON.stringify((v0.pagos || []).map(p => ({ metodo: p.metodo, monto: Number(p.monto), ...(p.fecha ? { fecha: p.fecha } : {}) })));
   if (cambioPago && pagado < Number(v0.total) - 0.5 &&
       !confirm(`Con este cambio queda ${fMoneda(v0.total - pagado, v0.moneda)} como saldo en la cuenta corriente del cliente. ¿Confirmar?`)) return;
   const datos = {
@@ -3422,7 +3614,7 @@ async function guardarEdicionVenta(e, id){
     pagos: pagosNuevos, pagado
   };
   const fNueva = $("ev-fecha").value;
-  if (fNueva && fNueva !== new Date(v0.created_at).toISOString().slice(0,10))
+  if (fNueva && fNueva !== diaLocal(v0.created_at))
     datos.created_at = new Date(fNueva + "T12:00:00").toISOString();
   const { error } = await sb.from("ventas").update(datos).eq("id", id);
   if (error) return toast("No se pudo guardar: " + error.message, "error");
@@ -3576,7 +3768,8 @@ function convertirPresupuesto(id){
         · Total del presupuesto: <b class="num" style="color:var(--tinta)">${fMoneda(p.total, p.moneda)}</b></div>
 
       <div class="fila-2">
-        <div class="field"><label>Descuento extra (ej. pago en efectivo)</label>
+        <div class="field"><label style="display:flex;justify-content:space-between;align-items:center;gap:6px">Descuento extra
+            <button type="button" class="btn btn-chico btn-suave" onclick="convEfectivo(${p.id})" style="text-transform:none;letter-spacing:0">Paga en efectivo −${descEfectivoPct()}%</button></label>
           <div style="display:flex;gap:6px">
             <select id="cv-desc-tipo" onchange="convRecalcular(${p.id})"
               style="border:1.5px solid var(--linea);border-radius:8px;padding:6px 8px">
@@ -3620,6 +3813,15 @@ function convertirPresupuesto(id){
         <button type="button" class="btn btn-primario" id="cv-confirmar" onclick="ejecutarConversion(${p.id})">Convertir en venta</button>
       </div>
     </div>`);
+  convRenderPagos(p);
+}
+function convEfectivo(id){
+  const p = state.presupuestos.find(x => x.id === id);
+  $("cv-desc-tipo").value = "pct";
+  $("cv-descuento").value = descEfectivoPct();
+  state.convPagos = [{ metodo: "efectivo", monto: 0 }];
+  state.convPagoTocado = false;
+  convRecalcular(id);
   convRenderPagos(p);
 }
 function convTotal(p){
@@ -3686,7 +3888,8 @@ async function ejecutarConversion(id){
   // 1) Si hay descuento extra, se pisa el presupuesto para que la venta salga con el total correcto.
   if (extra > 0){
     const { error: eD } = await sb.from("presupuestos")
-      .update({ descuento: Math.round((Number(p.descuento || 0) + extra) * 100) / 100, total })
+      .update({ descuento: Math.round((Number(p.descuento || 0) + extra) * 100) / 100, total,
+        margen_pct: total > 0 ? Math.max(0, Math.min(100, Math.round((Number(p.total) * (Number(p.margen_pct) || 0) / 100 - extra) / total * 100))) : 0 })
       .eq("id", id).is("venta_id", null);
     if (eD){ btn.disabled = false; btn.textContent = "Convertir en venta"; return toast("No se pudo aplicar el descuento: " + eD.message, "error"); }
   }
@@ -3721,8 +3924,8 @@ async function generarPresupuestoPDF(id){
   const p = state.presupuestos.find(x => x.id === id);
   const items = p.items || [];
   const doc = new window.jspdf.jsPDF();
-  doc.setFillColor(11, 57, 72); doc.rect(0, 0, 210, 32, "F");
-  doc.setTextColor(255).setFontSize(18).setFont(undefined, "bold");
+  pdfBanda(doc, 32);
+  doc.setFontSize(18).setFont(undefined, "bold");
   doc.text("Biotopium", 14, 15);
   doc.setFontSize(11).setFont(undefined, "normal");
   doc.text(`Presupuesto #${p.id}`, 14, 24);
@@ -3888,6 +4091,30 @@ function estCostoProyecto(p){
   const costos = (state.estCostos || []).filter(c => c.proyecto_id === p.id)
     .reduce((s,c) => s + Number(c.monto), 0);
   return costos + Number(p.mano_obra || 0);
+}
+/* Período a liquidar (fechas locales). Ventas por fecha de venta; proyectos por fecha de CIERRE. */
+const estDiaVenta = v => diaLocal(v.created_at);
+const estDiaProy = p => diaLocal(p.cerrado_at || p.created_at);
+function estRango(){
+  if (!state.estRango) state.estRango = { desde: "", hasta: hoyISO() };
+  return state.estRango;
+}
+const estEnRango = d => { const r = estRango(); return (!r.desde || d >= r.desde) && d <= r.hasta; };
+function estRangoPreset(t){
+  const r = estRango(), hoy = new Date();
+  if (t === "mes_ant"){
+    const ini = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1), fin = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+    r.desde = diaLocal(ini); r.hasta = diaLocal(fin);
+  } else if (t === "mes"){
+    r.desde = diaLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 1)); r.hasta = hoyISO();
+  } else { r.desde = ""; r.hasta = hoyISO(); }
+  renderEstuario();
+}
+function estRangoCambio(){
+  const r = estRango();
+  r.desde = $("est-liq-desde").value || "";
+  r.hasta = $("est-liq-hasta").value || hoyISO();
+  renderEstuario();
 }
 const estLiquidableVenta = v => v.estado === "completada" && !v.liquidacion_id && Number(v.cobrado) >= Number(v.total) - 0.5;
 const estLiquidableProy = p => p.estado === "cerrado" && !p.liquidacion_id && Number(p.cobrado) >= Number(p.precio_total) - 0.5;
@@ -4734,7 +4961,7 @@ async function guardarPagoVentaEst(e, id){
   const monto = +$("pve-monto").value || 0;
   if (monto <= 0) return toast("Monto inválido", "error");
   const { error } = await sb.from("est_ventas").update({
-    pagos: [...(v.pagos || []), { metodo: $("pve-metodo").value, monto }],
+    pagos: [...(v.pagos || []), { metodo: $("pve-metodo").value, monto, fecha: new Date().toISOString() }],
     cobrado: Number(v.cobrado) + monto
   }).eq("id", id);
   if (error) return toast("No se pudo registrar: " + error.message, "error");
@@ -4744,49 +4971,75 @@ async function guardarPagoVentaEst(e, id){
 
 /* ---------- Liquidación ---------- */
 function renderEstLiquidacion(esPartner){
-  const ventasPend = state.estVentas.filter(estLiquidableVenta);
-  const proysPend = state.estProyectos.filter(estLiquidableProy);
+  const r = estRango();
+  const ventasTodas = state.estVentas.filter(estLiquidableVenta);
+  const proysTodos = state.estProyectos.filter(estLiquidableProy);
+  const ventasPend = ventasTodas.filter(v => estEnRango(estDiaVenta(v)));
+  const proysPend = proysTodos.filter(p => estEnRango(estDiaProy(p)));
+  const fuera = ventasTodas.length + proysTodos.length - ventasPend.length - proysPend.length;
   const ganPend = ventasPend.reduce((s,v) => s + Number(v.ganancia), 0)
     + proysPend.reduce((s,p) => s + estGanProyecto(p), 0);
+  const rangoTxt = (r.desde ? `del ${fFecha(r.desde + "T12:00:00")} ` : "") + `hasta el ${fFecha(r.hasta + "T12:00:00")}`;
+  const rangoHtml = `<div class="card" style="margin-bottom:16px">
+      <h3>Período a liquidar</h3>
+      <div class="rango-liq">
+        <div class="field"><label>Desde (opcional)</label><input type="date" id="est-liq-desde" value="${r.desde}" onchange="estRangoCambio()"></div>
+        <div class="field"><label>Hasta</label><input type="date" id="est-liq-hasta" value="${r.hasta}" max="${hoyISO()}" onchange="estRangoCambio()"></div>
+        <button type="button" class="btn btn-borde btn-chico" onclick="estRangoPreset('mes_ant')">Mes anterior</button>
+        <button type="button" class="btn btn-borde btn-chico" onclick="estRangoPreset('mes')">Este mes</button>
+        <button type="button" class="btn btn-borde btn-chico" onclick="estRangoPreset('todo')">Todo hasta hoy</button>
+      </div>
+      <p style="font-size:12.5px;color:var(--gris);margin-top:10px">Ventas por fecha de venta y proyectos por fecha de cierre. Sin “desde” entra todo lo pendiente hasta la fecha elegida.
+        ${fuera ? `<br><b style="color:var(--alerta)">${fuera} operación${fuera > 1 ? "es" : ""} cobrada${fuera > 1 ? "s" : ""} quedan fuera del período y siguen pendientes.</b>` : ""}</p>
+    </div>`;
   const pendHtml = (ventasPend.length + proysPend.length)
-    ? `<div class="card" style="margin-bottom:16px"><h3>Pendiente de liquidar (cobrado 100%)</h3>
+    ? `<div class="card" style="margin-bottom:16px"><h3>A liquidar ${rangoTxt}</h3>
         ${proysPend.map(p => `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--linea);font-size:13.5px">
-          <span><span class="chip agua" style="font-size:11px;padding:2px 8px">Proyecto</span> ${esc(p.nombre)}</span>
+          <span><span class="chip agua" style="font-size:11px;padding:2px 8px">Proyecto</span> ${esc(p.nombre)} <small style="color:var(--gris)">· cerrado ${fFecha(estDiaProy(p) + "T12:00:00")}</small></span>
           <b class="num" style="color:var(--ok)">${fmtARS.format(estGanProyecto(p))}</b></div>`).join("")}
         ${ventasPend.map(v => `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--linea);font-size:13.5px">
-          <span><span class="chip gris" style="font-size:11px;padding:2px 8px">Venta #${v.id}</span> ${esc(v.cliente_nombre)}</span>
+          <span><span class="chip gris" style="font-size:11px;padding:2px 8px">Venta #${v.id}</span> ${esc(v.cliente_nombre)} <small style="color:var(--gris)">· ${fFecha(v.created_at)}</small></span>
           <b class="num" style="color:var(--ok)">${fmtARS.format(v.ganancia)}</b></div>`).join("")}
         <div style="display:flex;justify-content:space-between;padding-top:10px;font-size:15px">
           <b>Ganancia a liquidar</b><b class="num">${fmtARS.format(ganPend)}</b></div>
         <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--gris)">
           <span>50% El Estuario</span><b class="num">${fmtARS.format(ganPend * EST_SPLIT)}</b></div>
       </div>`
-    : '<div class="vacio" style="margin-bottom:16px"><b>Nada pendiente de liquidar</b>Las operaciones entran cuando están cobradas al 100% (proyectos, además, cerrados).</div>';
+    : `<div class="vacio" style="margin-bottom:16px"><b>Nada para liquidar ${rangoTxt}</b>Las operaciones entran cuando están cobradas al 100% (proyectos, además, cerrados).</div>`;
 
   const liqsHtml = state.estLiqs.length
     ? `<div class="card"><h3>Liquidaciones</h3><div class="tabla-wrap" style="box-shadow:none;border-radius:0">
-        <table><thead><tr><th>N°</th><th>Fecha</th><th class="der">Ganancia</th><th class="der">50% socio</th>
+        <table><thead><tr><th>N°</th><th>Fecha</th><th>Período</th><th class="der">Ganancia</th><th class="der">50% socio</th>
           <th class="der">Pagado</th><th>Estado</th></tr></thead><tbody>` +
         state.estLiqs.map(l => `<tr class="fila-click" onclick="verLiquidacionEst(${l.id})">
           <td class="num"><b>#${l.id}</b></td>
           <td class="num">${fFecha(l.created_at)}</td>
+          <td class="num" style="color:var(--gris);font-size:13px">${l.desde ? fFecha(l.desde + "T12:00:00") + " → " : "hasta "}${fFecha(l.hasta + "T12:00:00")}</td>
           <td class="der num">${fmtARS.format(l.ganancia)}</td>
           <td class="der num"><b>${fmtARS.format(l.monto_socio)}</b></td>
           <td class="der num">${fmtARS.format(l.pagado_socio || 0)}</td>
           <td><span class="chip ${l.estado === "pagada" ? "ok" : "alerta"}">${l.estado === "pagada" ? "Pagada" : "Pendiente"}</span></td>
         </tr>`).join("") + "</tbody></table></div></div>"
     : "";
-  $("est-cuerpo").innerHTML = pendHtml + liqsHtml;
+  $("est-cuerpo").innerHTML = rangoHtml + pendHtml + liqsHtml;
 }
 async function generarLiquidacionEst(){
-  const ventasPend = state.estVentas.filter(estLiquidableVenta);
-  const proysPend = state.estProyectos.filter(estLiquidableProy);
+  const r = estRango();
+  if (r.desde && r.desde > r.hasta) return toast("La fecha desde es posterior a la fecha hasta.", "error");
+  const ventasPend = state.estVentas.filter(estLiquidableVenta).filter(v => estEnRango(estDiaVenta(v)));
+  const proysPend = state.estProyectos.filter(estLiquidableProy).filter(p => estEnRango(estDiaProy(p)));
+  if (!ventasPend.length && !proysPend.length) return toast("No hay operaciones cobradas para liquidar en ese período.", "error");
   const gan = ventasPend.reduce((s,v) => s + Number(v.ganancia), 0)
     + proysPend.reduce((s,p) => s + estGanProyecto(p), 0);
-  if (!confirm(`Generar liquidación con ${proysPend.length} proyecto(s) y ${ventasPend.length} venta(s).\n` +
+  const per = (r.desde ? `del ${fFecha(r.desde + "T12:00:00")} ` : "") + `hasta el ${fFecha(r.hasta + "T12:00:00")}`;
+  if (!confirm(`Liquidación ${per}: ${proysPend.length} proyecto(s) y ${ventasPend.length} venta(s).\n` +
     `Ganancia: ${fmtARS.format(gan)} → 50% El Estuario: ${fmtARS.format(gan * EST_SPLIT)}.\n\n` +
     `Las operaciones quedan selladas en esta liquidación. ¿Continuar?`)) return;
-  const { data, error } = await sb.rpc("est_generar_liquidacion", { p_hasta: hoyISO() });
+  let { data, error } = await sb.rpc("est_generar_liquidacion", { p_hasta: r.hasta, p_desde: r.desde || null });
+  if (error && /p_desde|function|schema cache/i.test(error.message)){
+    if (r.desde) return toast("Para liquidar con fecha “desde” falta correr migracion-octubre.sql en Supabase.", "error");
+    ({ data, error } = await sb.rpc("est_generar_liquidacion", { p_hasta: r.hasta }));
+  }
   if (error) return toast("No se pudo generar: " + error.message, "error");
   toast(`Liquidación #${data} generada.`, "ok");
   await cargarEstuarioData(); estTab("liquidacion"); verLiquidacionEst(data);
@@ -4799,7 +5052,7 @@ function verLiquidacionEst(id){
   abrirModal(`Liquidación #${l.id}`, `
     <div class="modal-cuerpo">
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <span class="chip gris">${fFecha(l.created_at)} · hasta ${fFecha(l.hasta)}</span>
+        <span class="chip gris">${fFecha(l.created_at)} · ${l.desde ? "del " + fFecha(l.desde + "T12:00:00") + " " : ""}hasta ${fFecha(l.hasta + "T12:00:00")}</span>
         <span class="chip ${l.estado === "pagada" ? "ok" : "alerta"}">${l.estado === "pagada" ? "Pagada" : "Pendiente"}</span>
       </div>
       ${(l.detalle || []).map(d => `
@@ -4825,7 +5078,8 @@ function verLiquidacionEst(id){
       </div>
     </div>`);
 }
-function pagarSocioEst(id){
+async function pagarSocioEst(id){
+  await finCuentasCargar();
   const l = state.estLiqs.find(x => x.id === id);
   const saldo = Number(l.monto_socio) - Number(l.pagado_socio || 0);
   abrirModal(`Pago al socio · Liquidación #${id}`, `
@@ -4836,6 +5090,7 @@ function pagarSocioEst(id){
         <div class="field"><label>Método</label>
           <select id="ps-metodo">${METODOS_PAGO.map(([v,n]) => `<option value="${v}">${n}</option>`).join("")}</select></div>
       </div>
+      ${selectCajaHTML("ps-cuenta", "")}
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="verLiquidacionEst(${id})">Cancelar</button>
         <button type="submit" class="btn btn-primario">Registrar</button>
@@ -4849,7 +5104,9 @@ async function guardarPagoSocioEst(e, id){
   if (monto <= 0) return toast("Monto inválido", "error");
   const pagadoNuevo = Number(l.pagado_socio || 0) + monto;
   const { error } = await sb.from("est_liquidaciones").update({
-    pagos: [...(l.pagos || []), { fecha: hoyISO(), metodo: $("ps-metodo").value, monto }],
+    pagos: [...(l.pagos || []), { fecha: hoyISO(), metodo: $("ps-metodo").value, monto,
+      ...(cajaElegida("ps-cuenta") ? { cuenta_id: cajaElegida("ps-cuenta") } : {}),
+      ...(cajaNinguna("ps-cuenta") ? { sin_caja: true } : {}) }],
     pagado_socio: pagadoNuevo,
     estado: pagadoNuevo >= Number(l.monto_socio) - 0.5 ? "pagada" : "pendiente"
   }).eq("id", id);
@@ -4861,13 +5118,13 @@ async function generarLiquidacionPDF(id){
   if (!window.jspdf) return toast("La librería de PDF todavía está cargando.", "error");
   const l = state.estLiqs.find(x => x.id === id);
   const doc = new window.jspdf.jsPDF();
-  doc.setFillColor(11, 57, 72); doc.rect(0, 0, 210, 32, "F");
-  doc.setTextColor(255).setFontSize(18).setFont(undefined, "bold");
+  pdfBanda(doc, 32);
+  doc.setFontSize(18).setFont(undefined, "bold");
   doc.text("Biotopium × El Estuario", 14, 15);
   doc.setFontSize(11).setFont(undefined, "normal");
   doc.text(`Liquidación #${l.id} · ${fFecha(l.created_at)}`, 14, 24);
   doc.setTextColor(20).setFontSize(10);
-  doc.text(`Operaciones cobradas al 100% hasta el ${fFecha(l.hasta)} · Split 50/50 sobre ganancia (costo real + mano de obra)`, 14, 42);
+  doc.text(`Operaciones cobradas al 100% ${l.desde ? "del " + fFecha(l.desde + "T12:00:00") + " " : ""}hasta el ${fFecha(l.hasta + "T12:00:00")} · Split 50/50 sobre ganancia`, 14, 42);
   doc.autoTable({
     startY: 50,
     head: [["Operación", "Detalle", "Ganancia"]],
@@ -4985,7 +5242,7 @@ function renderReporte(){
   // Por categoría
   const porCat = {};
   state.repItems.forEach(i => {
-    if (!ventasOkIds.has(i.venta_id)) return;
+    if (!ventasOkIds.has(i.venta_id) || esServId(i.producto_id)) return;
     const cat = state.categorias.find(c => c.id === i.productos?.categoria_id)?.nombre || "Sin categoría";
     porCat[cat] = (porCat[cat] || 0) + Number(i.subtotal) * (tcPorVenta[i.venta_id] && state.repVentas.find(v=>v.id===i.venta_id)?.moneda==="USD" ? tcPorVenta[i.venta_id] : 1);
   });
@@ -5003,7 +5260,7 @@ function renderReporte(){
   // Top productos
   const porProd = {};
   state.repItems.forEach(i => {
-    if (!ventasOkIds.has(i.venta_id)) return;
+    if (!ventasOkIds.has(i.venta_id) || esServId(i.producto_id)) return;
     porProd[i.producto_nombre] = porProd[i.producto_nombre] || { c: 0, t: 0 };
     porProd[i.producto_nombre].c += Number(i.cantidad);
   });
@@ -5323,6 +5580,10 @@ function stkFiltrados(){
   const ubi = $("stk-f-ubi").value, fe = $("stk-f-estado").value;
   const k = state.stk.kpi;
   let lista = state.productos.filter(p => {
+    // Los ítems variables no son inventario: solo aparecen con el filtro "Servicios / variables"
+    if (fe === "servicios") return esServ(p) &&
+      (!q || p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q));
+    if (esServ(p)) return false;
     const est = stkEstado(p);
     if (fe === "inactivos"){ if (est !== "inactivo") return false; }
     else {
@@ -5367,7 +5628,7 @@ function stkKpi(k){
 }
 
 function renderStock(){
-  const activos = state.productos.filter(p => p.activo !== false);
+  const activos = state.productos.filter(p => p.activo !== false && !esServ(p));
   const tc = stkTC();
   const admin = state.perfil?.rol === "admin";
   const valorARS = activos.reduce((s,p) => s + stkCostoARS(p, tc) * Number(p.stock || 0), 0);
@@ -5429,11 +5690,11 @@ function renderStock(){
           : `<span class="tag-ubi" style="opacity:.55" title="Asignar ubicación" onclick="stkEditarUbicacion(${p.id})">＋ asignar</span>`}</td>
         <td class="der num">${admin ? fMoneda(costo, monCosto) : "—"}</td>
         <td class="der num" style="color:var(--alerta);font-weight:600">${fmtARS.format(p.precio_ars)}</td>
-        <td class="der"><span class="chip num ${est.chip === "gris" ? "gris" : Number(p.stock) <= 0 ? "rojo" : stkEstado(p) === "bajo" ? "alerta" : "ok"}">${p.stock}</span></td>
+        <td class="der">${esServ(p) ? '<span class="chip agua">∞</span>' : `<span class="chip num ${est.chip === "gris" ? "gris" : Number(p.stock) <= 0 ? "rojo" : stkEstado(p) === "bajo" ? "alerta" : "ok"}">${p.stock}</span>`}</td>
         <td><span class="chip ${est.chip}"><span class="punto"></span>${est.nombre.toUpperCase()}</span>${stkEnCamino(p) ? ' <span class="chip agua" title="Tiene pedidos en camino">◈</span>' : ""}</td>
         <td class="der acciones-fila" onclick="event.stopPropagation()">
-          <button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">±</button>
-          <button class="btn-icono" title="Reservar para un cliente" onclick="abrirStkReserva(${p.id})">◆</button>
+          ${esServ(p) ? "" : `<button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">±</button>
+          <button class="btn-icono" title="Reservar para un cliente" onclick="abrirStkReserva(${p.id})">◆</button>`}
           <button class="btn-icono" title="Editar producto" onclick="abrirProducto(${p.id})">✎</button>
           ${admin ? `<button class="btn-icono btn-peligro" title="Eliminar" onclick="borrarProducto(${p.id})">✕</button>` : ""}
         </td>
@@ -5871,7 +6132,7 @@ async function cargarStkReportes(){
 function renderStkReportes(){
   const dias = +($("stkrep-rango")?.value ?? 90);
   const desde = dias ? new Date(Date.now() - dias * 864e5) : new Date(0);
-  const movs = state.stk.movs.filter(m => new Date(m.created_at) >= desde);
+  const movs = state.stk.movs.filter(m => new Date(m.created_at) >= desde && !esServId(m.producto_id));
   const admin = state.perfil?.rol === "admin";
   const tc = stkTC();
   const ing = movs.filter(m => m.tipo === "ingreso").reduce((s,m) => s + Number(m.cantidad), 0);
@@ -5879,8 +6140,8 @@ function renderStkReportes(){
   const costoMermas = movs.filter(m => m.tipo === "merma")
     .reduce((s,m) => s + Number(m.cantidad) * Number(m.costo_usd || 0) * Number(m.tipo_cambio || 1), 0);
 
-  // Valor de stock por categoría (foto actual, ARS)
-  const activos = state.productos.filter(p => p.activo !== false);
+  // Valor de stock por categoría (foto actual, ARS) — sin ítems variables
+  const activos = state.productos.filter(p => p.activo !== false && !esServ(p));
   const porCat = {};
   activos.forEach(p => {
     const n = state.categorias.find(c => c.id === p.categoria_id)?.nombre || "Sin categoría";
@@ -5907,6 +6168,7 @@ function renderStkReportes(){
     meses.push({ k: d.toISOString().slice(0,7), lbl: d.toLocaleDateString("es-AR", { month: "short" }), ing: 0, sal: 0 });
   }
   state.stk.movs.forEach(m => {
+    if (esServId(m.producto_id)) return;
     const mm = meses.find(x => x.k === String(m.created_at).slice(0,7));
     if (!mm) return;
     if (m.tipo === "ingreso") mm.ing += Number(m.cantidad); else mm.sal += Number(m.cantidad);
@@ -5971,7 +6233,8 @@ function renderStkReportes(){
    ================================================================== */
 const invTC = () => (typeof tcDeFuente === "function" && tcDeFuente(state.tcFuente)) || Number(state.config.tipo_cambio) || "";
 
-function abrirInversion(){
+async function abrirInversion(){
+  await finCuentasCargar();
   abrirModal("Nueva inversión", `
     <form onsubmit="guardarInversion(event)">
       <p style="color:var(--gris);font-size:13.5px;margin-bottom:10px">
@@ -6001,6 +6264,11 @@ function abrirInversion(){
         <div class="field"><label>Equivalente</label>
           <input id="inv-equiv" disabled style="background:var(--superficie)"></div>
       </div>
+      <div class="fila-2">
+        <div class="field"><label>Pagado con</label>
+          <select id="inv-metodo">${GASTO_METODOS.map(([v,n]) => `<option value="${v}" ${v === "transferencia" ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        <div>${selectCajaHTML("inv-cuenta", "")}</div>
+      </div>
       <div class="field"><label>Nota</label><input id="inv-nota" placeholder="Opcional"></div>
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
@@ -6025,12 +6293,19 @@ async function guardarInversion(e){
   const concepto = $("inv-concepto").value.trim();
   if (!concepto) return toast("El concepto no puede quedar vacío.", "error");
   const btn = e.submitter; if (btn){ btn.disabled = true; btn.textContent = "Registrando…"; }
-  const { error } = await sb.rpc("registrar_inversion", {
+  const base = {
     p_concepto: concepto, p_tipo: $("inv-tipo").value,
     p_monto_origen: monto, p_moneda: moneda, p_tc: tc,
     p_proveedor: $("inv-prov").value.trim(), p_nota: $("inv-nota").value.trim(),
     p_fecha: $("inv-fecha").value || null
-  });
+  };
+  const ninguna = cajaNinguna("inv-cuenta");
+  let { error } = await sb.rpc("registrar_inversion", { ...base,
+    p_cuenta: cajaElegida("inv-cuenta"), p_metodo: ninguna ? null : $("inv-metodo").value });
+  if (error && /p_cuenta|p_metodo|function/i.test(error.message)){
+    ({ error } = await sb.rpc("registrar_inversion", base));
+    if (!error) toast("Inversión registrada sin impactar caja: falta correr migracion-octubre.sql.", "error");
+  }
   if (error){
     if (btn){ btn.disabled = false; btn.textContent = "Registrar inversión"; }
     const falta = /registrar_inversion|does not exist|schema cache/i.test(error.message);
@@ -6224,8 +6499,8 @@ function exportarPDF(desde, hasta, nombre){
   const doc = new window.jspdf.jsPDF();
   const ok = state.repVentas.filter(v => v.estado === "completada");
   const total = ok.reduce((s,v) => s + (v.moneda === "USD" ? v.total * (v.tipo_cambio||1) : Number(v.total)), 0);
-  doc.setFillColor(11, 57, 72); doc.rect(0, 0, 210, 30, "F");
-  doc.setTextColor(255).setFontSize(16).setFont(undefined, "bold");
+  pdfBanda(doc, 30);
+  doc.setFontSize(16).setFont(undefined, "bold");
   doc.text("Biotopium · Reporte de ventas", 14, 13);
   doc.setFontSize(10).setFont(undefined, "normal");
   doc.text(`Período: ${fFecha(desde)} al ${fFecha(hasta)}  ·  ${ok.length} ventas  ·  Total equiv. ${fmtARS.format(total)}`, 14, 22);
@@ -6309,6 +6584,7 @@ const GASTO_CATS = [
   { id:"impuestos",    nombre:"Impuestos / tasas" },
   { id:"bancarios",    nombre:"Bancarios / comisiones" },
   { id:"marketing",    nombre:"Marketing / publicidad" },
+  { id:"comisiones",   nombre:"Comisiones a vendedores" },
   { id:"otros",        nombre:"Otros" }
 ];
 const nombreCat = id => (GASTO_CATS.find(c => c.id === id) || {}).nombre || id || "Otros";
@@ -6321,6 +6597,7 @@ const gastoARS = g => g.moneda === "USD" ? Number(g.monto) * (Number(g.tipo_camb
 
 async function cargarGastos(){
   $("gastos-tabla").innerHTML = '<div class="cargando">Cargando gastos…</div>';
+  await finCuentasCargar();
   if ($("gastos-filtro-cat").children.length <= 1){
     $("gastos-filtro-cat").innerHTML = '<option value="">Todas las categorías</option>' +
       GASTO_CATS.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("");
@@ -6359,7 +6636,9 @@ function renderGastos(){
       <td class="num">${fFecha(g.fecha)}</td>
       <td><span class="chip cat">${esc(nombreCat(g.categoria))}</span></td>
       <td><b>${esc(g.concepto)}</b>${g.proveedor ? `<small style="color:var(--gris);display:block">${esc(g.proveedor)}</small>` : ""}</td>
-      <td style="color:var(--gris)">${esc(nombreMetodoGasto(g.metodo_pago))}</td>
+      <td style="color:var(--gris)">${esc(nombreMetodoGasto(g.metodo_pago))}${g.impacta_caja === false
+        ? '<small style="display:block;font-size:11.5px">No sale de caja</small>'
+        : g.cuenta_id && finCta(g.cuenta_id) ? `<small style="display:block;font-size:11.5px">↳ ${esc(finCta(g.cuenta_id).nombre)}</small>` : ""}</td>
       <td class="der num">${fMoneda(g.monto, g.moneda)}${g.moneda === "USD" ? `<small style="color:var(--gris);display:block">${fmtARS.format(gastoARS(g))}</small>` : ""}</td>
       <td style="white-space:nowrap;text-align:right">
         <button class="btn-icono" title="Editar" onclick="abrirGasto(${g.id})">✎</button>
@@ -6370,7 +6649,8 @@ function renderGastos(){
 ["gastos-busca","gastos-filtro-cat","gastos-filtro-metodo","gastos-mes"].forEach(id =>
   { const el = $(id); if (el) el.addEventListener("input", renderGastos); });
 
-function abrirGasto(id){
+async function abrirGasto(id){
+  await finCuentasCargar();
   const g = id ? state.gastos.find(x => x.id === id) : null;
   const usd = g?.moneda === "USD";
   abrirModal(g ? "Editar gasto" : "Nuevo gasto", `
@@ -6395,6 +6675,8 @@ function abrirGasto(id){
         <input type="number" id="g-tc" min="0" step="0.01" value="${g?.tipo_cambio || state.config.tipo_cambio || ""}"></div>
       <div class="field"><label>Método de pago</label>
         <select id="g-metodo">${GASTO_METODOS.map(([v,n]) => `<option value="${v}" ${g?.metodo_pago === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      ${selectCajaHTML("g-cuenta", g ? (g.impacta_caja === false ? "none" : (g.cuenta_id || "")) : "")}
+      ${g?.com_liq_id ? `<p style="font-size:12.5px;color:var(--alerta)">Este gasto es el pago de la liquidación de comisiones #${g.com_liq_id}. Si lo eliminás, la liquidación vuelve a quedar pendiente.</p>` : ""}
       <div class="field"><label>Notas</label><textarea id="g-notas" placeholder="Opcional">${esc(g?.notas || "")}</textarea></div>
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
@@ -6426,9 +6708,17 @@ async function guardarGasto(e, id){
     notas: $("g-notas").value.trim() || null
   };
   if (!id) datos.cargado_por = state.perfil?.nombre || state.user?.email || null;
-  const res = id
+  datos.cuenta_id = cajaElegida("g-cuenta");
+  datos.impacta_caja = !cajaNinguna("g-cuenta");
+  let res = id
     ? await sb.from("gastos").update(datos).eq("id", id).select().single()
     : await sb.from("gastos").insert(datos).select().single();
+  if (res.error && /cuenta_id|impacta_caja/i.test(res.error.message)){
+    delete datos.cuenta_id; delete datos.impacta_caja;
+    res = id ? await sb.from("gastos").update(datos).eq("id", id).select().single()
+             : await sb.from("gastos").insert(datos).select().single();
+    if (!res.error) toast("Gasto guardado, pero sin caja: falta correr migracion-octubre.sql.", "error");
+  }
   if (res.error) return toast("No se pudo guardar: " + res.error.message, "error");
   toast(id ? "Gasto actualizado" : "Gasto registrado", "ok");
   cerrarModal();
@@ -6437,7 +6727,9 @@ async function guardarGasto(e, id){
 async function borrarGasto(id){
   const g = state.gastos.find(x => x.id === id);
   if (!g) return;
-  if (!confirm(`¿Eliminar el gasto "${g.concepto}" por ${fMoneda(g.monto, g.moneda)}? No se puede deshacer.`)) return;
+  if (!confirm(`¿Eliminar el gasto "${g.concepto}" por ${fMoneda(g.monto, g.moneda)}? No se puede deshacer.` +
+    (g.com_liq_id ? `\n\nEs el pago de la liquidación de comisiones #${g.com_liq_id}: vuelve a quedar pendiente.` : "") +
+    `\nSi había salido de una caja, el movimiento se anula solo en Finanzas.`)) return;
   const { error } = await sb.from("gastos").delete().eq("id", id);
   if (error) return toast("No se pudo eliminar: " + error.message, "error");
   toast("Gasto eliminado", "ok");
@@ -6517,6 +6809,7 @@ function elegirFuenteTC(key){
 async function cargarConfigVista(){
   $("cfg-tc").value = state.config.tipo_cambio;
   $("cfg-margen").value = state.config.margen_default ?? 40;
+  if ($("cfg-desc-efec")) $("cfg-desc-efec").value = descEfectivoPct();
   renderCotizaciones();
   if (!state.cotizaciones.oficial) traerCotizaciones(false);
   renderCategoriasCfg();
@@ -6579,11 +6872,15 @@ async function guardarTC(){
   const tc = +$("cfg-tc").value;
   const margen = Math.max(0, Math.min(100, +$("cfg-margen").value || 0));
   if (!tc || tc <= 0) return toast("Ingresá una cotización válida", "error");
+  const descEf = Math.max(0, Math.min(50, numDec($("cfg-desc-efec")?.value ?? 15)));
   const { error } = await sb.from("configuracion")
     .update({ tipo_cambio: tc, margen_default: margen, updated_at: new Date().toISOString() }).eq("id", 1);
   if (error) return toast("No se pudo guardar: " + error.message, "error");
   state.config.tipo_cambio = tc;
   state.config.margen_default = margen;
+  { const { error: eDe } = await sb.from("configuracion").update({ desc_efectivo_pct: descEf }).eq("id", 1);
+    if (eDe) toast("El % de descuento por efectivo no se guardó: falta correr migracion-octubre.sql.", "error");
+    else state.config.desc_efectivo_pct = descEf; }
   toast("Configuración actualizada", "ok");
 }
 async function agregarCategoria(){
@@ -6744,16 +7041,26 @@ async function cargarFinanzas(){
   state.fin.movs = movs.data || [];
   state.fin.cc = cc.data || [];
   state.fin.cargado = true;
+  // Impacto automático (migracion-octubre.sql): si falta, el panel lo avisa
+  const [dst, cfg, errs] = await Promise.all([
+    sb.from("fin_destinos").select("*"),
+    sb.from("fin_config").select("*").eq("id", 1).maybeSingle(),
+    sb.from("fin_sync_errores").select("*").order("created_at", { ascending: false }).limit(20)
+  ]);
+  state.fin.autoOk = !dst.error && !cfg.error;
+  state.fin.destinos = dst.data || [];
+  state.fin.syncDesde = cfg.data?.sync_desde || null;
+  state.fin.errores = errs.data || [];
   finTab(state.fin.tab || "resumen");
 }
 
 function finTab(t){
   state.fin.tab = t;
-  ["resumen","movs","cc","cuentas"].forEach(x => {
+  ["resumen","movs","cc","com","cuentas"].forEach(x => {
     const b = $("fin-tab-" + x);
     if (b) b.className = "btn " + (x === t ? "btn-suave" : "btn-borde");
   });
-  ({ resumen: renderFinResumen, movs: renderFinMovs, cc: renderFinCC, cuentas: renderFinCuentas }[t] || renderFinResumen)();
+  ({ resumen: renderFinResumen, movs: renderFinMovs, cc: renderFinCC, com: renderFinComisiones, cuentas: renderFinCuentas }[t] || renderFinResumen)();
 }
 
 /* ---------- helpers de período ---------- */
@@ -6886,6 +7193,7 @@ function renderFinMovs(){
         <input id="fm-busca" placeholder="Buscar por concepto, contraparte, referencia…"></div>
       <select id="fm-f-tipo"><option value="">Todos los tipos</option>${Object.entries(FIN_TIPOS).map(([k,v]) => `<option value="${k}">${v.nombre}</option>`).join("")}</select>
       <select id="fm-f-cuenta"><option value="">Todas las cuentas</option>${opCtas}</select>
+      <select id="fm-f-origen"><option value="">Manuales y automáticos</option><option value="auto">Solo automáticos</option><option value="manual">Solo manuales</option></select>
       <input type="date" id="fm-f-desde"><input type="date" id="fm-f-hasta">
       <button class="btn btn-borde" onclick="exportarFinMovs('xlsx')">Excel</button>
       <button class="btn btn-borde" onclick="exportarFinMovs('csv')">CSV</button>
@@ -6893,14 +7201,16 @@ function renderFinMovs(){
     </div>
     <div class="fin-kpis" id="fm-kpis"></div>
     <div class="tabla-wrap" id="fm-tabla"></div>`;
-  ["fm-busca","fm-f-tipo","fm-f-cuenta","fm-f-desde","fm-f-hasta"].forEach(id => $(id).addEventListener("input", pintarFinMovs));
+  ["fm-busca","fm-f-tipo","fm-f-cuenta","fm-f-origen","fm-f-desde","fm-f-hasta"].forEach(id => $(id).addEventListener("input", pintarFinMovs));
   pintarFinMovs();
 }
 function finMovsFiltrados(){
   const q = ($("fm-busca")?.value || "").toLowerCase();
   const t = $("fm-f-tipo")?.value, c = $("fm-f-cuenta")?.value;
   const d = $("fm-f-desde")?.value, h = $("fm-f-hasta")?.value;
+  const o = $("fm-f-origen")?.value;
   return state.fin.movs.filter(m =>
+    (!o || (o === "auto" ? !!m.origen : !m.origen)) &&
     (!q || [m.concepto, m.contraparte, m.referencia, m.categoria].some(x => (x||"").toLowerCase().includes(q))) &&
     (!t || m.tipo === t) &&
     (!c || m.cuenta_id === c || m.cuenta_destino_id === c) &&
@@ -6939,7 +7249,7 @@ function pintarFinMovs(){
       return `<tr style="${m.anulado ? "opacity:.45;text-decoration:line-through" : ""}">
         <td class="num" style="white-space:nowrap">${fFechaHora(m.fecha)}</td>
         <td><span class="chip ${T.chip}"><span class="punto"></span>${T.nombre.toUpperCase()}</span></td>
-        <td><b>${esc(m.concepto)}</b>${m.categoria ? `<span class="chip cat" style="margin-left:6px">${esc(nombreCat(m.categoria))}</span>` : ""}${m.notas ? `<span class="fin-mini">${esc(m.notas)}</span>` : ""}</td>
+        <td><b>${esc(m.concepto)}</b>${m.origen ? `<span class="chip chip-auto" title="Generado automáticamente desde ${esc(m.referencia || m.origen)}. Se corrige editando el origen.">AUTO</span>` : ""}${m.categoria ? `<span class="chip cat" style="margin-left:6px">${esc(nombreCat(m.categoria))}</span>` : ""}${m.notas ? `<span class="fin-mini">${esc(m.notas)}</span>` : ""}</td>
         <td>${esc(m.contraparte || "—")}</td>
         <td style="font-size:13px">${esc(cta?.nombre || "?")}${m.tipo === "transferencia" ? ` → ${esc(dest?.nombre || "?")}` : ""}</td>
         <td class="der num ${color}" style="white-space:nowrap">${montoTxt}</td>
@@ -6958,7 +7268,7 @@ function exportarFinMovs(formato){
       "Cuenta destino": dest?.nombre || "", "Monto": Number(m.monto),
       "Moneda": cta?.moneda || "", "TC": Number(m.tc || 1),
       "US$ equiv.": Number(m.usd_equiv || 0), "Ref.": m.referencia || "",
-      "Estado": m.anulado ? "ANULADO" : "OK", "Cargado por": m.creado_por_nombre || "" };
+      "Estado": m.anulado ? "ANULADO" : "OK", "Origen": m.origen ? "Automático" : "Manual", "Cargado por": m.creado_por_nombre || "" };
   });
   if (!filas.length) return toast("No hay movimientos para exportar.", "error");
   const base = "biotopium-finanzas-" + hoyISO();
@@ -7096,11 +7406,406 @@ async function guardarFinMov(e){
 }
 async function anularFinMov(id){
   const m = state.fin.movs.find(x => x.id === id); if (!m) return;
-  if (!confirm(`¿Anular "${m.concepto}"? Se revierte el saldo de la(s) cuenta(s) y queda marcado como anulado.`)) return;
+  if (!confirm(`¿Anular "${m.concepto}"? Se revierte el saldo de la(s) cuenta(s) y queda marcado como anulado.` +
+    (m.origen ? `\n\nOJO: es un movimiento AUTOMÁTICO (${m.referencia || m.origen}). Lo correcto es corregir o anular el origen; si lo anulás acá, puede volver a generarse cuando se edite ese origen.` : ""))) return;
   const { error } = await sb.rpc("fin_anular_movimiento", { p_id: id });
   if (error) return toast("No se pudo anular: " + error.message, "error");
   toast("Movimiento anulado", "ok");
   await cargarFinanzas();
+}
+
+/* ================= IMPACTO AUTOMÁTICO EN CAJAS ================= */
+/* Ventas, pagos a cuenta, gastos, inversiones y El Estuario impactan solos en la caja
+   asignada a cada método de pago (lo hace la base con triggers: no depende del navegador). */
+const FIN_METODOS_AUTO = [
+  ["efectivo","Efectivo"],["transferencia","Transferencia"],["posnet","Posnet"],["tarjeta","Tarjeta"],
+  ["debito","Débito"],["mercadopago","Mercado Pago"],["otro","Otro"]
+];
+async function finCuentasCargar(){
+  if (state.perfil?.rol !== "admin") return [];
+  if (!state.fin.cuentas.length){
+    const { data } = await sb.from("fin_cuentas").select("*").order("created_at");
+    state.fin.cuentas = data || [];
+  }
+  return state.fin.cuentas;
+}
+/* Selector "Sale de (caja)": automático por método · una caja puntual · no impacta */
+function selectCajaHTML(id, valor, etiqueta){
+  const admin = state.perfil?.rol === "admin";
+  const ctas = admin ? (state.fin.cuentas || []).filter(c => c.activa !== false || c.id === valor) : [];
+  return `<div class="field"><label>${etiqueta || "Sale de (caja)"}</label>
+    <select id="${id}">
+      <option value="" ${!valor ? "selected" : ""}>Automático según el método de pago</option>
+      ${ctas.map(c => `<option value="${c.id}" ${valor === c.id ? "selected" : ""}>${esc(c.nombre)} (${c.moneda})</option>`).join("")}
+      <option value="none" ${valor === "none" ? "selected" : ""}>No sale de ninguna caja (ej. tarjeta de crédito)</option>
+    </select></div>`;
+}
+const cajaElegida = id => { const v = $(id)?.value || ""; return v && v !== "none" ? v : null; };
+const cajaNinguna = id => ($(id)?.value || "") === "none";
+
+function finPanelDestinosHTML(){
+  if (!state.fin.autoOk) return `<div class="fin-panel"><h4>Impacto automático</h4>
+    <div class="vacio" style="padding:16px"><b>Falta correr la migración</b>Ejecutá <b>migracion-octubre.sql</b> en Supabase para que ventas, gastos e inversiones impacten solos en las cajas.</div></div>`;
+  const activas = state.fin.cuentas.filter(c => c.activa !== false);
+  const dest = (m, mon) => state.fin.destinos.find(d => d.metodo === m && d.moneda === mon)?.cuenta_id || "";
+  const sel = (m, mon) => `<select id="fd-${m}-${mon}" class="num">
+      <option value="">— no impacta —</option>
+      ${activas.map(c => `<option value="${c.id}" ${dest(m, mon) === c.id ? "selected" : ""}>${esc(c.nombre)} (${c.moneda})</option>`).join("")}</select>`;
+  const sinAsignar = ["efectivo","transferencia","posnet","tarjeta"].filter(m => !dest(m, "ARS"));
+  return `<div class="fin-panel" id="fin-destinos">
+    <h4>Impacto automático en cajas</h4>
+    <p style="font-size:13.5px;color:var(--gris);margin-bottom:12px">Cada venta, cobro de saldo, pago a cuenta, gasto, inversión y operación de El Estuario
+      entra o sale <b>sola</b> de la caja asignada a su método de pago. Si editás o anulás el origen, el movimiento se corrige solo (queda tachado el anterior).
+      Ya no hace falta cargar esos cobros a mano acá: se duplicarían.</p>
+    ${sinAsignar.length ? `<div style="background:var(--alerta-bg);color:var(--alerta);border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:12px">
+      Sin caja asignada: <b>${sinAsignar.map(m => nombreMetodo(m)).join(", ")}</b>. Lo cobrado con esos métodos todavía no impacta.</div>` : ""}
+    <div class="tabla-wrap destinos-tabla" style="box-shadow:none;margin-bottom:12px"><table><thead><tr>
+      <th>Método</th><th>Operaciones en pesos → caja</th><th>Operaciones en dólares → caja</th></tr></thead><tbody>
+      ${FIN_METODOS_AUTO.map(([m, n]) => `<tr><td><b>${n}</b></td><td>${sel(m, "ARS")}</td><td>${sel(m, "USD")}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p style="font-size:12.5px;color:var(--gris);margin-bottom:10px">Si una operación en dólares no tiene caja en USD, entra en la de pesos al tipo de cambio de la operación (y viceversa).</p>
+    <div class="filtros" style="margin:0;align-items:end">
+      <div class="field" style="margin:0"><label>Impactan las operaciones desde el día</label>
+        <input type="date" id="fd-desde" value="${state.fin.syncDesde || hoyISO()}"></div>
+      <button class="btn btn-primario" onclick="guardarFinDestinos()">Guardar asignaciones</button>
+      <button class="btn btn-borde" onclick="finResincronizar()" title="Recalcula el impacto de todo lo cargado desde esa fecha">Recalcular desde esa fecha</button>
+    </div>
+    <p style="font-size:12.5px;color:var(--gris);margin-top:8px">Lo anterior a esa fecha no impacta: se supone incluido en los saldos iniciales o en el último arqueo.
+      Si cambiás la fecha, tocá <b>Recalcular</b> para que lo ya cargado se ajuste.</p>
+    ${state.fin.errores.length ? `<div style="margin-top:12px;font-size:12.5px;color:var(--rojo)"><b>${state.fin.errores.length} operación(es) no pudieron impactar</b> (la operación se guardó igual):
+      ${state.fin.errores.slice(0, 5).map(e => `<div>· ${esc(e.origen)} #${esc(e.origen_id)} — ${esc(e.error)} <span style="color:var(--gris)">(${fFechaHora(e.created_at)})</span></div>`).join("")}</div>` : ""}
+  </div>`;
+}
+async function guardarFinDestinos(){
+  const filas = [];
+  FIN_METODOS_AUTO.forEach(([m]) => ["ARS","USD"].forEach(mon => {
+    const v = $(`fd-${m}-${mon}`)?.value;
+    if (v) filas.push({ metodo: m, moneda: mon, cuenta_id: v });
+  }));
+  const desde = $("fd-desde").value || hoyISO();
+  const cambioFecha = desde !== state.fin.syncDesde;
+  const { error: eDel } = await sb.from("fin_destinos").delete().neq("metodo", "");
+  if (eDel) return toast("No se pudo guardar: " + eDel.message, "error");
+  if (filas.length){
+    const { error } = await sb.from("fin_destinos").insert(filas);
+    if (error) return toast("No se pudo guardar: " + error.message, "error");
+  }
+  const { error: eCfg } = await sb.from("fin_config").upsert({ id: 1, sync_desde: desde, updated_at: new Date().toISOString() });
+  if (eCfg) return toast("Asignaciones guardadas, pero no la fecha: " + eCfg.message, "error");
+  toast("Asignaciones guardadas", "ok");
+  await cargarFinanzas();
+  if (cambioFecha && confirm("Cambiaste la fecha desde la que impactan las operaciones. ¿Recalcular ahora lo ya cargado?")) finResincronizar(true);
+}
+async function finResincronizar(sinPreguntar){
+  const desde = $("fd-desde")?.value || state.fin.syncDesde || hoyISO();
+  if (!sinPreguntar && !confirm(`Recalcular el impacto en cajas de todo lo cargado desde el ${fFecha(desde + "T12:00:00")}.\n\n` +
+    "· Lo que falte impactar (por ejemplo, ventas cargadas antes de asignar una caja) entra ahora.\n" +
+    "· Lo anterior a esa fecha que hubiera impactado se anula.\n\n" +
+    "Si ya habías cargado esos cobros a mano en Movimientos, anulalos primero para no duplicar. ¿Continuar?")) return;
+  toast("Recalculando…");
+  const { data, error } = await sb.rpc("fin_resincronizar", { p_desde: desde });
+  if (error) return toast("No se pudo recalcular: " + error.message, "error");
+  toast(`Listo: ${data} operaciones revisadas.`, "ok");
+  await cargarFinanzas();
+}
+
+/* ================= COMISIONES DE VENDEDORES ================= */
+/* Base: lo vendido sin envío (o la ganancia). Se liquida por mes o rango, las ventas quedan
+   selladas y el pago es un gasto "Comisiones" que sale de la caja elegida. */
+const COM_BASES = { venta: "lo vendido (sin envío)", ganancia: "la ganancia" };
+async function renderFinComisiones(){
+  $("fin-cuerpo").innerHTML = '<div class="cargando">Cargando comisiones…</div>';
+  const [perf, liqs] = await Promise.all([
+    sb.from("perfiles").select("*").order("nombre"),
+    sb.from("com_liquidaciones").select("*").order("created_at", { ascending: false }).limit(300)
+  ]);
+  if (liqs.error){
+    $("fin-cuerpo").innerHTML = `<div class="vacio"><b>Falta correr la migración</b>Ejecutá <b>migracion-octubre.sql</b> en Supabase para habilitar las comisiones.</div>`;
+    return;
+  }
+  state.com = { perfiles: (perf.data || []).filter(u => u.rol !== "partner"), liqs: liqs.data || [] };
+  pintarFinComisiones();
+}
+function pintarFinComisiones(){
+  const { perfiles, liqs } = state.com;
+  const vivas = liqs.filter(l => l.estado !== "anulada");
+  const pend = vivas.reduce((s,l) => s + Math.max(0, Number(l.monto) - Number(l.pagado || 0)), 0);
+  const mesK = hoyISO().slice(0,7);
+  const liqMes = vivas.filter(l => diaLocal(l.created_at).slice(0,7) === mesK).reduce((s,l) => s + Number(l.monto), 0);
+  const pagMes = vivas.filter(l => diaLocal(l.created_at).slice(0,7) === mesK).reduce((s,l) => s + Number(l.pagado || 0), 0);
+  const estChip = { pendiente:"alerta", parcial:"agua", pagada:"ok", anulada:"gris" };
+  $("fin-cuerpo").innerHTML = `
+    <div class="fin-kpis">
+      <div class="fin-kpi"><div class="fk-valor num ${pend > 0.5 ? "fin-neg" : ""}">${fmtARS.format(pend)}</div><div class="fk-label">Comisiones a pagar</div></div>
+      <div class="fin-kpi"><div class="fk-valor num">${fmtARS.format(liqMes)}</div><div class="fk-label">Liquidado este mes</div></div>
+      <div class="fin-kpi"><div class="fk-valor num fin-pos">${fmtARS.format(pagMes)}</div><div class="fk-label">Pagado de lo de este mes</div></div>
+      <div class="fin-kpi"><div class="fk-valor num">${vivas.filter(l => l.estado !== "pagada").length}</div><div class="fk-label">Liquidaciones abiertas</div></div>
+    </div>
+    <div class="fin-panel">
+      <h4>Vendedores</h4>
+      <div class="tabla-wrap" style="box-shadow:none"><table><thead><tr>
+        <th>Vendedor</th><th>Rol</th><th>Esquema de comisión</th><th></th></tr></thead><tbody>
+        ${perfiles.map(u => `<tr>
+          <td><b>${esc(u.nombre || u.email)}</b>${u.activo === false ? ' <span class="chip gris">inactivo</span>' : ""}</td>
+          <td style="text-transform:capitalize;color:var(--gris)">${esc(u.rol)}</td>
+          <td>${Number(u.comision_pct) > 0 ? `<b class="num">${Number(u.comision_pct)}%</b> sobre ${COM_BASES[u.comision_base] || COM_BASES.venta}` : '<span style="color:var(--gris)">Sin definir</span>'}</td>
+          <td class="der" style="white-space:nowrap">
+            <button class="btn btn-chico btn-borde" onclick="abrirComEsquema('${u.id}')">Esquema</button>
+            <button class="btn btn-chico btn-primario" onclick="abrirComLiquidar('${u.id}')">Liquidar</button></td>
+        </tr>`).join("") || '<tr><td colspan="4"><div class="vacio" style="padding:16px"><b>Sin vendedores</b>Se dan de alta en Configuración → Equipo.</div></td></tr>'}
+      </tbody></table></div>
+    </div>
+    <div class="fin-panel">
+      <h4>Liquidaciones</h4>
+      ${liqs.length ? `<div class="tabla-wrap" style="box-shadow:none"><table><thead><tr>
+        <th>N°</th><th>Vendedor</th><th>Período</th><th class="der">Ventas</th><th class="der">Base</th>
+        <th class="der">%</th><th class="der">Comisión</th><th class="der">Pagado</th><th>Estado</th></tr></thead><tbody>
+        ${liqs.map(l => `<tr class="fila-click" onclick="verComLiq(${l.id})" style="${l.estado === "anulada" ? "opacity:.5" : ""}">
+          <td class="num"><b>#${l.id}</b></td><td>${esc(l.vendedor_nombre || "")}</td>
+          <td class="num" style="font-size:13px">${comPeriodoTxt(l)}</td>
+          <td class="der num">${l.cant_ventas}</td><td class="der num">${fmtARS.format(l.base_total)}</td>
+          <td class="der num">${Number(l.pct)}%</td><td class="der num"><b>${fmtARS.format(l.monto)}</b></td>
+          <td class="der num">${fmtARS.format(l.pagado || 0)}</td>
+          <td><span class="chip ${estChip[l.estado] || "gris"}">${l.estado}</span></td></tr>`).join("")}
+      </tbody></table></div>` : '<div class="vacio" style="padding:16px"><b>Todavía no hay liquidaciones</b>Elegí un vendedor y tocá “Liquidar”.</div>'}
+    </div>`;
+}
+const comPeriodoTxt = l => (l.desde ? fFecha(l.desde + "T12:00:00") + " → " : "hasta ") + fFecha(l.hasta + "T12:00:00");
+
+function abrirComEsquema(uid){
+  const u = state.com.perfiles.find(x => x.id === uid); if (!u) return;
+  abrirModal("Esquema de comisión · " + (u.nombre || u.email), `
+    <form onsubmit="guardarComEsquema(event,'${uid}')">
+      <div class="fila-2">
+        <div class="field"><label>Porcentaje (%)</label><input id="ce-pct" inputmode="decimal" value="${Number(u.comision_pct) || ""}" placeholder="Ej: 5" required></div>
+        <div class="field"><label>Sobre</label><select id="ce-base">
+          <option value="venta" ${u.comision_base !== "ganancia" ? "selected" : ""}>Lo vendido (sin envío)</option>
+          <option value="ganancia" ${u.comision_base === "ganancia" ? "selected" : ""}>La ganancia de la venta</option></select></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--gris)">Es el valor que se propone al liquidar; en cada liquidación se puede ajustar.</p>
+      <div class="modal-pie"><button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Guardar</button></div>
+    </form>`);
+}
+async function guardarComEsquema(e, uid){
+  e.preventDefault();
+  const pct = numDec($("ce-pct").value);
+  if (pct < 0 || pct > 100) return toast("Porcentaje inválido.", "error");
+  const { error } = await sb.rpc("com_config_vendedor", { p_vendedor: uid, p_pct: pct, p_base: $("ce-base").value });
+  if (error) return toast("No se pudo guardar: " + error.message, "error");
+  toast("Esquema guardado", "ok"); cerrarModal(); renderFinComisiones();
+}
+
+/* ----- Liquidar: vendedor + período + % → vista previa → sellar ----- */
+function abrirComLiquidar(uid){
+  const u = state.com.perfiles.find(x => x.id === uid); if (!u) return;
+  const hoy = new Date();
+  const ini = diaLocal(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)), fin = diaLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 0));
+  abrirModal("Liquidar comisiones · " + (u.nombre || u.email), `
+    <div class="modal-cuerpo">
+      <div class="rango-liq">
+        <div class="field"><label>Desde (opcional)</label><input type="date" id="cl-desde" value="${ini}" onchange="comPreview()"></div>
+        <div class="field"><label>Hasta</label><input type="date" id="cl-hasta" value="${fin}" max="${hoyISO()}" onchange="comPreview()"></div>
+        <button type="button" class="btn btn-borde btn-chico" onclick="comPreset('mes_ant')">Mes anterior</button>
+        <button type="button" class="btn btn-borde btn-chico" onclick="comPreset('mes')">Este mes</button>
+        <button type="button" class="btn btn-borde btn-chico" onclick="comPreset('todo')">Todo lo pendiente</button>
+      </div>
+      <div class="fila-2">
+        <div class="field"><label>Comisión (%)</label><input id="cl-pct" inputmode="decimal" value="${Number(u.comision_pct) || ""}" placeholder="Ej: 5" oninput="comPreviewCalc()"></div>
+        <div class="field"><label>Sobre</label><select id="cl-base" onchange="comPreviewCalc()">
+          <option value="venta" ${u.comision_base !== "ganancia" ? "selected" : ""}>Lo vendido (sin envío)</option>
+          <option value="ganancia" ${u.comision_base === "ganancia" ? "selected" : ""}>La ganancia de la venta</option></select></div>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox" id="cl-cobradas" checked onchange="comPreviewCalc()" style="width:17px;height:17px;accent-color:var(--agua)">
+        Solo ventas cobradas al 100% <span style="color:var(--gris)">(las que tienen saldo quedan para la próxima)</span></label>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13.5px"><input type="checkbox" id="cl-serv" checked onchange="comPreviewCalc()" style="width:17px;height:17px;accent-color:var(--agua)">
+        Excluir ítems variables / servicios <span style="color:var(--gris)">(km, embalaje, agua de ósmosis…)</span></label>
+      <div id="cl-preview"><div class="cargando">Buscando ventas…</div></div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-borde" onclick="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primario" id="cl-generar" disabled onclick="generarComLiq('${uid}')">Generar liquidación</button>
+      </div>
+    </div>`);
+  state.comLiqVendedor = uid;
+  comPreview();
+}
+function comPreset(t){
+  const hoy = new Date();
+  if (t === "mes_ant"){ $("cl-desde").value = diaLocal(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)); $("cl-hasta").value = diaLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 0)); }
+  else if (t === "mes"){ $("cl-desde").value = diaLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 1)); $("cl-hasta").value = hoyISO(); }
+  else { $("cl-desde").value = ""; $("cl-hasta").value = hoyISO(); }
+  comPreview();
+}
+async function comPreview(){
+  const uid = state.comLiqVendedor, desde = $("cl-desde").value, hasta = $("cl-hasta").value || hoyISO();
+  $("cl-preview").innerHTML = '<div class="cargando">Buscando ventas…</div>';
+  let q = sb.from("ventas").select("id,created_at,total,costo_envio,margen_pct,moneda,tipo_cambio,pagado,estado,cliente_id,comision_liq_id,clientes(nombre)")
+    .eq("vendedor_id", uid).eq("estado", "completada").is("comision_liq_id", null)
+    .lte("created_at", new Date(hasta + "T23:59:59.999").toISOString()).order("created_at");
+  if (desde) q = q.gte("created_at", new Date(desde + "T00:00:00").toISOString());
+  const { data, error } = await q.limit(2000);
+  if (error){ $("cl-preview").innerHTML = `<div class="vacio" style="padding:14px"><b>No se pudieron traer las ventas</b>${esc(error.message)}</div>`; return; }
+  const ventas = data || [];
+  // Parte de cada venta que corresponde a ítems variables (para excluirla de la base)
+  const servPorVenta = {};
+  for (let i = 0; i < ventas.length; i += 200){
+    const ids = ventas.slice(i, i + 200).map(v => v.id);
+    const { data: items } = await sb.from("venta_items").select("venta_id,producto_id,subtotal").in("venta_id", ids);
+    (items || []).forEach(it => {
+      const x = servPorVenta[it.venta_id] || (servPorVenta[it.venta_id] = { tot: 0, serv: 0 });
+      x.tot += Number(it.subtotal) || 0;
+      if (esServId(it.producto_id)) x.serv += Number(it.subtotal) || 0;
+    });
+  }
+  state.comPrev = { ventas, servPorVenta };
+  comPreviewCalc();
+}
+function comBaseVenta(v, base, excluir){
+  const tc = v.moneda === "USD" ? (Number(v.tipo_cambio) || 1) : 1;
+  let neto = (Number(v.total) - Number(v.costo_envio || 0)) * tc;
+  const sp = state.comPrev.servPorVenta[v.id];
+  if (excluir && sp && sp.tot > 0) neto *= (sp.tot - sp.serv) / sp.tot;
+  return Math.round((base === "ganancia" ? neto * (Number(v.margen_pct) || 0) / 100 : neto) * 100) / 100;
+}
+function comPreviewCalc(){
+  if (!state.comPrev) return;
+  const pct = numDec($("cl-pct").value), base = $("cl-base").value;
+  const soloCob = $("cl-cobradas").checked, excl = $("cl-serv").checked;
+  const todas = state.comPrev.ventas;
+  const lista = todas.filter(v => !soloCob || Number(v.pagado || 0) >= Number(v.total) - 0.5);
+  const conSaldo = todas.length - lista.length;
+  const filas = lista.map(v => { const b = comBaseVenta(v, base, excl); return { v, b, c: Math.round(b * pct) / 100 }; });
+  const tb = filas.reduce((s,f) => s + f.b, 0), tcom = filas.reduce((s,f) => s + f.c, 0);
+  $("cl-generar").disabled = !(filas.length && pct > 0);
+  $("cl-preview").innerHTML = !filas.length
+    ? `<div class="vacio" style="padding:16px"><b>No hay ventas para liquidar en ese período</b>${conSaldo ? `${conSaldo} venta(s) tienen saldo pendiente.` : "Las ventas ya liquidadas no vuelven a aparecer."}</div>`
+    : `<div class="tabla-wrap" style="box-shadow:none;max-height:260px"><table><thead><tr>
+        <th>N°</th><th>Fecha</th><th>Cliente</th><th class="der">Total</th><th class="der">Base</th><th class="der">Comisión</th></tr></thead><tbody>
+        ${filas.map(f => `<tr><td class="num">#${f.v.id}</td><td class="num">${fFecha(f.v.created_at)}</td>
+          <td>${esc(f.v.clientes?.nombre || "Consumidor final")}</td>
+          <td class="der num">${fmtARS.format(ventaARS(f.v))}</td><td class="der num">${fmtARS.format(f.b)}</td>
+          <td class="der num"><b>${fmtARS.format(f.c)}</b></td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="totales" style="margin-top:10px">
+        <div class="fila-total"><span>${filas.length} venta(s) · base</span><span class="num">${fmtARS.format(tb)}</span></div>
+        <div class="fila-total grande"><span>Comisión ${pct ? pct + "%" : ""}</span><span class="num">${fmtARS.format(tcom)}</span></div>
+        ${conSaldo ? `<div style="font-size:12.5px;color:var(--alerta)">${conSaldo} venta(s) con saldo pendiente quedan afuera.</div>` : ""}
+      </div>`;
+}
+async function generarComLiq(uid){
+  const pct = numDec($("cl-pct").value);
+  if (!(pct > 0 && pct <= 100)) return toast("Cargá el porcentaje de comisión.", "error");
+  const desde = $("cl-desde").value || null, hasta = $("cl-hasta").value || hoyISO();
+  if (desde && desde > hasta) return toast("La fecha desde es posterior a la fecha hasta.", "error");
+  const btn = $("cl-generar"); btn.disabled = true; btn.textContent = "Generando…";
+  const { data, error } = await sb.rpc("com_generar_liquidacion", {
+    p_vendedor: uid, p_desde: desde, p_hasta: hasta, p_pct: pct, p_base: $("cl-base").value,
+    p_solo_cobradas: $("cl-cobradas").checked, p_excluir_servicios: $("cl-serv").checked });
+  if (error){ btn.disabled = false; btn.textContent = "Generar liquidación"; return toast("No se pudo generar: " + error.message, "error"); }
+  toast(`Liquidación #${data} generada. Las ventas quedan selladas.`, "ok");
+  await renderFinComisiones();
+  verComLiq(data);
+}
+
+/* ----- Detalle, pago, PDF y anulación ----- */
+async function verComLiq(id){
+  const l = state.com.liqs.find(x => x.id === id); if (!l) return;
+  abrirModal(`Comisiones #${l.id} · ${l.vendedor_nombre || ""}`, '<div class="cargando">Cargando…</div>');
+  const { data: pagos } = await sb.from("gastos").select("id,fecha,monto,metodo_pago,cuenta_id").eq("com_liq_id", id).order("fecha");
+  const saldo = Number(l.monto) - Number(l.pagado || 0);
+  const estChip = { pendiente:"alerta", parcial:"agua", pagada:"ok", anulada:"gris" };
+  $("modal-cuerpo").innerHTML = `
+    <div class="modal-cuerpo">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip gris">${comPeriodoTxt(l)}</span>
+        <span class="chip gris">${Number(l.pct)}% sobre ${COM_BASES[l.base]}</span>
+        ${l.excluye_servicios ? '<span class="chip gris">sin ítems variables</span>' : ""}
+        <span class="chip ${estChip[l.estado]}">${l.estado}</span>
+      </div>
+      <div class="tabla-wrap" style="box-shadow:none;max-height:260px"><table><thead><tr>
+        <th>Venta</th><th>Fecha</th><th>Cliente</th><th class="der">Base</th><th class="der">Comisión</th></tr></thead><tbody>
+        ${(l.detalle || []).map(d => `<tr><td class="num">#${d.id}</td><td class="num">${fFecha(d.fecha)}</td><td>${esc(d.cliente || "")}</td>
+          <td class="der num">${fmtARS.format(d.base)}</td><td class="der num">${fmtARS.format(d.comision)}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="totales">
+        <div class="fila-total"><span>Base total (${l.cant_ventas} ventas)</span><span class="num">${fmtARS.format(l.base_total)}</span></div>
+        <div class="fila-total grande"><span>Comisión</span><span class="num">${fmtARS.format(l.monto)}</span></div>
+        <div class="fila-total"><span>Pagado</span><span class="num">${fmtARS.format(l.pagado || 0)}</span></div>
+        ${saldo > 0.5 && l.estado !== "anulada" ? `<div class="fila-total" style="color:var(--alerta)"><span>Saldo a pagar</span><b class="num">${fmtARS.format(saldo)}</b></div>` : ""}
+      </div>
+      ${(pagos || []).length ? `<div style="display:flex;gap:8px;flex-wrap:wrap">${pagos.map(pg => `<span class="chip gris">${fFecha(pg.fecha + "T12:00:00")} · ${esc(finCta(pg.cuenta_id)?.nombre || nombreMetodoGasto(pg.metodo_pago))}: <b class="num" style="margin-left:4px">${fmtARS.format(pg.monto)}</b></span>`).join("")}</div>
+        <p style="font-size:12px;color:var(--gris)">Cada pago es un gasto “Comisiones a vendedores”: para corregirlo, editalo o eliminalo desde la solapa Gastos.</p>` : ""}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-suave btn-chico" onclick="comPDF(${l.id})">📄 PDF para el vendedor</button></div>
+      <div class="modal-pie">
+        ${l.estado !== "anulada" && Number(l.pagado || 0) < 0.5 ? `<button class="btn btn-peligro" style="margin-right:auto" onclick="anularComLiq(${l.id})">Anular liquidación</button>` : ""}
+        <button class="btn btn-borde" onclick="cerrarModal()">Cerrar</button>
+        ${l.estado !== "anulada" && saldo > 0.5 ? `<button class="btn btn-primario" onclick="abrirComPago(${l.id})">Registrar pago</button>` : ""}
+      </div>
+    </div>`;
+}
+function abrirComPago(id){
+  const l = state.com.liqs.find(x => x.id === id); if (!l) return;
+  const saldo = Math.round((Number(l.monto) - Number(l.pagado || 0)) * 100) / 100;
+  const activas = state.fin.cuentas.filter(c => c.activa !== false);
+  abrirModal(`Pago de comisión · #${id} · ${l.vendedor_nombre || ""}`, `
+    <form onsubmit="guardarComPago(event, ${id})">
+      <div class="fila-2">
+        <div class="field"><label>Monto (ARS) *</label><input id="cp-monto" inputmode="decimal" value="${saldo}" required></div>
+        <div class="field"><label>Fecha *</label><input type="date" id="cp-fecha" value="${hoyISO()}" required></div>
+      </div>
+      <div class="field"><label>Sale de (caja) *</label><select id="cp-cuenta">
+        ${activas.map(c => `<option value="${c.id}">${esc(c.nombre)} (${c.moneda})</option>`).join("")}
+        <option value="">No sale de ninguna caja</option></select></div>
+      <p style="font-size:12.5px;color:var(--gris)">Se registra como gasto “Comisiones a vendedores”: descuenta de la caja y del resultado neto del mes.</p>
+      <div class="modal-pie"><button type="button" class="btn btn-borde" onclick="verComLiq(${id})">Cancelar</button>
+        <button type="submit" class="btn btn-primario">Registrar pago</button></div>
+    </form>`);
+}
+async function guardarComPago(e, id){
+  e.preventDefault();
+  const monto = numDec($("cp-monto").value);
+  if (!(monto > 0)) return toast("Monto inválido.", "error");
+  const btn = e.submitter; if (btn){ btn.disabled = true; btn.textContent = "Registrando…"; }
+  const { error } = await sb.rpc("com_registrar_pago", { p_liq: id, p_monto: monto,
+    p_cuenta: $("cp-cuenta").value || null, p_fecha: $("cp-fecha").value || hoyISO() });
+  if (error){ if (btn){ btn.disabled = false; btn.textContent = "Registrar pago"; } return toast("No se pudo registrar: " + error.message, "error"); }
+  toast("Pago de comisión registrado", "ok");
+  await Promise.all([renderFinComisiones(), (async () => { const { data } = await sb.from("fin_cuentas").select("*").order("created_at"); if (data) state.fin.cuentas = data; })()]);
+  verComLiq(id);
+}
+async function anularComLiq(id){
+  if (!confirm(`¿Anular la liquidación #${id}? Sus ventas vuelven a quedar disponibles para liquidar.`)) return;
+  const { error } = await sb.rpc("com_anular_liquidacion", { p_liq: id });
+  if (error) return toast("No se pudo anular: " + error.message, "error");
+  toast("Liquidación anulada", "ok"); cerrarModal(); renderFinComisiones();
+}
+function comPDF(id){
+  if (!window.jspdf) return toast("La librería de PDF todavía está cargando.", "error");
+  const l = state.com.liqs.find(x => x.id === id); if (!l) return;
+  const doc = new window.jspdf.jsPDF();
+  pdfBanda(doc, 32);
+  doc.setFontSize(18).setFont(undefined, "bold");
+  doc.text("Biotopium", 14, 15);
+  doc.setFontSize(11).setFont(undefined, "normal");
+  doc.text(`Liquidación de comisiones #${l.id} · ${l.vendedor_nombre || ""}`, 14, 24);
+  doc.setTextColor(20).setFontSize(10);
+  doc.text(`Período: ${comPeriodoTxt(l)} · ${Number(l.pct)}% sobre ${COM_BASES[l.base]}${l.excluye_servicios ? " (sin ítems variables)" : ""}`, 14, 42);
+  doc.autoTable({
+    startY: 48,
+    head: [["Venta", "Fecha", "Cliente", "Base", "Comisión"]],
+    body: (l.detalle || []).map(d => ["#" + d.id, fFecha(d.fecha), d.cliente || "", fmtARS.format(d.base), fmtARS.format(d.comision)]),
+    styles: { fontSize: 9, cellPadding: 2.5 }, headStyles: { fillColor: [47, 167, 202] },
+    alternateRowStyles: { fillColor: [243, 248, 250] }
+  });
+  let y = doc.lastAutoTable.finalY + 10;
+  const linea = (t, v, b) => { doc.setFont(undefined, b ? "bold" : "normal"); doc.text(t, 110, y); doc.text(v, 196, y, { align: "right" }); y += 6; };
+  linea(`Base (${l.cant_ventas} ventas)`, fmtARS.format(l.base_total));
+  linea("Comisión", fmtARS.format(l.monto), true);
+  linea("Pagado", fmtARS.format(l.pagado || 0));
+  if (Number(l.monto) - Number(l.pagado || 0) > 0.5) linea("Saldo", fmtARS.format(Number(l.monto) - Number(l.pagado || 0)), true);
+  doc.setFontSize(8).setTextColor(130);
+  doc.text("Generado por Biotopium CRM", 14, 285);
+  doc.save(`comisiones-${(l.vendedor_nombre || "vendedor").toLowerCase().replace(/\s+/g, "-")}-${l.id}.pdf`);
 }
 
 /* ================= CUENTAS CORRIENTES ================= */
@@ -7299,7 +8004,8 @@ function renderFinCuentas(){
         <button class="btn btn-primario">Agregar</button>
       </form>
     </div>
-    <div class="fin-nota" style="text-align:left">El arqueo compara el saldo del sistema con lo contado y registra la diferencia como movimiento de ajuste (queda trazado, no se pisa el historial).</div>`;
+    <div class="fin-nota" style="text-align:left">El arqueo compara el saldo del sistema con lo contado y registra la diferencia como movimiento de ajuste (queda trazado, no se pisa el historial).</div>
+    ${finPanelDestinosHTML()}`;
 }
 async function crearFinCta(e){
   e.preventDefault();
