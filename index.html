@@ -608,43 +608,14 @@ body.blanco .topbar .btn-icono{color:var(--marino)}
       <div class="tabla-wrap" id="clientes-tabla"></div>
     </section>
 
-    <!-- ===== PRODUCTOS ===== -->
+    <!-- ===== PRODUCTOS Y STOCK (vista unificada) ===== -->
     <section class="vista" id="view-productos">
       <div class="vista-head">
-        <div><h2>Productos</h2><p>Catálogo y control de stock</p></div>
-        <div class="acciones">
-          <button class="btn btn-borde" onclick="abrirMovimientos()">Movimientos</button>
-          <button class="btn btn-borde" id="btn-importar" onclick="abrirImportador()" style="display:none">Importar</button>
-          <button class="btn btn-borde" onclick="abrirAumentoMasivo()">% Precios masivo</button>
-          <button class="btn btn-borde" onclick="exportarProductos()">Exportar</button>
-          <button class="btn btn-primario" onclick="abrirProducto()">+ Nuevo producto</button>
-        </div>
-      </div>
-      <div class="filtros">
-        <div class="buscador">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input id="prod-busca" placeholder="Buscar por nombre, SKU o escaneá el código…" onkeydown="prodBuscaEnter(event)">
-        </div>
-        <select id="prod-filtro-marca"><option value="">Todas las marcas</option></select>
-        <select id="prod-filtro-cat"><option value="">Todas las categorías</option></select>
-        <select id="prod-filtro-stock"><option value="">Todo el stock</option>
-          <option value="serv">Servicios / variables</option>
-          <option value="bajo">Stock bajo</option><option value="sin">Sin stock</option></select>
-      </div>
-      <div class="tabla-wrap" id="prod-tabla"></div>
-    </section>
-
-    <!-- ===== STOCK ===== -->
-    <section class="vista" id="view-stock">
-      <div class="vista-head">
-        <div><h2>Stock</h2><p>Control de inventario: valuación, pedidos a proveedores, reservas y kardex</p></div>
-        <div class="acciones" id="stk-acciones">
-          <button class="btn btn-borde" onclick="exportarStock()">Exportar</button>
-          <button class="btn btn-primario" onclick="abrirProducto()">+ Nuevo producto</button>
-        </div>
+        <div><h2>Productos y stock</h2><p>Catálogo, precios e inventario: valuación, pedidos a proveedores, reservas y kardex</p></div>
+        <div class="acciones" id="stk-acciones"></div>
       </div>
       <div class="fin-tabs">
-        <button class="btn btn-suave" id="stk-tab-stock" onclick="stkTab('stock')">Stock</button>
+        <button class="btn btn-suave" id="stk-tab-stock" onclick="stkTab('stock')">Productos</button>
         <button class="btn btn-borde" id="stk-tab-pedidos" onclick="stkTab('pedidos')">Pedidos <span class="chip agua num" id="stk-badge-ped" style="display:none;padding:1px 8px;margin-left:2px"></span></button>
         <button class="btn btn-borde" id="stk-tab-reservas" onclick="stkTab('reservas')">Reservas</button>
         <button class="btn btn-borde" id="stk-tab-movs" onclick="stkTab('movs')">Movimientos</button>
@@ -655,18 +626,19 @@ body.blanco .topbar .btn-icono{color:var(--marino)}
       <div class="filtros">
         <div class="buscador">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input id="stk-busca" placeholder="Buscar por nombre, SKU, código o marca…">
+          <input id="stk-busca" placeholder="Buscar por nombre, SKU, marca o escaneá el código…" onkeydown="stkBuscaEnter(event)">
         </div>
         <select id="stk-f-cat"><option value="">Todas las categorías</option></select>
         <select id="stk-f-marca"><option value="">Todas las marcas</option></select>
         <select id="stk-f-ubi"><option value="">Todas las ubicaciones</option></select>
         <select id="stk-f-estado">
-          <option value="">Todos los estados</option>
+          <option value="">Activos (sin servicios)</option>
           <option value="ok">En stock</option>
           <option value="bajo">Bajo mínimo</option>
           <option value="sin">Sin stock</option>
           <option value="inactivos">Inactivos</option>
           <option value="servicios">Servicios / variables</option>
+          <option value="todos">Todo el catálogo (incluye inactivos y servicios)</option>
         </select>
         <span class="stk-tc" id="stk-tc" title="Cotización que valúa el stock (se elige la fuente en Configuración)"></span>
       </div>
@@ -912,7 +884,13 @@ const state = {
 
 const $ = id => document.getElementById(id);
 // Número decimal tolerante: acepta "2,5" (teclado argentino) y "2.5"
-const numDec = v => { const n = parseFloat(String(v ?? "").trim().replace(",", ".")); return isFinite(n) ? n : 0; };
+/* Número escrito a mano: acepta "2,5", "2.5", "1.500,50" y "1.500.000" (punto de miles si hay coma o más de un punto) */
+const numDec = v => {
+  let s = String(v ?? "").trim().replace(/\s/g, "");
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if ((s.match(/\./g) || []).length > 1) s = s.replace(/\./g, "");
+  const n = parseFloat(s); return isFinite(n) ? n : 0;
+};
 
 /* ----- Tema claro / oscuro (oscuro por defecto) ----- */
 function aplicarTema(t){
@@ -1120,8 +1098,7 @@ const VISTAS = [
   { id:"envios",    nombre:"Envíos" },
   { id:"leads",     nombre:"Leads" },
   { id:"clientes",  nombre:"Clientes" },
-  { id:"productos", nombre:"Productos" },
-  { id:"stock",     nombre:"Stock" },
+  { id:"productos", nombre:"Productos y stock", corto:"Productos" },
   { id:"reportes",  nombre:"Reportes" },
   { id:"gastos",    nombre:"Gastos" },
   { id:"comisiones", nombre:"Comisiones" },
@@ -1145,11 +1122,12 @@ function construirNav(){
   ).join("");
   $("bottom-nav").innerHTML = (partner ? ["estuario"] : admin ? [...NAV_MOBILE, "finanzas"] : NAV_MOBILE).map(id => {
     const v = VISTAS.find(x => x.id === id);
-    return `<button class="bn-item" data-v="${id}" onclick="nav('${id}')">${ICONOS[id]}<span>${v.nombre}</span></button>`;
+    return `<button class="bn-item" data-v="${id}" onclick="nav('${id}')">${ICONOS[id]}<span>${v.corto || v.nombre}</span></button>`;
   }).join("");
 }
 
 function nav(id){
+  if (id === "stock") id = "productos";   // Stock y Productos son ahora una sola vista
   if (["config","finanzas","auditoria"].includes(id) && state.perfil?.rol !== "admin") return;
   if (state.perfil?.rol === "partner" && id !== "estuario") return;
   vistaActual = id;
@@ -1161,10 +1139,9 @@ function nav(id){
   window.scrollTo({ top: 0 });
   const cargas = {
     dashboard: renderDashboard, ventas: cargarVentas, leads: cargarLeads,
-    clientes: cargarClientes, productos: cargarProductos, presupuestos: cargarPresupuestos,
+    clientes: cargarClientes, productos: cargarStockVista, presupuestos: cargarPresupuestos,
     envios: cargarEnvios,
     smd: cargarSMD, reportes: cargarReporte, config: cargarConfigVista,
-    stock: cargarStockVista,
     estuario: cargarEstuario,
     gastos: cargarGastos,
     comisiones: cargarComisiones,
@@ -1961,8 +1938,7 @@ async function cargarBase(){
   ]);
   if (cfg) state.config = cfg;
   state.categorias = cats || [];
-  $("prod-filtro-cat").innerHTML = '<option value="">Todas las categorías</option>' +
-    state.categorias.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join("");
+  stkPoblarFiltros();
 }
 
 async function cargarProductosData(){
@@ -2202,59 +2178,19 @@ async function renderDashboard(){
 }
 </script>
 <script>
-/* ---------------- PRODUCTOS ---------------- */
+/* ---------------- PRODUCTOS ----------------
+   El listado vive en la vista unificada "Productos y stock" (pestaña Productos, ver renderStock).
+   Estos nombres se conservan para que las funciones que ya los llaman sigan andando. */
 async function cargarProductos(){
-  $("prod-tabla").innerHTML = '<div class="cargando">Cargando productos…</div>';
+  if (vistaActual === "productos") return cargarStockVista();
   await cargarProductosData();
-  poblarMarcas();
-  $("btn-importar").style.display = state.perfil.rol === "admin" ? "" : "none";
-  renderProductos();
+  stkPoblarFiltros();
 }
 function renderProductos(){
-  const q = ($("prod-busca").value || "").toLowerCase();
-  const cat = $("prod-filtro-cat").value;
-  const fs = $("prod-filtro-stock").value;
-  const fm = $("prod-filtro-marca").value;
-  let lista = state.productos.filter(p =>
-    (!q || p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) || (p.codigo_barras || "").toLowerCase().includes(q) || (p.marca || "").toLowerCase().includes(q)) &&
-    (!cat || String(p.categoria_id) === cat) &&
-    (!fm || (p.marca || "") === fm) &&
-    (fs !== "bajo" || (!esServ(p) && p.stock <= p.stock_minimo && p.stock > 0)) &&
-    (fs !== "sin" || (!esServ(p) && p.stock <= 0)) &&
-    (fs !== "serv" || esServ(p)));
-  if (!lista.length){
-    $("prod-tabla").innerHTML = '<div class="vacio"><b>Sin productos</b>Cargá el primero con “+ Nuevo producto”.</div>';
-    return;
-  }
-  const catNombre = id => state.categorias.find(c => c.id === id)?.nombre || "—";
-  $("prod-tabla").innerHTML = `<table><thead><tr>
-      <th>Producto</th><th>Marca</th><th>Categoría</th><th class="der">Precio ARS</th>
-      <th class="der">Mayorista</th><th class="der">USD</th><th class="der">Stock</th><th></th>
-    </tr></thead><tbody>` +
-    lista.map(p => `<tr class="fila-click" onclick="abrirProducto(${p.id})">
-      <td><b>${esc(p.nombre)}</b>${p.sku ? `<br><small style="color:var(--gris)">SKU ${esc(p.sku)}</small>` : ""}${p.activo ? "" : ' <span class="chip gris">Inactivo</span>'}</td>
-      <td style="color:var(--gris);font-size:13.5px">${esc(p.marca || "—")}</td>
-      <td>${esc(catNombre(p.categoria_id))}</td>
-      <td class="der num">${fmtARS.format(p.precio_ars)}</td>
-      <td class="der num">${p.precio_mayorista_ars ? fmtARS.format(p.precio_mayorista_ars) : "—"}</td>
-      <td class="der num">${p.precio_usd ? fmtUSD.format(p.precio_usd) : "—"}</td>
-      <td class="der">${esServ(p) ? '<span class="chip agua" title="Ítem variable: no lleva stock">Servicio</span>'
-        : `<span class="chip num ${p.stock <= 0 ? "rojo" : p.stock <= p.stock_minimo ? "alerta" : "ok"}">${p.stock}</span>`}</td>
-      <td class="der acciones-fila" onclick="event.stopPropagation()">
-        ${esServ(p) ? "" : `<button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">Ajustar</button>`}
-        <button class="btn-icono" title="Editar producto" onclick="abrirProducto(${p.id})">✎</button>
-        ${puedeBorrarProd() ? `<button class="btn-icono btn-peligro" title="Eliminar o fusionar" onclick="borrarProducto(${p.id})">✕</button>` : ""}
-      </td>
-    </tr>`).join("") + "</tbody></table>";
+  stkPoblarFiltros();
+  if (vistaActual === "productos" && state.stk.tab === "stock") renderStock();
 }
-["prod-busca","prod-filtro-cat","prod-filtro-stock","prod-filtro-marca"].forEach(id =>
-  $(id).addEventListener("input", renderProductos));
-function poblarMarcas(){
-  const marcas = [...new Set(state.productos.map(p => (p.marca || "").trim()).filter(Boolean))].sort();
-  const sel = $("prod-filtro-marca"), actual = sel.value;
-  sel.innerHTML = '<option value="">Todas las marcas</option>' + marcas.map(m => `<option>${esc(m)}</option>`).join("");
-  sel.value = actual;
-}
+function poblarMarcas(){ stkPoblarFiltros(); }
 
 function abrirProducto(id){
   const p = id ? state.productos.find(x => x.id === id) : null;
@@ -2340,7 +2276,7 @@ function prodServicioCambio(){
    con historial queda oculto (no aparece en ninguna lista) y un admin lo restaura desde Auditoría. */
 const puedeBorrarProd = () => !!state.perfil && state.perfil.rol !== "partner";
 function recargarVistaProductos(){
-  return vistaActual === "stock" ? cargarStockVista() : vistaActual === "auditoria" ? cargarAuditoria() : cargarProductos();
+  return vistaActual === "auditoria" ? cargarAuditoria() : cargarProductos();
 }
 function borrarProducto(id){
   const p = state.productos.find(x => x.id === id);
@@ -2544,7 +2480,7 @@ async function guardarProducto(e, id){
   // La inversión NO se registra automáticamente: se carga a mano desde Reportes → "+ Inversión".
   toast(id ? "Producto actualizado" : "Producto creado", "ok");
   cerrarModal();
-  vistaActual === "stock" ? cargarStockVista() : cargarProductos();
+  cargarProductos();
 }
 
 /* ---------------- AUMENTO MASIVO DE PRECIOS ---------------- */
@@ -2798,42 +2734,15 @@ async function guardarAjuste(e, prodId){
   cerrarModal();
   await cargarProductosData();
   renderProductos();
-  if (vistaActual === "stock") renderStock();
   if (vistaActual === "dashboard") renderDashboard();
 }
 
 /* ----- Historial de movimientos ----- */
 const nombreMotivoMov = t => t === "merma" ? "Muerte / merma" : t === "consumo" ? "Consumo interno" : "Ingreso / reposición";
-async function abrirMovimientos(){
-  abrirModal("Movimientos de stock", '<div class="cargando">Cargando…</div>');
-  const { data } = await sb.from("movimientos_stock").select("*")
-    .order("created_at", { ascending: false }).limit(200);
-  const movs = data || [];
-  const esAdmin = state.perfil.rol === "admin";
-  $("modal-cuerpo").innerHTML = `
-    <div class="modal-cuerpo">
-      ${!movs.length ? '<div class="vacio" style="padding:24px"><b>Sin movimientos</b>Registrá bajas o ingresos desde “Ajustar” en cada producto.</div>'
-      : `<div style="max-height:60vh;overflow:auto"><table><thead><tr>
-          <th>Fecha</th><th>Producto</th><th>Motivo</th><th class="der">Cant.</th>${esAdmin ? "<th></th>" : ""}
-        </tr></thead><tbody>` +
-        movs.map(m => `<tr>
-          <td class="num">${fFecha(m.created_at)}</td>
-          <td>${esc(m.producto_nombre)}${m.nota ? `<br><small style="color:var(--gris)">${esc(m.nota)}</small>` : ""}</td>
-          <td><span class="chip ${m.tipo === "ingreso" ? "ok" : m.tipo === "merma" ? "rojo" : "alerta"}">${nombreMotivoMov(m.tipo)}</span></td>
-          <td class="der num">${m.tipo === "ingreso" ? "+" : "−"}${m.cantidad}</td>
-          ${esAdmin ? `<td class="der"><button class="btn btn-chico btn-peligro" onclick="eliminarMovimiento(${m.id})">Deshacer</button></td>` : ""}
-        </tr>`).join("") + "</tbody></table></div>"}
-      <div class="modal-pie"><button class="btn btn-borde" onclick="cerrarModal()">Cerrar</button></div>
-    </div>`;
-}
-async function eliminarMovimiento(id){
-  if (!confirm("¿Deshacer este movimiento? El stock se corrige automáticamente.")) return;
-  const { error } = await sb.rpc("eliminar_movimiento", { p_id: id });
-  if (error) return toast("No se pudo deshacer: " + error.message, "error");
-  toast("Movimiento deshecho. Stock corregido.", "ok");
-  await cargarProductosData();
-  abrirMovimientos();
-  if (vistaActual === "productos") renderProductos();
+/* El historial vive en la pestaña Movimientos de "Productos y stock" (filtros, export y deshacer) */
+function abrirMovimientos(){
+  state.stk.tab = "movs";
+  nav("productos");
 }
 
 /* ---------------- CLIENTES ---------------- */
@@ -3560,14 +3469,7 @@ function ventaBuscaEnter(e){
   $("v-sugerencias").style.display = "none";
   e.target.focus();
 }
-function prodBuscaEnter(e){
-  if (e.key !== "Enter") return;
-  e.preventDefault();
-  const q = e.target.value.trim();
-  if (!q) return;
-  const p = buscarPorCodigo(q);
-  if (p){ e.target.value = ""; renderProductos(); abrirProducto(p.id); }
-}
+function prodBuscaEnter(e){ stkBuscaEnter(e); }
 function margenLinea(i){
   const p = Number(i.precio_unit) || 0, c = costoUnitEnVenta(i);
   if (p <= 0) return 0;
@@ -4627,7 +4529,7 @@ function abrirProyectoEst(id){
             <option value="marino" ${p?.tipo === "marino" ? "selected" : ""}>Marino</option></select></div>
         <div class="field"><label>Estado</label>
           <select id="ep-estado">
-            ${Object.entries(EST_ESTADOS).filter(([k]) => k !== "cerrado").map(([k,[,n]]) =>
+            ${Object.entries(EST_ESTADOS).filter(([k]) => k !== "cerrado" || p?.estado === "cerrado").map(([k,[,n]]) =>
               `<option value="${k}" ${p?.estado === k ? "selected" : ""}>${n}</option>`).join("")}
           </select></div>
       </div>
@@ -5709,7 +5611,7 @@ async function pagarSocioEst(id){
         <div class="field"><label>Método</label>
           <select id="ps-metodo">${metodoOpciones("transferencia")}</select></div>
       </div>
-      ${selectCajaHTML("ps-cuenta", "")}
+      ${selectCajaHTML("ps-cuenta", "", estAbio ? "Entra en (caja)" : "Sale de (caja)")}
       <div class="modal-pie">
         <button type="button" class="btn btn-borde" onclick="verLiquidacionEst(${id})">Cancelar</button>
         <button type="submit" class="btn btn-primario">Registrar</button>
@@ -6153,8 +6055,11 @@ function renderAnalisisClientes(){
 
 /* ---------------- COMPRA/GASTO LEGACY (reemplazado por la solapa Gastos) ---------------- */
 /* ==================================================================
-   STOCK — control de inventario estilo Rough 4x4, con sub-pestañas:
-   Stock · Pedidos (a proveedores) · Reservas · Movimientos · Reportes.
+   PRODUCTOS Y STOCK — vista unificada (catálogo + inventario), con sub-pestañas:
+   Productos · Pedidos (a proveedores) · Reservas · Movimientos · Reportes.
+   La pestaña Productos reúne lo que antes eran dos vistas: precios (minorista,
+   mayorista, USD), importación, % masivo y lector de códigos, más valuación,
+   ubicación, reservas y pedidos en camino.
    Pedidos y Reservas usan tablas nuevas (migracion-stock.sql);
    Movimientos reusa la tabla movimientos_stock existente (kardex).
    ================================================================== */
@@ -6166,13 +6071,15 @@ function stkCostoARS(p, tc){
   return (p.costo_moneda === "ARS") ? costo : costo * tc;
 }
 const stkEstado = p => p.activo === false ? "inactivo"
+  : esServ(p) ? "servicio"
   : Number(p.stock) <= 0 ? "sin"
   : (Number(p.stock_minimo) > 0 && Number(p.stock) <= Number(p.stock_minimo)) ? "bajo" : "ok";
 const STK_ESTADOS = {
   ok:       { nombre: "En stock",    chip: "ok" },
   bajo:     { nombre: "Bajo mínimo", chip: "alerta" },
   sin:      { nombre: "Sin stock",   chip: "rojo" },
-  inactivo: { nombre: "Inactivo",    chip: "gris" }
+  inactivo: { nombre: "Inactivo",    chip: "gris" },
+  servicio: { nombre: "Servicio",    chip: "agua" }
 };
 const stkReservado = pid => state.stk.reservas.filter(r => r.producto_id === pid && r.estado === "activa")
   .reduce((s,r) => s + Number(r.cantidad), 0);
@@ -6188,18 +6095,35 @@ async function cargarStockVista(){
   state.stk.tablasOk = !ped.error && !res.error;
   state.stk.pedidos = ped.data || [];
   state.stk.reservas = res.data || [];
-  // Poblar filtros del pane Stock (manteniendo la selección actual)
-  const keep = (sel, opciones, primera) => {
-    const el = $(sel), v = el.value;
-    el.innerHTML = `<option value="">${primera}</option>` + opciones;
-    el.value = v;
-  };
-  keep("stk-f-cat", state.categorias.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join(""), "Todas las categorías");
-  keep("stk-f-marca", [...new Set(state.productos.map(p => (p.marca || "").trim()).filter(Boolean))].sort()
-    .map(m => `<option>${esc(m)}</option>`).join(""), "Todas las marcas");
-  keep("stk-f-ubi", [...new Set(state.productos.map(p => (p.ubicacion || "").trim()).filter(Boolean))].sort()
-    .map(u => `<option>${esc(u)}</option>`).join(""), "Todas las ubicaciones");
+  stkPoblarFiltros();
   stkTab(state.stk.tab || "stock");
+}
+/* Filtros de la pestaña Productos (categoría, marca, ubicación), manteniendo la selección actual */
+function stkPoblarFiltros(){
+  const keep = (sel, opciones, primera) => {
+    const el = $(sel); if (!el) return;
+    const v = el.value;
+    el.innerHTML = `<option value="">${primera}</option>` + opciones;
+    el.value = [...el.options].some(o => o.value === v) ? v : "";
+  };
+  const prods = state.productos || [];
+  keep("stk-f-cat", (state.categorias || []).map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join(""), "Todas las categorías");
+  keep("stk-f-marca", [...new Set(prods.map(p => (p.marca || "").trim()).filter(Boolean))].sort()
+    .map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join(""), "Todas las marcas");
+  keep("stk-f-ubi", [...new Set(prods.map(p => (p.ubicacion || "").trim()).filter(Boolean))].sort()
+    .map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join(""), "Todas las ubicaciones");
+}
+/* Lector QR / código de barras en el buscador: Enter con un código exacto abre el producto */
+function stkBuscaEnter(e){
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  const q = e.target.value.trim();
+  if (!q) return;
+  const p = buscarPorCodigo(q);
+  if (!p) return;   // sin coincidencia exacta: queda como búsqueda normal
+  e.target.value = "";
+  renderStock();
+  abrirProducto(p.id);
 }
 
 function stkTab(t){
@@ -6219,7 +6143,9 @@ function stkTab(t){
     ? '<button class="btn btn-primario" onclick="abrirStkReserva()">+ Nueva reserva</button>'
     : t === "movs"
     ? '<button class="btn btn-borde" onclick="exportarStkMovs()">Exportar</button>'
-    : `<button class="btn btn-borde" onclick="exportarStock()">Exportar</button>
+    : `${state.perfil?.rol === "admin" ? '<button class="btn btn-borde" onclick="abrirImportador()">Importar</button>' : ""}
+       <button class="btn btn-borde" onclick="abrirAumentoMasivo()">% Precios masivo</button>
+       <button class="btn btn-borde" onclick="exportarStock()" title="Exporta lo que estás viendo con los filtros actuales">Exportar</button>
        <button class="btn btn-primario" onclick="abrirProducto()">+ Nuevo producto</button>`;
   if (t === "stock") return renderStock();
   if (!state.stk.tablasOk && (t === "pedidos" || t === "reservas")){
@@ -6231,26 +6157,24 @@ function stkTab(t){
 
 /* ================= PANE STOCK ================= */
 function stkFiltrados(){
-  const q = ($("stk-busca").value || "").toLowerCase();
+  const q = ($("stk-busca").value || "").toLowerCase().trim();
   const cat = $("stk-f-cat").value, marca = $("stk-f-marca").value;
   const ubi = $("stk-f-ubi").value, fe = $("stk-f-estado").value;
   const k = state.stk.kpi;
   let lista = state.productos.filter(p => {
-    // Los ítems variables no son inventario: solo aparecen con el filtro "Servicios / variables"
-    if (fe === "servicios") return esServ(p) &&
-      (!q || p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q));
-    if (esServ(p)) return false;
+    if (q && ![p.nombre, p.sku, p.codigo_barras, p.marca].some(x => String(x || "").toLowerCase().includes(q))) return false;
+    if (cat && String(p.categoria_id) !== cat) return false;
+    if (marca && (p.marca || "").trim() !== marca) return false;
+    if (ubi && (p.ubicacion || "").trim() !== ubi) return false;
     const est = stkEstado(p);
-    if (fe === "inactivos"){ if (est !== "inactivo") return false; }
-    else {
-      if (est === "inactivo") return false;
+    // Por defecto: productos activos de inventario. Los ítems variables (servicios) e inactivos
+    // tienen su filtro propio; "Todo el catálogo" muestra absolutamente todo.
+    if (fe === "servicios"){ if (!esServ(p)) return false; }
+    else if (fe === "inactivos"){ if (est !== "inactivo") return false; }
+    else if (fe !== "todos"){
+      if (est === "inactivo" || est === "servicio") return false;
       if (fe && est !== fe) return false;
     }
-    if (q && !(p.nombre.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) ||
-               (p.codigo_barras || "").toLowerCase().includes(q) || (p.marca || "").toLowerCase().includes(q))) return false;
-    if (cat && String(p.categoria_id) !== cat) return false;
-    if (marca && (p.marca || "") !== marca) return false;
-    if (ubi && (p.ubicacion || "").trim() !== ubi) return false;
     if (k === "bajo" && est !== "bajo") return false;
     if (k === "sin" && est !== "sin") return false;
     if (k === "camino" && !stkEnCamino(p)) return false;
@@ -6263,7 +6187,7 @@ function stkFiltrados(){
     key === "categoria" ? (state.categorias.find(c => c.id === p.categoria_id)?.nombre || "") :
     key === "costo" ? stkCostoARS(p, tc) :
     key === "precio" ? Number(p.precio_ars) || 0 :
-    key === "estado" ? ["ok","bajo","sin","inactivo"].indexOf(stkEstado(p)) :
+    key === "estado" ? ["ok","bajo","sin","servicio","inactivo"].indexOf(stkEstado(p)) :
     p[key];
   lista.sort((a, b) => {
     let x = val(a), y = val(b);
@@ -6295,7 +6219,7 @@ function renderStock(){
   const resTot = state.stk.reservas.filter(r => r.estado === "activa").reduce((s,r) => s + Number(r.cantidad), 0);
   const k = state.stk.kpi;
   $("stk-kpis").innerHTML = `
-    <div class="fin-kpi stk-kpi ${!k ? "activo" : ""}" onclick="stkKpi('')" title="Todos los productos activos">
+    <div class="fin-kpi stk-kpi ${!k ? "activo" : ""}" onclick="stkKpi('')" title="Productos activos de inventario (sin servicios). Tocá para quitar el filtro de tarjeta">
       <div class="fk-valor num">${activos.length}</div><div class="fk-label">Productos</div></div>
     <div class="fin-kpi stk-kpi quieto" title="Inventario a costo, convertido a US$ con el TC">
       <div class="fk-valor num fin-oro">${admin ? (tc > 0 ? fmtUSD.format(valorUSD) : "—") : "—"}</div><div class="fk-label">Valor de stock USD</div></div>
@@ -6315,7 +6239,7 @@ function renderStock(){
 
   const lista = stkFiltrados();
   if (!lista.length){
-    $("stk-tabla").innerHTML = `<div class="vacio"><b>Sin resultados</b>${state.productos.length ? "Ajustá la búsqueda o los filtros." : "Cargá el primero con “+ Nuevo producto”."}</div>`;
+    $("stk-tabla").innerHTML = `<div class="vacio"><b>Sin resultados</b>${state.productos.length ? "Ajustá la búsqueda o los filtros. Para ver inactivos y servicios elegí “Todo el catálogo”." : "Cargá el primero con “+ Nuevo producto” o importalos desde Excel."}</div>`;
     return;
   }
   const flecha = c => state.stk.orden === c ? (state.stk.asc ? " ▲" : " ▼") : "";
@@ -6327,7 +6251,7 @@ function renderStock(){
       <th class="stk-th" onclick="stkOrden('categoria')">Categoría${flecha("categoria")}</th>
       <th class="stk-th" onclick="stkOrden('ubicacion')">Ubicación${flecha("ubicacion")}</th>
       <th class="stk-th der" onclick="stkOrden('costo')">P. costo${flecha("costo")}</th>
-      <th class="stk-th der" onclick="stkOrden('precio')">P. venta${flecha("precio")}</th>
+      <th class="stk-th der" onclick="stkOrden('precio')" title="Minorista ARS · debajo: mayorista y USD">P. venta${flecha("precio")}</th>
       <th class="stk-th der" onclick="stkOrden('stock')">Stock${flecha("stock")}</th>
       <th class="stk-th" onclick="stkOrden('estado')">Estado${flecha("estado")}</th>
       <th></th></tr></thead><tbody>` +
@@ -6345,8 +6269,10 @@ function renderStock(){
           ? `<span class="tag-ubi" title="Cambiar ubicación" onclick="stkEditarUbicacion(${p.id})">${esc(p.ubicacion)}</span>`
           : `<span class="tag-ubi" style="opacity:.55" title="Asignar ubicación" onclick="stkEditarUbicacion(${p.id})">＋ asignar</span>`}</td>
         <td class="der num">${admin ? fMoneda(costo, monCosto) : "—"}</td>
-        <td class="der num" style="color:var(--alerta);font-weight:600">${fmtARS.format(p.precio_ars)}</td>
-        <td class="der">${esServ(p) ? '<span class="chip agua">∞</span>' : `<span class="chip num ${est.chip === "gris" ? "gris" : Number(p.stock) <= 0 ? "rojo" : stkEstado(p) === "bajo" ? "alerta" : "ok"}">${p.stock}</span>`}</td>
+        <td class="der num" style="white-space:nowrap"><b style="color:var(--alerta)">${fmtARS.format(p.precio_ars)}</b>${
+          Number(p.precio_mayorista_ars) > 0 ? `<small style="display:block;color:var(--gris)" title="Precio mayorista">May. ${fmtARS.format(p.precio_mayorista_ars)}</small>` : ""}${
+          Number(p.precio_usd) > 0 ? `<small style="display:block;color:var(--gris)" title="Precio en dólares">${fmtUSD.format(p.precio_usd)}</small>` : ""}</td>
+        <td class="der">${esServ(p) ? '<span class="chip agua" title="Ítem variable: no lleva stock">∞</span>' : `<span class="chip num ${est.chip === "gris" ? "gris" : Number(p.stock) <= 0 ? "rojo" : stkEstado(p) === "bajo" ? "alerta" : "ok"}">${p.stock}</span>`}</td>
         <td><span class="chip ${est.chip}"><span class="punto"></span>${est.nombre.toUpperCase()}</span>${stkEnCamino(p) ? ' <span class="chip agua" title="Tiene pedidos en camino">◈</span>' : ""}</td>
         <td class="der acciones-fila" onclick="event.stopPropagation()">
           ${esServ(p) ? "" : `<button class="btn btn-chico btn-suave" title="Ajustar stock" onclick="abrirAjusteStock(${p.id})">±</button>
@@ -6390,30 +6316,38 @@ async function stkGuardarUbicacion(e, id){
   renderStock();
 }
 
-/* ----- Export del pane Stock (costos solo admin) ----- */
+/* ----- Export de la pestaña Productos: catálogo + inventario, con costos (todo el equipo) ----- */
 function exportarStock(){
-  const admin = state.perfil?.rol === "admin";
   const tc = stkTC();
   const catNom = id => state.categorias.find(c => c.id === id)?.nombre || "";
   const filas = stkFiltrados().map(p => {
+    const serv = esServ(p);
     const f = {
-      "Producto": p.nombre, "SKU": p.sku || "", "Marca": p.marca || "",
+      "Producto": p.nombre, "SKU": p.sku || "", "Código barras": p.codigo_barras || "", "Marca": p.marca || "",
       "Categoría": catNom(p.categoria_id), "Ubicación": p.ubicacion || "",
-      "Stock": Number(p.stock), "Reservadas": stkReservado(p.id), "Stock mínimo": Number(p.stock_minimo || 0),
-      "Estado": STK_ESTADOS[stkEstado(p)].nombre, "Precio venta ARS": Number(p.precio_ars) || 0
+      "Se vende": p.unidad === "kg" ? "kg" : "unidad",
+      "Stock": serv ? "" : Number(p.stock), "Reservadas": serv ? "" : stkReservado(p.id),
+      "Stock mínimo": serv ? "" : Number(p.stock_minimo || 0),
+      "Estado": STK_ESTADOS[stkEstado(p)].nombre,
+      "Precio ARS": Number(p.precio_ars) || 0,
+      "Precio mayorista ARS": Number(p.precio_mayorista_ars) || 0,
+      "Precio USD": Number(p.precio_usd) || 0,
+      "Activo": p.activo !== false ? "Sí" : "No",
+      "Servicio / variable": serv ? "Sí" : "No"
     };
-    if (admin){
-      const costo = Number(p.costo != null ? p.costo : p.costo_usd) || 0;
-      f["Costo"] = costo;
-      f["Moneda costo"] = p.costo_moneda === "ARS" ? "ARS" : "USD";
-      f["Costo unit. ARS (al TC)"] = Math.round(stkCostoARS(p, tc) * 100) / 100;
-      f["Valor stock ARS"] = Math.round(stkCostoARS(p, tc) * Number(p.stock || 0) * 100) / 100;
-    }
+    const costo = Number(p.costo != null ? p.costo : p.costo_usd) || 0;
+    f["Costo"] = costo;
+    f["Moneda costo"] = p.costo_moneda === "ARS" ? "ARS" : "USD";
+    f["Costo USD"] = Number(p.costo_usd) || 0;
+    f["Costo unit. ARS (al TC)"] = Math.round(stkCostoARS(p, tc) * 100) / 100;
+    f["Valor stock ARS"] = serv ? 0 : Math.round(stkCostoARS(p, tc) * Number(p.stock || 0) * 100) / 100;
     return f;
   });
-  if (!filas.length) return toast("No hay productos para exportar.", "error");
-  descargarXLSX([{ nombre: "Stock", filas }], "biotopium-stock-" + hoyISO());
+  if (!filas.length) return toast("No hay productos para exportar con estos filtros.", "error");
+  descargarXLSX([{ nombre: "Productos y stock", filas }], "biotopium-productos-stock-" + hoyISO());
 }
+/* Nombre anterior (botón de la vieja vista Productos) */
+function exportarProductos(){ exportarStock(); }
 
 /* ================= PEDIDOS A PROVEEDORES ================= */
 const STK_PED_EST = {
@@ -7177,19 +7111,6 @@ function exportarPDF(desde, hasta, nombre){
   });
   doc.save(nombre + ".pdf");
 }
-function exportarProductos(){
-  const filas = state.productos.map(p => ({
-    "SKU": p.sku || "", "Código barras": p.codigo_barras || "", "Producto": p.nombre, "Marca": p.marca || "",
-    "Categoría": state.categorias.find(c => c.id === p.categoria_id)?.nombre || "",
-    "Costo": Number(p.costo != null ? p.costo : p.costo_usd), "Moneda costo": p.costo_moneda || "USD",
-    "Costo USD": Number(p.costo_usd), "Precio ARS": Number(p.precio_ars),
-    "Precio mayorista ARS": Number(p.precio_mayorista_ars), "Precio USD": Number(p.precio_usd),
-    "Stock": Number(p.stock), "Stock mínimo": Number(p.stock_minimo),
-    "Activo": p.activo ? "Sí" : "No"
-  }));
-  descargarXLSX([{ nombre: "Productos", filas }], "biotopium-productos-" + hoyISO());
-}
-
 /* ---------------- BACKUP COMPLETO ---------------- */
 async function exportarBackup(){
   if (typeof XLSX === "undefined") return toast("La librería de Excel todavía está cargando. Probá en unos segundos.", "error");
